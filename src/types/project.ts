@@ -46,6 +46,13 @@ export interface Project {
   edpCount?: number;
   retCount?: number;
   ndcCount?: number;
+  // Modificaciones de Contrato
+  mcdCount?: number;
+  mcdData?: Array<{
+    monto?: string;
+    descripcion?: string;
+    fecha?: string;
+  }>;
   // Metadata
   createdAt?: string;
 }
