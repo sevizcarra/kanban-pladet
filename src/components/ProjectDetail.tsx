@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   ChevronLeft,
-  Save,
   CheckCircle,
   Trash2,
   AlertTriangle,
@@ -110,10 +109,14 @@ export default function ProjectDetail({
   );
 
   // UI state
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
   const [showPDF, setShowPDF] = useState(false);
+
+  // Auto-save refs
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const isFirstRender = useRef(true);
 
   // Computed values
   const fechaEstTermino = useMemo(() => {
@@ -138,42 +141,71 @@ export default function ProjectDetail({
   const statusIndex = getStatusIndex(project.status);
   const progress = getProgress(project.status, project.subEtapas);
 
+  // Build the updated project object
+  const buildUpdatedProject = useCallback((): Project => ({
+    ...project,
+    description: descripcion,
+    fechaLicitacion,
+    fechaPublicacion,
+    budget: montoAsignado,
+    tipoFinanciamiento,
+    tipoLicitacion: tipoLicitacion || undefined,
+    idLicitacion,
+    codigoProyectoDCI,
+    fechaVencimientoRecursos,
+    jefeProyectoId: jefeProyectoId === -1 ? undefined : jefeProyectoId,
+    inspectorId: inspectorId === -1 ? undefined : inspectorId,
+    profesionalAsignado: profesionalAsignado || undefined,
+    especialidades,
+    subEtapas,
+    edpCount,
+    retCount,
+    ndcCount,
+    fechaInicioObra,
+    plazoEjecucion: plazoEjecucion.toString(),
+    fechaVencGarantia,
+    fechaRecProviso,
+    fechaRecDefinitiva,
+  }), [
+    project, descripcion, fechaLicitacion, fechaPublicacion, montoAsignado,
+    tipoFinanciamiento, tipoLicitacion, idLicitacion, codigoProyectoDCI,
+    fechaVencimientoRecursos, jefeProyectoId, inspectorId, profesionalAsignado,
+    especialidades, subEtapas, edpCount, retCount, ndcCount, fechaInicioObra,
+    plazoEjecucion, fechaVencGarantia, fechaRecProviso, fechaRecDefinitiva,
+  ]);
+
+  // Auto-save with debounce
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    setSaveStatus("saving");
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onUpdate(buildUpdatedProject());
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    }, 800);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [
+    descripcion, fechaLicitacion, fechaPublicacion, montoAsignado,
+    tipoFinanciamiento, tipoLicitacion, idLicitacion, codigoProyectoDCI,
+    fechaVencimientoRecursos, jefeProyectoId, inspectorId, profesionalAsignado,
+    especialidades, subEtapas, edpCount, retCount, ndcCount, fechaInicioObra,
+    plazoEjecucion, fechaVencGarantia, fechaRecProviso, fechaRecDefinitiva,
+  ]);
+
   // Handlers
   const handleToggleEspecialidad = (name: string) => {
     setEspecialidades((prev) =>
       prev.includes(name) ? prev.filter((e) => e !== name) : [...prev, name]
     );
-  };
-
-  const handleSave = () => {
-    const updated: Project = {
-      ...project,
-      description: descripcion,
-      fechaLicitacion,
-      fechaPublicacion,
-      budget: montoAsignado,
-      tipoFinanciamiento,
-      tipoLicitacion: tipoLicitacion || undefined,
-      idLicitacion,
-      codigoProyectoDCI,
-      fechaVencimientoRecursos,
-      jefeProyectoId: jefeProyectoId === -1 ? undefined : jefeProyectoId,
-      inspectorId: inspectorId === -1 ? undefined : inspectorId,
-      profesionalAsignado: profesionalAsignado || undefined,
-      especialidades,
-      subEtapas,
-      edpCount,
-      retCount,
-      ndcCount,
-      fechaInicioObra,
-      plazoEjecucion: plazoEjecucion.toString(),
-      fechaVencGarantia,
-      fechaRecProviso,
-      fechaRecDefinitiva,
-    };
-    onUpdate(updated);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
   };
 
   const handleDeleteConfirm = () => {
@@ -217,6 +249,26 @@ export default function ProjectDetail({
             Memorándum: {project.memorandumNumber}
           </p>
         </div>
+        {/* Auto-save indicator */}
+        {saveStatus !== "idle" && (
+          <div className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
+            saveStatus === "saving"
+              ? "bg-amber-50 text-amber-600"
+              : "bg-green-50 text-green-600"
+          }`}>
+            {saveStatus === "saving" ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-3.5 h-3.5" />
+                Guardado
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-[1fr_2fr] gap-6 p-6 max-w-7xl mx-auto">
@@ -918,29 +970,7 @@ export default function ProjectDetail({
             </button>
           </div>
 
-          {/* 9. SAVE button */}
-          <button
-            onClick={handleSave}
-            className={`w-full px-4 py-3 rounded-lg text-white font-bold transition flex items-center justify-center gap-2 mb-4 ${
-              saved
-                ? "bg-green-500 hover:bg-green-600"
-                : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-            }`}
-          >
-            {saved ? (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                Cambios guardados
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                Guardar Cambios
-              </>
-            )}
-          </button>
-
-          {/* 10. DELETE button */}
+          {/* DELETE button */}
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="w-full px-4 py-3 rounded-lg border border-red-500 text-red-600 font-bold hover:bg-red-50 transition flex items-center justify-center gap-2"
