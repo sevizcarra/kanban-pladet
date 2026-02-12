@@ -15,7 +15,6 @@ import {
   createProject,
   updateProject,
   deleteProject,
-  seedIfEmpty,
 } from '@/lib/firestore';
 import { onAuthChange, logout, isAdmin, getUserProfile, ensureAdminProfile } from '@/lib/auth';
 import { Project } from '@/types/project';
@@ -85,7 +84,6 @@ export default function Home() {
 
     const initializeAndSubscribe = async () => {
       try {
-        await seedIfEmpty();
         unsubscribe = subscribeProjects((newProjects) => {
           setProjects(newProjects);
           setLoading(false);
