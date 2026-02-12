@@ -34,8 +34,31 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#00A499] to-white flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background shapes */}
+      <style>{`
+        @keyframes float1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(30px, -40px) scale(1.1); }
+        }
+        @keyframes float2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-25px, 30px) scale(1.05); }
+        }
+        @keyframes float3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(20px, 20px) scale(0.95); }
+        }
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      <div className="absolute top-[-80px] left-[-80px] w-[300px] h-[300px] rounded-full bg-[#00A499]/20 blur-3xl" style={{ animation: "float1 8s ease-in-out infinite" }} />
+      <div className="absolute bottom-[-60px] right-[-60px] w-[250px] h-[250px] rounded-full bg-white/30 blur-3xl" style={{ animation: "float2 10s ease-in-out infinite" }} />
+      <div className="absolute top-[40%] right-[10%] w-[180px] h-[180px] rounded-full bg-[#F97316]/10 blur-2xl" style={{ animation: "float3 12s ease-in-out infinite" }} />
+
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative z-10" style={{ animation: "fadeSlideUp 0.6s ease-out" }}>
         {/* Header */}
         <div className="bg-[#F97316] px-8 py-6 text-center">
           <h1 className="text-xl font-bold text-white tracking-wide">
