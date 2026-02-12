@@ -1,6 +1,6 @@
 "use client";
 
-import { STATUSES, PRIORITIES, MANAGERS, SPECIALISTS, fmt } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, SPECIALISTS, fmt } from "@/lib/constants";
 import { Project } from "@/types/project";
 import {
   BarChart,
@@ -80,7 +80,7 @@ export default function StatsView({ projects }: StatsViewProps) {
   };
 
   // Prepare data for professional workload
-  const allProfessionals = [...MANAGERS, ...SPECIALISTS.map(s => s.name)];
+  const allProfessionals = PROFESSIONALS.map(p => p.name);
   const workloadData = allProfessionals.map((name) => {
     const assigned = projects.filter((p) => p.profesionalAsignado === name);
     const active = assigned.filter((p) => p.status !== "terminada");
@@ -90,7 +90,7 @@ export default function StatsView({ projects }: StatsViewProps) {
       total: assigned.length,
       active: active.length,
     };
-  }).filter(d => d.total > 0 || allProfessionals.indexOf(d.fullName) < MANAGERS.length);
+  }).filter(d => d.total > 0);
 
   const WORKLOAD_COLORS = ["#0ea5e9", "#14b8a6", "#8b5cf6", "#f59e0b", "#ef4444", "#22c55e", "#f97316", "#64748b"];
 

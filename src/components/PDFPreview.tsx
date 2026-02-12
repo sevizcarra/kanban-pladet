@@ -3,7 +3,7 @@
 import { X, Download } from "lucide-react";
 import {
   STATUSES,
-  MANAGERS,
+  PROFESSIONALS,
   INSPECTORS,
   fmtDate,
   fmt,
@@ -36,13 +36,13 @@ export default function PDFPreview({ project, onClose }: PDFPreviewProps) {
   const priLabel = priorityLabels[project.priority] || project.priority;
 
   // Get project manager name
-  const jp = project.jefeProyectoId
-    ? MANAGERS[project.jefeProyectoId - 1] || "—"
+  const jp = project.jefeProyectoId !== undefined && project.jefeProyectoId >= 0
+    ? PROFESSIONALS[project.jefeProyectoId]?.name || "—"
     : "—";
 
   // Get inspector name
-  const insp = project.inspectorId
-    ? INSPECTORS[project.inspectorId - 1] || "—"
+  const insp = project.inspectorId !== undefined && project.inspectorId >= 0
+    ? INSPECTORS[project.inspectorId] || "—"
     : "—";
 
   // Get specialists

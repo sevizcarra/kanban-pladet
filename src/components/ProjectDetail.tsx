@@ -20,7 +20,7 @@ import {
 import {
   STATUSES,
   PRIORITIES,
-  MANAGERS,
+  PROFESSIONALS,
   INSPECTORS,
   SPECIALISTS,
   BIDDING_TYPES,
@@ -589,9 +589,9 @@ export default function ProjectDetail({
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
                 >
                   <option value="">Seleccionar...</option>
-                  {MANAGERS.map((manager, idx) => (
+                  {PROFESSIONALS.map((prof, idx) => (
                     <option key={idx} value={idx}>
-                      {manager}
+                      {prof.name} — {prof.role}
                     </option>
                   ))}
                 </select>
@@ -636,14 +636,9 @@ export default function ProjectDetail({
                   className="w-full px-3 py-2 rounded-lg border border-teal-300 text-sm focus:border-[#00A499] outline-none bg-white"
                 >
                   <option value="">Sin asignar</option>
-                  {MANAGERS.map((manager) => (
-                    <option key={manager} value={manager}>
-                      {manager}
-                    </option>
-                  ))}
-                  {SPECIALISTS.map((specialist) => (
-                    <option key={specialist.name} value={specialist.name}>
-                      {specialist.name} ({specialist.discipline})
+                  {PROFESSIONALS.map((prof) => (
+                    <option key={prof.name} value={prof.name}>
+                      {prof.name} — {prof.role}
                     </option>
                   ))}
                 </select>
@@ -672,7 +667,7 @@ export default function ProjectDetail({
                         {specialist.name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {specialist.discipline} • {specialist.unit}
+                        {specialist.discipline}
                       </p>
                     </div>
                   </label>

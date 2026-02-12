@@ -14,14 +14,41 @@ export const PRIORITIES: Record<string, { label: string; color: string; bg: stri
   baja: { label: "Baja", color: "#22c55e", bg: "#f0fdf4" },
 };
 
-export const MANAGERS = ["Dixon Vasquez", "Cristián Romero", "Francisca Bustamante"];
-export const INSPECTORS = ["Estefanía Contreras", "Rodrigo Farías"];
+// Todos los profesionales del equipo (para desplegable Jefe de Proyecto y Profesional Asignado)
+export const PROFESSIONALS = [
+  { name: "Estefanía Tamara Contreras Hernández", role: "Coordinadora de Obras" },
+  { name: "Rodrigo Armijo Henríquez", role: "Coordinador de Cuadrilla / Ing. Civil ME" },
+  { name: "Dixon Vásquez Fernández", role: "Coordinador de Diseño" },
+  { name: "Christian Amaro Valencia", role: "Arquitecto" },
+  { name: "Cristian Romero Serrano", role: "Arquitecto" },
+  { name: "Francisca Bustamante Labarca", role: "Arquitecta" },
+  { name: "Eloisa Barra Mora", role: "Arquitecta" },
+  { name: "Cristóbal Ríos Larraín", role: "Arquitecto" },
+  { name: "Héctor Olguín Quiroz", role: "Arquitecto" },
+  { name: "Richard Adriazola Castro", role: "Ing. en Climatización" },
+  { name: "Fabricio Ignacio Díaz San Martín", role: "Ing. en Climatización" },
+  { name: "Francisco Antonio Orellana Fernández", role: "Ing. Civil ST" },
+  { name: "Rodolfo Molina Molina", role: "Especialista Eléctrico" },
+  { name: "Pablo Lepe Almendares", role: "Especialista Eléctrico" },
+  { name: "Aitor Xabier Alexander Oyarzún Merino", role: "Tecnólogo en Construcción" },
+];
+
+export const INSPECTORS = [
+  "Lucía Eluardo Leon",
+  "Rodrigo Farías Godoy",
+  "Jorge Peralta Boysen",
+  "Ginger Puente Z.",
+  "Vicente Tolentino Carvajal",
+];
+
 export const SPECIALISTS = [
-  { name: "Fabricio Diaz", discipline: "HVAC", unit: "UOM" },
-  { name: "Richard Adriazola", discipline: "HVAC", unit: "UPLA" },
-  { name: "Rodolfo Molina", discipline: "EL", unit: "UOM" },
-  { name: "Pablo Lepe", discipline: "EL", unit: "UOM" },
-  { name: "Francisco Orellana", discipline: "ST", unit: "UOM" },
+  { name: "Christian Amaro Valencia", discipline: "Apoyo Sanitario" },
+  { name: "Rodrigo Armijo Henríquez", discipline: "Apoyo Mecánico" },
+  { name: "Richard Adriazola Castro", discipline: "Ing. en Climatización" },
+  { name: "Fabricio Ignacio Díaz San Martín", discipline: "Ing. en Climatización" },
+  { name: "Francisco Antonio Orellana Fernández", discipline: "Ing. Civil" },
+  { name: "Rodolfo Molina Molina", discipline: "Especialista Eléctrico" },
+  { name: "Pablo Lepe Almendares", discipline: "Especialista Eléctrico" },
 ];
 
 export const WORK_TYPES = [
