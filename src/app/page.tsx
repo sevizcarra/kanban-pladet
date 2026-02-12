@@ -212,152 +212,152 @@ export default function Home() {
     );
   }
 
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
+    { id: 'timeline', label: 'Línea de Tiempo', icon: <Clock size={18} /> },
+    ...(userIsAdmin ? [{ id: 'users' as Tab, label: 'Usuarios', icon: <Users size={18} />, adminOnly: true }] : []),
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header userEmail={authUser.email} onLogout={handleLogout} />
-
-      {/* Tab Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-8">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
-                activeTab === 'dashboard'
-                  ? 'border-teal-500 text-teal-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <LayoutDashboard size={18} />
-              Dashboard
-            </button>
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
-                activeTab === 'stats'
-                  ? 'border-teal-500 text-teal-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <BarChart3 size={18} />
-              Estadísticas
-            </button>
-            <button
-              onClick={() => setActiveTab('timeline')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
-                activeTab === 'timeline'
-                  ? 'border-teal-500 text-teal-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Clock size={18} />
-              Línea de Tiempo
-            </button>
-
-            {/* Admin-only: Users tab */}
-            {userIsAdmin && (
-              <button
-                onClick={() => setActiveTab('users')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
-                  activeTab === 'users'
-                    ? 'border-teal-500 text-teal-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Users size={18} />
-                Usuarios
-              </button>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative">
+      {/* Subtle decorative background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <svg className="absolute top-[15%] left-[-5%] w-[500px] h-[500px] opacity-[0.03]" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#00A499" strokeWidth="0.5" />
+          <circle cx="100" cy="100" r="60" fill="none" stroke="#00A499" strokeWidth="0.5" />
+          <circle cx="100" cy="100" r="40" fill="none" stroke="#00A499" strokeWidth="0.5" />
+          <circle cx="100" cy="100" r="20" fill="none" stroke="#00A499" strokeWidth="0.5" />
+        </svg>
+        <svg className="absolute bottom-[10%] right-[-3%] w-[400px] h-[400px] opacity-[0.03]" viewBox="0 0 200 200">
+          <polygon points="100,10 190,60 190,140 100,190 10,140 10,60" fill="none" stroke="#00A499" strokeWidth="0.5" />
+          <polygon points="100,30 170,65 170,135 100,170 30,135 30,65" fill="none" stroke="#00A499" strokeWidth="0.5" />
+          <polygon points="100,50 150,70 150,130 100,150 50,130 50,70" fill="none" stroke="#00A499" strokeWidth="0.5" />
+        </svg>
+        <svg className="absolute top-[60%] left-[50%] w-[300px] h-[300px] opacity-[0.02]" viewBox="0 0 200 200">
+          <rect x="30" y="30" width="140" height="140" rx="20" fill="none" stroke="#F97316" strokeWidth="0.5" />
+          <rect x="50" y="50" width="100" height="100" rx="15" fill="none" stroke="#F97316" strokeWidth="0.5" />
+          <rect x="70" y="70" width="60" height="60" rx="10" fill="none" stroke="#F97316" strokeWidth="0.5" />
+        </svg>
+        <div className="absolute top-[30%] right-[20%] w-[200px] h-[200px] rounded-full bg-[#00A499]/[0.02] blur-3xl" />
+        <div className="absolute bottom-[20%] left-[10%] w-[250px] h-[250px] rounded-full bg-[#F97316]/[0.02] blur-3xl" />
       </div>
 
-      {/* Filter Bar — hide on admin panel */}
-      {activeTab !== 'users' && (
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-                {/* Status Filter */}
-                <div className="flex items-center gap-2">
-                  <Filter size={18} className="text-gray-500" />
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="all">Todos los Estados</option>
-                    {STATUSES.map((status) => (
-                      <option key={status.id} value={status.id}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+      <div className="relative z-10">
+        <Header userEmail={authUser.email} onLogout={handleLogout} />
 
-                {/* Priority Filter */}
-                <select
-                  value={filterPriority}
-                  onChange={(e) => setFilterPriority(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+        {/* Tab Bar */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/80 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-3.5 px-4 font-medium text-sm flex items-center gap-2 transition-all rounded-t-lg relative ${
+                    activeTab === tab.id
+                      ? 'text-teal-700 bg-teal-50/60'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
+                  }`}
                 >
-                  <option value="all">Todas las Prioridades</option>
-                  {Object.entries(PRIORITIES).map(([key, prio]) => (
-                    <option key={key} value={key}>
-                      {prio.label}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Search Input */}
-                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                  <Search size={18} className="text-gray-500" />
-                  <input
-                    type="text"
-                    placeholder="Buscar por título o memorándum..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg flex-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-              </div>
-
-              {/* Create Project Button */}
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors whitespace-nowrap"
-              >
-                <Plus size={18} />
-                Nuevo Proyecto
-              </button>
+                  {tab.icon}
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <div className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#00A499] rounded-full" />
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-      )}
 
-      {/* Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'dashboard' && (
-          <KanbanBoard
-            projects={filteredProjects}
-            onProjectClick={setSelectedProject}
-          />
+        {/* Filter Bar — hide on admin panel */}
+        {activeTab !== 'users' && (
+          <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200/60">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-1">
+                  {/* Status Filter */}
+                  <div className="flex items-center gap-2">
+                    <Filter size={16} className="text-gray-400" />
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 shadow-sm"
+                    >
+                      <option value="all">Todos los Estados</option>
+                      {STATUSES.map((status) => (
+                        <option key={status.id} value={status.id}>
+                          {status.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Priority Filter */}
+                  <select
+                    value={filterPriority}
+                    onChange={(e) => setFilterPriority(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 shadow-sm"
+                  >
+                    <option value="all">Todas las Prioridades</option>
+                    {Object.entries(PRIORITIES).map(([key, prio]) => (
+                      <option key={key} value={key}>
+                        {prio.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Search Input */}
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar por título o memorándum..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 shadow-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Create Project Button */}
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#00A499] to-[#00B4A8] text-white rounded-lg font-semibold text-sm hover:shadow-lg hover:shadow-teal-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
+                >
+                  <Plus size={18} />
+                  Nuevo Proyecto
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
-        {activeTab === 'stats' && (
-          <StatsView projects={filteredProjects} />
-        )}
+        {/* Content Area */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {activeTab === 'dashboard' && (
+            <KanbanBoard
+              projects={filteredProjects}
+              onProjectClick={setSelectedProject}
+            />
+          )}
 
-        {activeTab === 'timeline' && (
-          <TimelineView
-            projects={filteredProjects}
-            onProjectClick={setSelectedProject}
-          />
-        )}
+          {activeTab === 'stats' && (
+            <StatsView projects={filteredProjects} />
+          )}
 
-        {activeTab === 'users' && userIsAdmin && (
-          <AdminPanel />
-        )}
+          {activeTab === 'timeline' && (
+            <TimelineView
+              projects={filteredProjects}
+              onProjectClick={setSelectedProject}
+            />
+          )}
+
+          {activeTab === 'users' && userIsAdmin && (
+            <AdminPanel />
+          )}
+        </div>
       </div>
 
       {/* Create Project Modal */}

@@ -21,35 +21,58 @@ export default function KanbanBoard({ projects, onProjectClick }: Props) {
         const cols = projects.filter((p) => p.status === s.id);
         return (
           <div key={s.id} className="min-w-[240px] max-w-[280px] flex-shrink-0">
-            <div className="flex items-center gap-2 mb-3 py-2">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-              <span className="text-sm font-semibold text-gray-700">{s.label}</span>
-              <span className="text-xs text-gray-600 bg-gray-200 rounded-full px-2">{cols.length}</span>
+            {/* Column header */}
+            <div className="flex items-center gap-2 mb-3 py-2 px-1">
+              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color, boxShadow: `0 0 0 2px white, 0 0 0 3.5px ${s.color}40` }} />
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">{s.label}</span>
+              <span
+                className="text-[10px] font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center"
+                style={{ backgroundColor: s.color + '15', color: s.color }}
+              >
+                {cols.length}
+              </span>
             </div>
-            <div className="flex flex-col gap-2 min-h-[100px] p-1 bg-gray-50 rounded-xl">
+
+            {/* Column body */}
+            <div className="flex flex-col gap-2.5 min-h-[100px] p-2 bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200/50">
               {cols.map((p) => {
                 const prio = PRIORITIES[p.priority];
                 return (
                   <div key={p.id} onClick={() => onProjectClick(p)}
-                    className="bg-white rounded-lg p-3 cursor-pointer border-l-[3px] shadow-sm hover:scale-[1.02] transition-transform"
-                    style={{ borderLeftColor: s.color }}>
-                    <p className="text-xs font-semibold text-gray-900 mb-1">{p.title}</p>
-                    <div className="flex justify-between items-center">
+                    className="bg-white rounded-xl p-3.5 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 hover:-translate-y-0.5 transition-all duration-200 group"
+                  >
+                    {/* Top color accent bar */}
+                    <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${s.color}, ${s.color}80)` }} />
+
+                    <p className="text-xs font-bold text-gray-900 mb-2 leading-snug group-hover:text-[#00A499] transition-colors">{p.title}</p>
+
+                    <div className="flex justify-between items-center mb-1">
                       <Badge color={prio.color} bg={prio.bg}>{prio.label}</Badge>
-                      <span className="text-[10px] text-gray-600 font-medium">{p.requestingUnit}</span>
+                      <span className="text-[10px] text-gray-500 font-medium bg-gray-50 px-1.5 py-0.5 rounded">{p.requestingUnit}</span>
                     </div>
+
                     {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] && (
-                      <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
-                        <div className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-[9px] font-bold flex-shrink-0">
+                      <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-gray-100">
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 text-white"
+                          style={{ backgroundColor: s.color }}
+                        >
                           {getInitials(PROFESSIONALS[p.jefeProyectoId].name)}
                         </div>
-                        <span className="text-[10px] text-gray-700 truncate">{PROFESSIONALS[p.jefeProyectoId].name}</span>
+                        <span className="text-[10px] text-gray-600 truncate">{PROFESSIONALS[p.jefeProyectoId].name}</span>
                       </div>
                     )}
                   </div>
                 );
               })}
-              {cols.length === 0 && <p className="text-xs text-gray-500 text-center py-5">Sin proyectos</p>}
+              {cols.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+                    <span className="text-xs">0</span>
+                  </div>
+                  <p className="text-xs">Sin proyectos</p>
+                </div>
+              )}
             </div>
           </div>
         );
