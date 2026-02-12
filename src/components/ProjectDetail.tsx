@@ -449,6 +449,9 @@ export default function ProjectDetail({
               })}
             </div>
           </div>
+
+          {/* Comentarios — left sidebar */}
+          <CommentsSection projectId={project.id} userEmail={userEmail} />
         </div>
 
         {/* RIGHT COLUMN - Multiple cards */}
@@ -619,9 +622,6 @@ export default function ProjectDetail({
                   <span className="text-xs text-gray-400">PDF, DOC o imagen</span>
                 </button>
               </div>
-
-              {/* Comentarios (FTE) */}
-              <CommentsSection projectId={project.id} userEmail={userEmail} />
 
               {/* DELETE button */}
               <button
@@ -1169,9 +1169,6 @@ export default function ProjectDetail({
               ))}
             </div>
           </div>
-
-          {/* Comentarios */}
-          <CommentsSection projectId={project.id} userEmail={userEmail} />
 
           {/* DELETE button */}
           <button

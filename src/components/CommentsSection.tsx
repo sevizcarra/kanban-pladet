@@ -3,21 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageCircle, Send, Trash2, AtSign } from "lucide-react";
 import { subscribeComments, addComment, deleteComment } from "@/lib/firestore";
-import { PROFESSIONALS, INSPECTORS, SPECIALISTS } from "@/lib/constants";
+import { COLLABORATORS } from "@/lib/constants";
 import type { Comment } from "@/types/project";
 
-// Build a unified list of all mentionable people
-const ALL_PEOPLE = (() => {
-  const map = new Map<string, string>();
-  PROFESSIONALS.forEach((p) => map.set(p.name, p.role));
-  INSPECTORS.forEach((name) => {
-    if (!map.has(name)) map.set(name, "Inspector Técnico");
-  });
-  SPECIALISTS.forEach((s) => {
-    if (!map.has(s.name)) map.set(s.name, s.discipline);
-  });
-  return Array.from(map.entries()).map(([name, role]) => ({ name, role }));
-})();
+const ALL_PEOPLE = COLLABORATORS;
 
 interface CommentsSectionProps {
   projectId: string;
@@ -188,136 +177,130 @@ export default function CommentsSection({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-      <div className="flex items-center gap-2 mb-4">
-        <MessageCircle className="w-5 h-5 text-[#00A499]" />
-        <h2 className="text-lg font-bold text-gray-900">Comentarios</h2>
+    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 border-l-4 border-l-[#00A499] shadow-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <MessageCircle className="w-4 h-4 text-[#00A499]" />
+        <p className="text-xs text-gray-500 uppercase font-semibold">Comentarios</p>
         {comments.length > 0 && (
-          <span className="text-xs font-bold bg-[#00A499]/10 text-[#00A499] px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-bold bg-[#00A499]/10 text-[#00A499] px-1.5 py-0.5 rounded-full">
             {comments.length}
           </span>
         )}
       </div>
 
       {/* Comment input */}
-      <div className="relative mb-4">
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <textarea
-              ref={textareaRef}
-              value={draft}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe un comentario... usa @ para mencionar"
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none resize-none h-20"
-            />
+      <div className="relative mb-3">
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Escribe un comentario... usa @ para mencionar"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-[#00A499] outline-none resize-none h-16"
+          />
 
-            {/* Mention autocomplete dropdown */}
-            {showMentions && filteredPeople.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto">
-                {filteredPeople.map((person, idx) => (
-                  <button
-                    key={person.name}
-                    onClick={() => insertMention(person.name)}
-                    className={`w-full text-left px-3 py-2 flex items-center gap-2 text-sm transition ${
-                      idx === mentionIndex
-                        ? "bg-[#00A499]/10 text-[#00A499]"
-                        : "hover:bg-gray-50 text-gray-700"
-                    }`}
-                  >
-                    <div className="w-7 h-7 rounded-full bg-[#00A499]/15 flex items-center justify-center text-[10px] font-bold text-[#00A499] flex-shrink-0">
-                      {person.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{person.name}</p>
-                      <p className="text-xs text-gray-500">{person.role}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Mention autocomplete dropdown */}
+          {showMentions && filteredPeople.length > 0 && (
+            <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-40 overflow-y-auto">
+              {filteredPeople.map((person, idx) => (
+                <button
+                  key={person.name}
+                  onClick={() => insertMention(person.name)}
+                  className={`w-full text-left px-3 py-2 flex items-center gap-2 text-xs transition ${
+                    idx === mentionIndex
+                      ? "bg-[#00A499]/10 text-[#00A499]"
+                      : "hover:bg-gray-50 text-gray-700"
+                  }`}
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#00A499]/15 flex items-center justify-center text-[9px] font-bold text-[#00A499] flex-shrink-0">
+                    {person.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{person.name}</p>
+                    <p className="text-[10px] text-gray-500">{person.role}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-          <div className="flex flex-col gap-1">
-            <button
-              onClick={() => {
-                if (textareaRef.current) {
-                  const pos = textareaRef.current.selectionStart;
-                  const before = draft.slice(0, pos);
-                  const after = draft.slice(pos);
-                  setDraft(before + "@" + after);
-                  setShowMentions(true);
-                  setMentionQuery("");
-                  setTimeout(() => {
-                    textareaRef.current?.focus();
-                    textareaRef.current?.setSelectionRange(pos + 1, pos + 1);
-                  }, 0);
-                }
-              }}
-              className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-[#00A499] transition"
-              title="Mencionar colaborador"
-            >
-              <AtSign className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!draft.trim()}
-              className={`p-2 rounded-lg transition ${
-                draft.trim()
-                  ? "bg-[#00A499] text-white hover:bg-[#00A499]/90"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }`}
-              title="Enviar comentario"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="flex items-center gap-1 mt-1.5">
+          <button
+            onClick={() => {
+              if (textareaRef.current) {
+                const pos = textareaRef.current.selectionStart;
+                const before = draft.slice(0, pos);
+                const after = draft.slice(pos);
+                setDraft(before + "@" + after);
+                setShowMentions(true);
+                setMentionQuery("");
+                setTimeout(() => {
+                  textareaRef.current?.focus();
+                  textareaRef.current?.setSelectionRange(pos + 1, pos + 1);
+                }, 0);
+              }
+            }}
+            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-[#00A499] transition"
+            title="Mencionar colaborador"
+          >
+            <AtSign className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!draft.trim()}
+            className={`flex-1 p-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${
+              draft.trim()
+                ? "bg-[#00A499] text-white hover:bg-[#00A499]/90"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+            title="Enviar comentario"
+          >
+            <Send className="w-3 h-3" />
+            Enviar
+          </button>
         </div>
       </div>
 
       {/* Comments list */}
       {comments.length === 0 ? (
-        <div className="text-center py-6 text-gray-400">
-          <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Sin comentarios aún</p>
-          <p className="text-xs mt-1">
-            Usa <span className="font-semibold">@</span> para mencionar a un
-            colaborador
-          </p>
+        <div className="text-center py-4 text-gray-400">
+          <p className="text-xs">Sin comentarios aún</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-80 overflow-y-auto">
+        <div className="space-y-2 max-h-60 overflow-y-auto">
           {comments.map((c) => (
             <div
               key={c.id}
-              className="group bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition"
+              className="group bg-gray-50 rounded-lg p-2.5 hover:bg-gray-100 transition"
             >
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-1">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-gray-700">
-                      {c.authorEmail}
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-semibold text-gray-600 truncate">
+                      {c.authorEmail.split("@")[0]}
                     </span>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[9px] text-gray-400">
                       {timeAgo(c.createdAt)}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+                  <p className="text-xs text-gray-800 whitespace-pre-wrap break-words leading-relaxed">
                     {renderContent(c.content)}
                   </p>
                   {c.mentions.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-1 mt-1.5">
                       {c.mentions.map((name) => (
                         <span
                           key={name}
-                          className="text-[10px] bg-[#00A499]/10 text-[#00A499] px-1.5 py-0.5 rounded-full font-medium"
+                          className="text-[9px] bg-[#00A499]/10 text-[#00A499] px-1.5 py-0.5 rounded-full font-medium"
                         >
-                          @{name.split(" ")[0]}
+                          @{name}
                         </span>
                       ))}
                     </div>
@@ -328,7 +311,7 @@ export default function CommentsSection({
                   className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition text-gray-400 hover:text-red-500 flex-shrink-0"
                   title="Eliminar comentario"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3 h-3" />
                 </button>
               </div>
             </div>

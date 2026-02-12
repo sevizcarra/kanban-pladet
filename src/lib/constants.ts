@@ -51,6 +51,13 @@ export const SPECIALISTS = [
   { name: "Pablo Lepe Almendares", discipline: "Especialista Eléctrico" },
 ];
 
+// Colaboradores del sistema (usuarios que pueden ser mencionados con @)
+export const COLLABORATORS = [
+  { name: "Sebastián", role: "Administrador" },
+  { name: "Rodimar", role: "Colaborador" },
+  { name: "Daniela", role: "Colaboradora" },
+];
+
 export const WORK_TYPES = [
   { value: "REM", label: "REM - Remodelación" },
   { value: "ONV", label: "ONV - Obra Nueva" },
