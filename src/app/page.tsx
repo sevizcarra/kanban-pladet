@@ -10,6 +10,8 @@ import DashboardSummary from '@/components/DashboardSummary';
 import ProjectDetail from '@/components/ProjectDetail';
 import StatsView from '@/components/StatsView';
 import TimelineView from '@/components/TimelineView';
+import GanttView from '@/components/GanttView';
+import ExportButton from '@/components/ExportButton';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import AdminPanel from '@/components/AdminPanel';
 import {
@@ -25,6 +27,7 @@ import {
   LayoutDashboard,
   BarChart3,
   Clock,
+  GanttChart,
   Plus,
   Filter,
   Search,
@@ -34,7 +37,7 @@ import {
 } from 'lucide-react';
 import { STATUSES, PRIORITIES } from '@/lib/constants';
 
-type Tab = 'dashboard' | 'stats' | 'timeline' | 'users';
+type Tab = 'dashboard' | 'stats' | 'timeline' | 'gantt' | 'users';
 
 export default function Home() {
   // Auth state
@@ -219,6 +222,7 @@ export default function Home() {
   const tabs: { id: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
+    { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
     { id: 'timeline', label: 'Línea de Tiempo', icon: <Clock size={18} /> },
     ...(userIsAdmin ? [{ id: 'users' as Tab, label: 'Usuarios', icon: <Users size={18} />, adminOnly: true }] : []),
   ];
@@ -335,6 +339,9 @@ export default function Home() {
                     </div>
                   )}
 
+                  {/* Export Button */}
+                  <ExportButton projects={filteredProjects} />
+
                   {/* Create Project Button */}
                   <button
                     onClick={() => setShowCreateModal(true)}
@@ -371,6 +378,13 @@ export default function Home() {
 
           {activeTab === 'stats' && (
             <StatsView projects={filteredProjects} />
+          )}
+
+          {activeTab === 'gantt' && (
+            <GanttView
+              projects={filteredProjects}
+              onProjectClick={setSelectedProject}
+            />
           )}
 
           {activeTab === 'timeline' && (
