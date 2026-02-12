@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronsUpDown,
   MessageCircle,
+  AlertTriangle,
 } from "lucide-react";
 import {
   STATUSES,
@@ -14,6 +15,7 @@ import {
   getStatusObj,
   getProgress,
   fmtDate,
+  daysLeft,
 } from "@/lib/constants";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
@@ -164,22 +166,31 @@ export default function TableView({ projects, onProjectClick }: Props) {
                 PROFESSIONALS[p.jefeProyectoId]
                   ? PROFESSIONALS[p.jefeProyectoId]
                   : null;
+              const dl = p.status !== "terminada" ? daysLeft(p.dueDate) : null;
+              const isOverdue = dl !== null && dl < 0;
+              const isDueSoon = dl !== null && dl >= 0 && dl <= 7;
 
               return (
                 <tr
                   key={p.id}
                   onClick={() => onProjectClick(p)}
-                  className="hover:bg-teal-50/40 cursor-pointer transition-colors group"
+                  className={`cursor-pointer transition-colors group ${
+                    isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-teal-50/40"
+                  }`}
                 >
                   {/* Proyecto */}
                   <td className="px-4 py-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 group-hover:text-[#00A499] transition-colors leading-snug">
-                        {p.title}
-                      </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        {p.codigoProyectoUsa || p.memorandumNumber}
-                      </p>
+                    <div className="flex items-center gap-2">
+                      {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
+                      {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 group-hover:text-[#00A499] transition-colors leading-snug">
+                          {p.title}
+                        </p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {p.codigoProyectoUsa || p.memorandumNumber}
+                        </p>
+                      </div>
                     </div>
                   </td>
 
@@ -245,9 +256,21 @@ export default function TableView({ projects, onProjectClick }: Props) {
 
                   {/* Fecha Entrega */}
                   <td className="px-4 py-3">
-                    <span className="text-xs text-gray-600">
-                      {fmtDate(p.dueDate)}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs ${isOverdue ? "text-red-600 font-semibold" : isDueSoon ? "text-amber-600 font-semibold" : "text-gray-600"}`}>
+                        {fmtDate(p.dueDate)}
+                      </span>
+                      {isOverdue && (
+                        <span className="text-[9px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full">
+                          {Math.abs(dl || 0)}d
+                        </span>
+                      )}
+                      {isDueSoon && !isOverdue && (
+                        <span className="text-[9px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">
+                          {dl === 0 ? "Hoy" : `${dl}d`}
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Comment indicator */}

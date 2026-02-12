@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import LoginPage from '@/components/LoginPage';
 import KanbanBoard from '@/components/KanbanBoard';
 import TableView from '@/components/TableView';
+import DashboardSummary from '@/components/DashboardSummary';
 import ProjectDetail from '@/components/ProjectDetail';
 import StatsView from '@/components/StatsView';
 import TimelineView from '@/components/TimelineView';
@@ -350,6 +351,10 @@ export default function Home() {
 
         {/* Content Area */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {activeTab === 'dashboard' && (
+            <DashboardSummary projects={filteredProjects} />
+          )}
+
           {activeTab === 'dashboard' && viewMode === 'kanban' && (
             <KanbanBoard
               projects={filteredProjects}

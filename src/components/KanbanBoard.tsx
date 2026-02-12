@@ -1,9 +1,9 @@
 "use client";
-import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress, daysLeft } from "@/lib/constants";
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
-import { User, MessageCircle } from "lucide-react";
+import { User, MessageCircle, AlertTriangle } from "lucide-react";
 
 interface Props {
   projects: Project[];
@@ -37,14 +37,23 @@ export default function KanbanBoard({ projects, onProjectClick }: Props) {
             <div className="flex flex-col gap-2.5 min-h-[100px] p-2 bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200/50">
               {cols.map((p) => {
                 const prio = PRIORITIES[p.priority];
+                const dl = p.status !== "terminada" ? daysLeft(p.dueDate) : null;
+                const isOverdue = dl !== null && dl < 0;
+                const isDueSoon = dl !== null && dl >= 0 && dl <= 7;
                 return (
                   <div key={p.id} onClick={() => onProjectClick(p)}
-                    className="bg-white rounded-xl p-3.5 cursor-pointer border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 hover:-translate-y-0.5 transition-all duration-200 group"
+                    className={`bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group ${
+                      isOverdue ? "border-2 border-red-300" : isDueSoon ? "border-2 border-amber-300" : "border border-gray-100 hover:border-gray-200"
+                    }`}
                   >
                     {/* Top color accent bar */}
-                    <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${s.color}, ${s.color}80)` }} />
+                    <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${isOverdue ? '#ef4444' : s.color}, ${isOverdue ? '#ef444480' : s.color + '80'})` }} />
 
-                    <p className="text-xs font-bold text-gray-900 mb-2 leading-snug group-hover:text-[#00A499] transition-colors">{p.title}</p>
+                    <div className="flex items-start justify-between gap-1 mb-2">
+                      <p className="text-xs font-bold text-gray-900 leading-snug group-hover:text-[#00A499] transition-colors flex-1">{p.title}</p>
+                      {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
+                      {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                    </div>
 
                     <div className="flex justify-between items-center mb-1">
                       <Badge color={prio.color} bg={prio.bg}>{prio.label}</Badge>
