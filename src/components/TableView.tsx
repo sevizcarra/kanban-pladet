@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   MessageCircle,
   AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
 import {
   STATUSES,
@@ -16,6 +17,7 @@ import {
   getProgress,
   fmtDate,
   daysLeft,
+  getAntecedentesIncompletos,
 } from "@/lib/constants";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
@@ -169,6 +171,7 @@ export default function TableView({ projects, onProjectClick }: Props) {
               const dl = p.status !== "terminada" ? daysLeft(p.dueDate) : null;
               const isOverdue = dl !== null && dl < 0;
               const isDueSoon = dl !== null && dl >= 0 && dl <= 7;
+              const antecedentes = getAntecedentesIncompletos(p);
 
               return (
                 <tr
@@ -184,9 +187,22 @@ export default function TableView({ projects, onProjectClick }: Props) {
                       {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
                       {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                       <div>
-                        <p className="text-sm font-semibold text-gray-900 group-hover:text-[#00A499] transition-colors leading-snug">
-                          {p.title}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold text-gray-900 group-hover:text-[#00A499] transition-colors leading-snug">
+                            {p.title}
+                          </p>
+                          {antecedentes.incompleto && (
+                            <div className="relative group/dot">
+                              <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-white text-[8px] font-bold">{antecedentes.faltantes.length}</span>
+                              </div>
+                              <div className="absolute left-0 top-5 hidden group-hover/dot:block z-50 w-48 bg-gray-900 text-white text-[10px] rounded-lg p-2 shadow-lg">
+                                <p className="font-semibold mb-1">Antecedentes incompletos:</p>
+                                {antecedentes.faltantes.map(f => <p key={f} className="text-gray-300">• {f}</p>)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         <p className="text-[11px] text-gray-500 mt-0.5">
                           {p.codigoProyectoUsa || p.memorandumNumber}
                         </p>

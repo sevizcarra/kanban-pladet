@@ -1,9 +1,9 @@
 "use client";
-import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress, daysLeft } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress, daysLeft, getAntecedentesIncompletos } from "@/lib/constants";
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
-import { User, MessageCircle, AlertTriangle } from "lucide-react";
+import { User, MessageCircle, AlertTriangle, AlertCircle } from "lucide-react";
 
 interface Props {
   projects: Project[];
@@ -40,12 +40,26 @@ export default function KanbanBoard({ projects, onProjectClick }: Props) {
                 const dl = p.status !== "terminada" ? daysLeft(p.dueDate) : null;
                 const isOverdue = dl !== null && dl < 0;
                 const isDueSoon = dl !== null && dl >= 0 && dl <= 7;
+                const antecedentes = getAntecedentesIncompletos(p);
                 return (
                   <div key={p.id} onClick={() => onProjectClick(p)}
-                    className={`bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group ${
+                    className={`bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group relative ${
                       isOverdue ? "border-2 border-red-300" : isDueSoon ? "border-2 border-amber-300" : "border border-gray-100 hover:border-gray-200"
                     }`}
                   >
+                    {/* Punto rojo: Antecedentes incompletos */}
+                    {antecedentes.incompleto && (
+                      <div className="absolute -top-1.5 -right-1.5 group/dot">
+                        <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+                          <span className="text-white text-[8px] font-bold">{antecedentes.faltantes.length}</span>
+                        </div>
+                        <div className="absolute right-0 top-5 hidden group-hover/dot:block z-50 w-48 bg-gray-900 text-white text-[10px] rounded-lg p-2 shadow-lg">
+                          <p className="font-semibold mb-1">Antecedentes incompletos:</p>
+                          {antecedentes.faltantes.map(f => <p key={f} className="text-gray-300">• {f}</p>)}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Top color accent bar */}
                     <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${isOverdue ? '#ef4444' : s.color}, ${isOverdue ? '#ef444480' : s.color + '80'})` }} />
 

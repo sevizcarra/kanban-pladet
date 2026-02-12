@@ -129,6 +129,31 @@ export const getStatusIndex = (id: string, tipoDesarrollo?: string) => {
   const list = getStatusesForProject(tipoDesarrollo);
   return list.findIndex((s) => s.id === id);
 };
+// Verifica si los Antecedentes Generales de un proyecto están incompletos
+export const getAntecedentesIncompletos = (p: {
+  fechaRecepcionMemo?: string;
+  dueDate?: string | null;
+  fechaLicitacion?: string;
+  fechaPublicacion?: string;
+  budget?: string;
+  tipoFinanciamiento?: string | null;
+  tipoLicitacion?: string;
+  idLicitacion?: string;
+}) => {
+  const campos: { campo: string; valor: unknown }[] = [
+    { campo: "Fecha Recepción Memorándum", valor: p.fechaRecepcionMemo },
+    { campo: "Fecha Est. Entrega", valor: p.dueDate },
+    { campo: "Fecha Licitación", valor: p.fechaLicitacion },
+    { campo: "Fecha Publicación", valor: p.fechaPublicacion },
+    { campo: "Monto Asignado", valor: p.budget && p.budget !== "0" ? p.budget : null },
+    { campo: "Tipo Financiamiento", valor: p.tipoFinanciamiento },
+    { campo: "Tipo de Licitación", valor: p.tipoLicitacion },
+    { campo: "ID Licitación", valor: p.idLicitacion },
+  ];
+  const faltantes = campos.filter(c => !c.valor).map(c => c.campo);
+  return { incompleto: faltantes.length > 0, faltantes, total: campos.length, completados: campos.length - faltantes.length };
+};
+
 export const getProgress = (
   id: string,
   subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean },
