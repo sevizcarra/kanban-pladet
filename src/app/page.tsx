@@ -5,6 +5,7 @@ import { User } from 'firebase/auth';
 import Header from '@/components/Header';
 import LoginPage from '@/components/LoginPage';
 import KanbanBoard from '@/components/KanbanBoard';
+import TableView from '@/components/TableView';
 import ProjectDetail from '@/components/ProjectDetail';
 import StatsView from '@/components/StatsView';
 import TimelineView from '@/components/TimelineView';
@@ -27,6 +28,8 @@ import {
   Filter,
   Search,
   Users,
+  Columns3,
+  List,
 } from 'lucide-react';
 import { STATUSES, PRIORITIES } from '@/lib/constants';
 
@@ -47,6 +50,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -301,14 +305,44 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Create Project Button */}
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#00A499] to-[#00B4A8] text-white rounded-lg font-semibold text-sm hover:shadow-lg hover:shadow-teal-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
-                >
-                  <Plus size={18} />
-                  Nuevo Proyecto
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* View toggle */}
+                  {activeTab === 'dashboard' && (
+                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+                      <button
+                        onClick={() => setViewMode('kanban')}
+                        className={`p-2 rounded-md transition-all ${
+                          viewMode === 'kanban'
+                            ? 'bg-white text-[#00A499] shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        title="Vista Kanban"
+                      >
+                        <Columns3 size={16} />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('table')}
+                        className={`p-2 rounded-md transition-all ${
+                          viewMode === 'table'
+                            ? 'bg-white text-[#00A499] shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                        title="Vista Tabla"
+                      >
+                        <List size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Create Project Button */}
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#00A499] to-[#00B4A8] text-white rounded-lg font-semibold text-sm hover:shadow-lg hover:shadow-teal-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
+                  >
+                    <Plus size={18} />
+                    Nuevo Proyecto
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -316,8 +350,15 @@ export default function Home() {
 
         {/* Content Area */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {activeTab === 'dashboard' && (
+          {activeTab === 'dashboard' && viewMode === 'kanban' && (
             <KanbanBoard
+              projects={filteredProjects}
+              onProjectClick={setSelectedProject}
+            />
+          )}
+
+          {activeTab === 'dashboard' && viewMode === 'table' && (
+            <TableView
               projects={filteredProjects}
               onProjectClick={setSelectedProject}
             />
