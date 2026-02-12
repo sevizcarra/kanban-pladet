@@ -29,6 +29,8 @@ import {
   getStatusObj,
   getStatusIndex,
   getProgress,
+  isFTE,
+  getStatusesForProject,
 } from "@/lib/constants";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
@@ -132,9 +134,11 @@ export default function ProjectDetail({
     [deleteReason]
   );
 
-  const statusObj = getStatusObj(project.status);
-  const statusIndex = getStatusIndex(project.status);
-  const progress = getProgress(project.status, project.subEtapas);
+  const projectIsFTE = isFTE(project.tipoDesarrollo);
+  const projectStatuses = getStatusesForProject(project.tipoDesarrollo);
+  const statusObj = getStatusObj(project.status, project.tipoDesarrollo);
+  const statusIndex = getStatusIndex(project.status, project.tipoDesarrollo);
+  const progress = getProgress(project.status, project.subEtapas, project.tipoDesarrollo);
 
   // Handlers
   const handleSave = () => {
@@ -183,12 +187,12 @@ export default function ProjectDetail({
     let newStatusId = project.status;
     if (clickedIdx <= statusIndex) {
       if (clickedIdx === statusIndex && clickedIdx > 0) {
-        newStatusId = STATUSES[clickedIdx - 1].id;
+        newStatusId = projectStatuses[clickedIdx - 1].id;
       } else if (clickedIdx < statusIndex) {
-        newStatusId = STATUSES[clickedIdx].id;
+        newStatusId = projectStatuses[clickedIdx].id;
       }
     } else {
-      newStatusId = STATUSES[clickedIdx].id;
+      newStatusId = projectStatuses[clickedIdx].id;
     }
     if (newStatusId !== project.status) {
       onUpdate({ ...project, status: newStatusId });
@@ -308,7 +312,7 @@ export default function ProjectDetail({
               <p className="text-xs text-gray-500 uppercase font-semibold mb-3">
                 Flujo de Estado
               </p>
-              {STATUSES.map((status, idx) => {
+              {projectStatuses.map((status, idx) => {
                 const isChecked = idx <= statusIndex;
                 const isCurrent = idx === statusIndex;
                 const isPast = idx < statusIndex;
@@ -334,8 +338,8 @@ export default function ProjectDetail({
                       <span className="leading-tight">{status.label}</span>
                     </label>
 
-                    {/* Sub-checkboxes for "En Diseño" */}
-                    {status.id === "en_diseno" && (
+                    {/* Sub-checkboxes for "En Diseño" (not for FTE) */}
+                    {!projectIsFTE && status.id === "en_diseno" && (
                       <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-amber-200 pl-3">
                         <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-amber-50 transition-colors text-gray-700">
                           <input
@@ -358,8 +362,8 @@ export default function ProjectDetail({
                       </div>
                     )}
 
-                    {/* Sub-checkboxes for "En Gestión de Compra" */}
-                    {status.id === "gestion_compra" && (
+                    {/* Sub-checkboxes for "En Gestión de Compra" (not for FTE) */}
+                    {!projectIsFTE && status.id === "gestion_compra" && (
                       <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-teal-200 pl-3">
                         <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
                           <input
@@ -399,6 +403,96 @@ export default function ProjectDetail({
 
         {/* RIGHT COLUMN - Multiple cards */}
         <div>
+          {/* FTE: Vista simplificada — solo resumen + adjuntar informe */}
+          {projectIsFTE ? (
+            <>
+              {/* Resumen de creación */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-[#00A499]" />
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Resumen del Requerimiento
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Memorándum</p>
+                    <p className="text-sm font-medium text-gray-900">{project.memorandumNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Unidad Requirente</p>
+                    <p className="text-sm font-medium text-gray-900">{project.requestingUnit}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Contacto</p>
+                    <p className="text-sm font-medium text-gray-900">{project.contactName}</p>
+                    <p className="text-xs text-gray-500">{project.contactEmail}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Tipo de Desarrollo</p>
+                    <p className="text-sm font-medium text-gray-900">FTE — Factibilidad Técnica</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Disciplina Líder</p>
+                    <p className="text-sm font-medium text-gray-900">{project.disciplinaLider || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Sector</p>
+                    <p className="text-sm font-medium text-gray-900">{project.sector || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Fecha Creación</p>
+                    <p className="text-sm font-medium text-gray-900">{fmtDate(project.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">Fecha Est. Entrega</p>
+                    <p className="text-sm font-medium text-gray-900">{fmtDate(project.dueDate)}</p>
+                  </div>
+                  {project.jefeProyectoId !== undefined && project.jefeProyectoId >= 0 && PROFESSIONALS[project.jefeProyectoId] && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-500 font-semibold">Jefe de Proyecto</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {PROFESSIONALS[project.jefeProyectoId].name} — {PROFESSIONALS[project.jefeProyectoId].role}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Descripción */}
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-xs text-gray-500 font-semibold mb-1">Descripción</p>
+                  <p className="text-sm text-gray-700">{project.description || "Sin descripción"}</p>
+                </div>
+              </div>
+
+              {/* Informe de Factibilidad */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Upload className="w-5 h-5 text-[#00A499]" />
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Informe de Factibilidad
+                  </h2>
+                </div>
+
+                <button className="w-full border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-6 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]">
+                  <Upload className="w-6 h-6" />
+                  <span className="text-sm font-medium">Adjuntar Informe de Factibilidad</span>
+                  <span className="text-xs text-gray-400">PDF, DOC o imagen</span>
+                </button>
+              </div>
+
+              {/* DELETE button */}
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full px-4 py-3 rounded-lg border border-red-500 text-red-600 font-bold hover:bg-red-50 transition flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-5 h-5" />
+                Eliminar Proyecto
+              </button>
+            </>
+          ) : (
+          <>
           {/* 1. Antecedentes Generales */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
@@ -943,6 +1037,8 @@ export default function ProjectDetail({
             <Trash2 className="w-5 h-5" />
             Eliminar Proyecto
           </button>
+          </>
+          )}
         </div>
       </div>
 

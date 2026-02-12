@@ -87,6 +87,21 @@ export const SECTORS = [
   { value: "CEPEC", label: "CEPEC" }, { value: "PROPEXT", label: "PROPEXT" },
 ];
 
+// Flujo reducido para Factibilidad Técnica (FTE)
+export const FTE_STATUSES = [
+  { id: "recepcion_requerimiento", label: "Recepción Requerimiento", short: "REC", color: "#0ea5e9" },
+  { id: "asignacion_profesional", label: "En Asignación de Profesional", short: "ASI", color: "#8b5cf6" },
+  { id: "en_diseno", label: "En Diseño", short: "DIS", color: "#f59e0b" },
+  { id: "terminada", label: "Terminada", short: "TER", color: "#64748b" },
+];
+
+export const FTE_STATUS_IDS = new Set(FTE_STATUSES.map((s) => s.id));
+
+export const isFTE = (tipoDesarrollo: string | undefined) => tipoDesarrollo === "FTE";
+
+export const getStatusesForProject = (tipoDesarrollo: string | undefined) =>
+  isFTE(tipoDesarrollo) ? FTE_STATUSES : STATUSES;
+
 // Helpers
 export const fmt = (n: number | string) =>
   new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 }).format(Number(n));
@@ -99,20 +114,32 @@ export const daysLeft = (d: string | null | undefined) => {
   return Math.ceil((new Date(d).getTime() - new Date().getTime()) / 86400000);
 };
 
-export const getStatusObj = (id: string) => STATUSES.find((s) => s.id === id) || STATUSES[0];
-export const getStatusIndex = (id: string) => STATUSES.findIndex((s) => s.id === id);
+export const getStatusObj = (id: string, tipoDesarrollo?: string) => {
+  const list = getStatusesForProject(tipoDesarrollo);
+  return list.find((s) => s.id === id) || list[0];
+};
+export const getStatusIndex = (id: string, tipoDesarrollo?: string) => {
+  const list = getStatusesForProject(tipoDesarrollo);
+  return list.findIndex((s) => s.id === id);
+};
 export const getProgress = (
   id: string,
-  subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean }
+  subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean },
+  tipoDesarrollo?: string
 ) => {
-  const mainIdx = getStatusIndex(id);
-
-  // Terminada = 100% siempre
   if (id === "terminada") return 100;
 
-  // 7 etapas principales + 5 sub-etapas = 12 checkpoints totales
+  const list = getStatusesForProject(tipoDesarrollo);
+  const mainIdx = list.findIndex((s) => s.id === id);
+
+  if (isFTE(tipoDesarrollo)) {
+    // FTE: 4 etapas, sin sub-etapas
+    return Math.min(100, Math.round(((mainIdx + 1) / list.length) * 100));
+  }
+
+  // Normal: 7 etapas principales + 5 sub-etapas = 12 checkpoints
   let completed = mainIdx + 1;
-  const totalCheckpoints = STATUSES.length + 5;
+  const totalCheckpoints = list.length + 5;
 
   if (subEtapas) {
     if (subEtapas.disenoArquitectura) completed++;

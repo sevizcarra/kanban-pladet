@@ -77,7 +77,7 @@ export default function TimelineView({ projects, onProjectClick }: TimelineViewP
                 {statusProjects.length > 0 ? (
                   statusProjects.map((project) => {
                     const priorityConfig = PRIORITIES[project.priority];
-                    const progress = getProgress(project.status, project.subEtapas);
+                    const progress = getProgress(project.status, project.subEtapas, project.tipoDesarrollo);
                     const daysLeftValue = daysLeft(project.dueDate);
 
                     return (
