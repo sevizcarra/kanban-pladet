@@ -35,6 +35,7 @@ import {
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
 import CommentsSection from "./CommentsSection";
+import LocationPicker from "./LocationPicker";
 import { Project } from "@/types/project";
 
 interface ProjectDetailProps {
@@ -118,6 +119,11 @@ export default function ProjectDetail({
     project.fechaRecDefinitiva || ""
   );
 
+  // Location
+  const [ubicacionLat, setUbicacionLat] = useState(project.ubicacionLat || 0);
+  const [ubicacionLng, setUbicacionLng] = useState(project.ubicacionLng || 0);
+  const [ubicacionNombre, setUbicacionNombre] = useState(project.ubicacionNombre || "");
+
   // Title editing
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(project.title);
@@ -180,6 +186,9 @@ export default function ProjectDetail({
       fechaVencGarantia: fechaVencGarantia || "",
       fechaRecProviso: fechaRecProviso || "",
       fechaRecDefinitiva: fechaRecDefinitiva || "",
+      ubicacionLat,
+      ubicacionLng,
+      ubicacionNombre,
     };
     onUpdate(updated);
     setSaved(true);
@@ -440,6 +449,18 @@ export default function ProjectDetail({
 
           {/* Comentarios — left sidebar */}
           <CommentsSection projectId={project.id} userEmail={userEmail} />
+
+          {/* Ubicación */}
+          <LocationPicker
+            lat={ubicacionLat}
+            lng={ubicacionLng}
+            nombre={ubicacionNombre}
+            onLocationChange={(lat, lng, nombre) => {
+              setUbicacionLat(lat);
+              setUbicacionLng(lng);
+              setUbicacionNombre(nombre);
+            }}
+          />
         </div>
 
         {/* RIGHT COLUMN - Multiple cards */}

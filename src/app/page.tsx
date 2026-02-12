@@ -12,6 +12,7 @@ import StatsView from '@/components/StatsView';
 import TimelineView from '@/components/TimelineView';
 import GanttView from '@/components/GanttView';
 import ExportButton from '@/components/ExportButton';
+import MapView from '@/components/MapView';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import AdminPanel from '@/components/AdminPanel';
 import {
@@ -28,6 +29,7 @@ import {
   BarChart3,
   Clock,
   GanttChart,
+  MapPin,
   Plus,
   Filter,
   Search,
@@ -37,7 +39,7 @@ import {
 } from 'lucide-react';
 import { STATUSES, PRIORITIES } from '@/lib/constants';
 
-type Tab = 'dashboard' | 'stats' | 'timeline' | 'gantt' | 'users';
+type Tab = 'dashboard' | 'stats' | 'gantt' | 'map' | 'timeline' | 'users';
 
 export default function Home() {
   // Auth state
@@ -223,6 +225,7 @@ export default function Home() {
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
     { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
+    { id: 'map', label: 'Mapa', icon: <MapPin size={18} /> },
     { id: 'timeline', label: 'Línea de Tiempo', icon: <Clock size={18} /> },
     ...(userIsAdmin ? [{ id: 'users' as Tab, label: 'Usuarios', icon: <Users size={18} />, adminOnly: true }] : []),
   ];
@@ -382,6 +385,13 @@ export default function Home() {
 
           {activeTab === 'gantt' && (
             <GanttView
+              projects={filteredProjects}
+              onProjectClick={setSelectedProject}
+            />
+          )}
+
+          {activeTab === 'map' && (
+            <MapView
               projects={filteredProjects}
               onProjectClick={setSelectedProject}
             />

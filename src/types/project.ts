@@ -54,6 +54,10 @@ export interface Project {
     descripcion?: string;
     fecha?: string;
   }>;
+  // Ubicación
+  ubicacionNombre?: string;
+  ubicacionLat?: number;
+  ubicacionLng?: number;
   // Metadata
   createdAt?: string;
   commentCount?: number;
