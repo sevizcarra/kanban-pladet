@@ -1016,6 +1016,27 @@ export default function ProjectDetail({
                           placeholder="Descripción de la modificación..."
                         />
                       </div>
+
+                      {/* Documentos asociados a la MCD */}
+                      <div className="mt-3 pt-3 border-t border-purple-200">
+                        <p className="text-xs text-purple-700 font-semibold mb-2">
+                          Documentos
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button className="border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1.5 text-purple-600 hover:text-purple-700">
+                            <Upload className="w-4 h-4" />
+                            <span className="text-[11px] font-medium leading-tight">Libro de Obras</span>
+                          </button>
+                          <button className="border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1.5 text-purple-600 hover:text-purple-700">
+                            <Upload className="w-4 h-4" />
+                            <span className="text-[11px] font-medium leading-tight">CDP</span>
+                          </button>
+                          <button className="border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1.5 text-purple-600 hover:text-purple-700">
+                            <Upload className="w-4 h-4" />
+                            <span className="text-[11px] font-medium leading-tight">MCD Propuesta</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
