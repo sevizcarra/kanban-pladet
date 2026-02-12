@@ -16,6 +16,8 @@ import {
   ClipboardList,
   Eye,
   Download,
+  Pencil,
+  Check,
 } from "lucide-react";
 import {
   STATUSES,
@@ -115,6 +117,10 @@ export default function ProjectDetail({
     project.fechaRecDefinitiva || ""
   );
 
+  // Title editing
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(project.title);
+
   // UI state
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -180,6 +186,13 @@ export default function ProjectDetail({
     setTimeout(() => setSaved(false), 2500);
   };
 
+  const handleTitleSave = () => {
+    if (titleDraft.trim()) {
+      onUpdate({ ...project, title: titleDraft.trim() });
+      setEditingTitle(false);
+    }
+  };
+
   const handleToggleEspecialidad = (name: string) => {
     setEspecialidades((prev) =>
       prev.includes(name) ? prev.filter((e) => e !== name) : [...prev, name]
@@ -222,9 +235,35 @@ export default function ProjectDetail({
           <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-900">{project.title}</h1>
+          <div className="flex items-center gap-2">
+            {editingTitle ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="text"
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleTitleSave(); if (e.key === "Escape") { setEditingTitle(false); setTitleDraft(project.title); } }}
+                  className="text-xl font-bold text-gray-900 border-b-2 border-[#00A499] outline-none bg-transparent flex-1 py-0.5"
+                  autoFocus
+                />
+                <button onClick={handleTitleSave} className="p-1.5 hover:bg-green-50 rounded-lg transition text-green-600">
+                  <Check className="w-4 h-4" />
+                </button>
+                <button onClick={() => { setEditingTitle(false); setTitleDraft(project.title); }} className="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-500">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-xl font-bold text-gray-900">{project.title}</h1>
+                <button onClick={() => setEditingTitle(true)} className="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600">
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
           <p className="text-sm text-gray-500">
-            Memorándum: {project.memorandumNumber}
+            Código: {project.codigoProyectoUsa || "—"}
           </p>
         </div>
         {/* Save button in header */}
@@ -265,10 +304,10 @@ export default function ProjectDetail({
             <div className="space-y-3 mb-5 pb-5 border-b border-gray-200">
               <div>
                 <p className="text-xs text-gray-500 uppercase font-semibold">
-                  Memorándum
+                  Código Proyecto PLADET
                 </p>
                 <p className="text-sm font-medium text-gray-900">
-                  {project.memorandumNumber}
+                  {project.codigoProyectoUsa || "—"}
                 </p>
               </div>
               <div>
