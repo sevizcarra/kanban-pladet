@@ -1,8 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { MapPin, Search, X, Navigation } from "lucide-react";
+
+const LocationPickerMap = dynamic(() => import("./LocationPickerMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full flex items-center justify-center bg-gray-50">
+      <div className="w-6 h-6 border-2 border-gray-200 border-t-[#00A499] rounded-full animate-spin" />
+    </div>
+  ),
+});
 
 interface LocationPickerProps {
   lat?: number;
@@ -11,37 +20,6 @@ interface LocationPickerProps {
   onLocationChange: (lat: number, lng: number, nombre: string) => void;
 }
 
-// Dynamic imports for react-leaflet
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false }
-);
-const useMapEvents = dynamic(
-  () => import("react-leaflet").then((mod) => {
-    // Return a wrapper component that uses the hook
-    const ClickHandler = ({ onClick }: { onClick: (lat: number, lng: number) => void }) => {
-      const hook = mod.useMapEvents;
-      hook({
-        click(e: { latlng: { lat: number; lng: number } }) {
-          onClick(e.latlng.lat, e.latlng.lng);
-        },
-      });
-      return null;
-    };
-    return ClickHandler;
-  }),
-  { ssr: false }
-) as unknown as React.ComponentType<{ onClick: (lat: number, lng: number) => void }>;
-
-// USACH campus center
 const USACH_CENTER: [number, number] = [-33.4489, -70.6818];
 
 export default function LocationPicker({
@@ -50,19 +28,17 @@ export default function LocationPicker({
   nombre,
   onLocationChange,
 }: LocationPickerProps) {
-  const [isClient, setIsClient] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [localNombre, setLocalNombre] = useState(nombre || "");
   const [markerPos, setMarkerPos] = useState<[number, number] | null>(
-    lat && lng ? [lat, lng] : null
+    lat && lng && (lat !== 0 || lng !== 0) ? [lat, lng] : null
   );
+  const [mapCenter, setMapCenter] = useState<[number, number]>(
+    lat && lng && (lat !== 0 || lng !== 0) ? [lat, lng] : USACH_CENTER
+  );
+  const [mapZoom, setMapZoom] = useState(lat && lng && (lat !== 0 || lng !== 0) ? 17 : 15);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Reverse geocode using Nominatim (free, no API key)
   const reverseGeocode = useCallback(
     async (latitude: number, longitude: number) => {
       try {
@@ -78,6 +54,8 @@ export default function LocationPicker({
               : data.display_name.split(",").slice(0, 2).join(",");
           setLocalNombre(shortName);
           onLocationChange(latitude, longitude, shortName);
+        } else {
+          onLocationChange(latitude, longitude, localNombre);
         }
       } catch {
         onLocationChange(latitude, longitude, localNombre);
@@ -86,7 +64,6 @@ export default function LocationPicker({
     [localNombre, onLocationChange]
   );
 
-  // Search by address
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
@@ -100,6 +77,8 @@ export default function LocationPicker({
         const newLat = parseFloat(data[0].lat);
         const newLng = parseFloat(data[0].lon);
         setMarkerPos([newLat, newLng]);
+        setMapCenter([newLat, newLng]);
+        setMapZoom(17);
         const shortName = data[0].display_name.split(",").slice(0, 2).join(",");
         setLocalNombre(shortName);
         onLocationChange(newLat, newLng, shortName);
@@ -110,33 +89,20 @@ export default function LocationPicker({
     setSearching(false);
   };
 
-  const handleMapClick = (clickLat: number, clickLng: number) => {
-    setMarkerPos([clickLat, clickLng]);
-    reverseGeocode(clickLat, clickLng);
-  };
+  const handleMapClick = useCallback(
+    (clickLat: number, clickLng: number) => {
+      setMarkerPos([clickLat, clickLng]);
+      reverseGeocode(clickLat, clickLng);
+    },
+    [reverseGeocode]
+  );
 
   const handleClearLocation = () => {
     setMarkerPos(null);
     setLocalNombre("");
+    setMapCenter(USACH_CENTER);
+    setMapZoom(15);
     onLocationChange(0, 0, "");
-  };
-
-  const createMarkerIcon = () => {
-    if (typeof window === "undefined") return undefined;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const L = require("leaflet");
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
-      <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 26 16 26s16-14 16-26C32 7.163 24.837 0 16 0z" fill="#00A499"/>
-      <circle cx="16" cy="16" r="8" fill="white"/>
-      <circle cx="16" cy="16" r="4" fill="#00A499"/>
-    </svg>`;
-    return L.divIcon({
-      html: svg,
-      className: "",
-      iconSize: [32, 42],
-      iconAnchor: [16, 42],
-      popupAnchor: [0, -42],
-    });
   };
 
   return (
@@ -150,10 +116,7 @@ export default function LocationPicker({
         {/* Search bar */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar dirección o edificio..."
@@ -176,13 +139,8 @@ export default function LocationPicker({
         {markerPos && localNombre && (
           <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 rounded-lg border border-teal-100">
             <Navigation size={12} className="text-[#00A499] flex-shrink-0" />
-            <span className="text-xs text-gray-700 flex-1 truncate">
-              {localNombre}
-            </span>
-            <button
-              onClick={handleClearLocation}
-              className="p-0.5 hover:bg-teal-100 rounded transition-colors"
-            >
+            <span className="text-xs text-gray-700 flex-1 truncate">{localNombre}</span>
+            <button onClick={handleClearLocation} className="p-0.5 hover:bg-teal-100 rounded transition-colors">
               <X size={12} className="text-gray-400" />
             </button>
           </div>
@@ -191,7 +149,7 @@ export default function LocationPicker({
         {/* Location name input */}
         <input
           type="text"
-          placeholder="Nombre de ubicación (ej: Edificio CITECAMP, Sala 302)"
+          placeholder="Nombre de ubicación (ej: Edificio CITECAMP)"
           value={localNombre}
           onChange={(e) => {
             setLocalNombre(e.target.value);
@@ -203,33 +161,15 @@ export default function LocationPicker({
         />
 
         {/* Map */}
-        {isClient && (
-          <div
-            className="rounded-lg overflow-hidden border border-gray-200"
-            style={{ height: 260 }}
-          >
-            <link
-              rel="stylesheet"
-              href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            />
-            <MapContainer
-              center={markerPos || USACH_CENTER}
-              zoom={markerPos ? 17 : 15}
-              style={{ height: "100%", width: "100%" }}
-              scrollWheelZoom={true}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {/* Click handler */}
-              {useMapEvents && React.createElement(useMapEvents, { onClick: handleMapClick })}
-              {markerPos && (
-                <Marker position={markerPos} icon={createMarkerIcon()} />
-              )}
-            </MapContainer>
-          </div>
-        )}
+        <div className="rounded-lg overflow-hidden border border-gray-200" style={{ height: 240 }}>
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+          <LocationPickerMap
+            markerPos={markerPos}
+            center={mapCenter}
+            zoom={mapZoom}
+            onMapClick={handleMapClick}
+          />
+        </div>
 
         <p className="text-[10px] text-gray-400 text-center">
           Haz clic en el mapa para marcar la ubicación del proyecto
