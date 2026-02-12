@@ -205,6 +205,7 @@ export default function Home() {
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onBack={() => setSelectedProject(null)}
+          userEmail={authUser.email || ""}
         />
       </div>
     );

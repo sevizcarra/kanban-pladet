@@ -36,6 +36,7 @@ import {
 } from "@/lib/constants";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
+import CommentsSection from "./CommentsSection";
 import { Project } from "@/types/project";
 
 interface ProjectDetailProps {
@@ -43,6 +44,7 @@ interface ProjectDetailProps {
   onBack: () => void;
   onUpdate: (p: Project) => void;
   onDelete: (id: string, reason: string) => void;
+  userEmail: string;
 }
 
 export default function ProjectDetail({
@@ -50,6 +52,7 @@ export default function ProjectDetail({
   onBack,
   onUpdate,
   onDelete,
+  userEmail,
 }: ProjectDetailProps) {
   // Local editable state
   const [fechaRecepcionMemo, setFechaRecepcionMemo] = useState(
@@ -617,6 +620,9 @@ export default function ProjectDetail({
                 </button>
               </div>
 
+              {/* Comentarios (FTE) */}
+              <CommentsSection projectId={project.id} userEmail={userEmail} />
+
               {/* DELETE button */}
               <button
                 onClick={() => setShowDeleteConfirm(true)}
@@ -1163,6 +1169,9 @@ export default function ProjectDetail({
               ))}
             </div>
           </div>
+
+          {/* Comentarios */}
+          <CommentsSection projectId={project.id} userEmail={userEmail} />
 
           {/* DELETE button */}
           <button

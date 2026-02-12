@@ -3,7 +3,7 @@ import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress } from "@/lib/constant
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
-import { User } from "lucide-react";
+import { User, MessageCircle } from "lucide-react";
 
 interface Props {
   projects: Project[];
@@ -51,17 +51,25 @@ export default function KanbanBoard({ projects, onProjectClick }: Props) {
                       <span className="text-[10px] text-gray-500 font-medium bg-gray-50 px-1.5 py-0.5 rounded">{p.requestingUnit}</span>
                     </div>
 
-                    {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] && (
-                      <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-gray-100">
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 text-white"
-                          style={{ backgroundColor: s.color }}
-                        >
-                          {getInitials(PROFESSIONALS[p.jefeProyectoId].name)}
+                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100">
+                      {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] ? (
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 text-white"
+                            style={{ backgroundColor: s.color }}
+                          >
+                            {getInitials(PROFESSIONALS[p.jefeProyectoId].name)}
+                          </div>
+                          <span className="text-[10px] text-gray-600 truncate">{PROFESSIONALS[p.jefeProyectoId].name}</span>
                         </div>
-                        <span className="text-[10px] text-gray-600 truncate">{PROFESSIONALS[p.jefeProyectoId].name}</span>
-                      </div>
-                    )}
+                      ) : <div />}
+                      {(p.commentCount || 0) > 0 && (
+                        <div className="flex items-center gap-0.5 text-gray-400 flex-shrink-0">
+                          <MessageCircle className="w-3 h-3" />
+                          <span className="text-[10px] font-medium">{p.commentCount}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}

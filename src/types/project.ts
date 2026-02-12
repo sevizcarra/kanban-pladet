@@ -56,4 +56,13 @@ export interface Project {
   }>;
   // Metadata
   createdAt?: string;
+  commentCount?: number;
+}
+
+export interface Comment {
+  id: string;
+  authorEmail: string;
+  content: string;
+  mentions: string[];
+  createdAt: string;
 }

@@ -7,10 +7,11 @@ import {
   onSnapshot,
   query,
   orderBy,
+  getDoc,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Project } from "@/types/project";
+import type { Project, Comment } from "@/types/project";
 
 const COLLECTION = "projects";
 
@@ -45,5 +46,52 @@ export async function updateProject(id: string, data: Partial<Project>): Promise
 export async function deleteProject(id: string): Promise<void> {
   const ref = doc(db, COLLECTION, id);
   await deleteDoc(ref);
+}
+
+// ── Comments (subcollection: projects/{id}/comments) ──
+
+export function subscribeComments(
+  projectId: string,
+  callback: (comments: Comment[]) => void
+): Unsubscribe {
+  const q = query(
+    collection(db, COLLECTION, projectId, "comments"),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(q, (snapshot) => {
+    const comments = snapshot.docs.map(
+      (d) => ({ id: d.id, ...d.data() } as Comment)
+    );
+    callback(comments);
+  });
+}
+
+export async function addComment(
+  projectId: string,
+  comment: Omit<Comment, "id">
+): Promise<string> {
+  const docRef = await addDoc(
+    collection(db, COLLECTION, projectId, "comments"),
+    comment
+  );
+  // Update comment count on the project
+  const projectRef = doc(db, COLLECTION, projectId);
+  const projectSnap = await getDoc(projectRef);
+  const currentCount = projectSnap.data()?.commentCount || 0;
+  await updateDoc(projectRef, { commentCount: currentCount + 1 });
+  return docRef.id;
+}
+
+export async function deleteComment(
+  projectId: string,
+  commentId: string
+): Promise<void> {
+  const ref = doc(db, COLLECTION, projectId, "comments", commentId);
+  await deleteDoc(ref);
+  // Decrement comment count
+  const projectRef = doc(db, COLLECTION, projectId);
+  const projectSnap = await getDoc(projectRef);
+  const currentCount = projectSnap.data()?.commentCount || 0;
+  await updateDoc(projectRef, { commentCount: Math.max(0, currentCount - 1) });
 }
 
