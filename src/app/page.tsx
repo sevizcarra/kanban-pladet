@@ -224,98 +224,76 @@ export default function Home() {
       {/* Decorative background graphics */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         {/* Concentric circles — top left */}
-        <svg className="absolute top-[6%] left-[-3%] w-[480px] h-[480px] opacity-[0.08]" viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r="95" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="100" cy="100" r="75" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="100" cy="100" r="55" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="100" cy="100" r="35" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="100" cy="100" r="15" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="100" y1="5" x2="100" y2="195" stroke="#00A499" strokeWidth="0.3" />
-          <line x1="5" y1="100" x2="195" y2="100" stroke="#00A499" strokeWidth="0.3" />
+        <svg className="absolute top-[6%] left-[-3%] w-[500px] h-[500px]" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="48" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.2" />
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
+          <circle cx="50" cy="50" r="28" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.15" />
+          <circle cx="50" cy="50" r="18" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.12" />
+          <circle cx="50" cy="50" r="8" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
+          <line x1="50" y1="2" x2="50" y2="98" stroke="#00A499" strokeWidth="0.1" opacity="0.12" />
+          <line x1="2" y1="50" x2="98" y2="50" stroke="#00A499" strokeWidth="0.1" opacity="0.12" />
         </svg>
 
-        {/* Hexagon nest — bottom right */}
-        <svg className="absolute bottom-[3%] right-[-3%] w-[420px] h-[420px] opacity-[0.08]" viewBox="0 0 200 200">
-          <polygon points="100,10 190,55 190,145 100,190 10,145 10,55" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <polygon points="100,30 170,60 170,140 100,170 30,140 30,60" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <polygon points="100,50 150,68 150,132 100,150 50,132 50,68" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <polygon points="100,70 130,80 130,120 100,130 70,120 70,80" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="100" y1="10" x2="100" y2="190" stroke="#00A499" strokeWidth="0.3" />
-        </svg>
-
-        {/* Diagonal lines — center */}
-        <svg className="absolute top-[20%] left-[25%] w-[600px] h-[600px] opacity-[0.04]" viewBox="0 0 200 200">
-          <line x1="0" y1="0" x2="200" y2="200" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="40" y1="0" x2="200" y2="160" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="80" y1="0" x2="200" y2="120" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="120" y1="0" x2="200" y2="80" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="160" y1="0" x2="200" y2="40" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="0" y1="40" x2="160" y2="200" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="0" y1="80" x2="120" y2="200" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="0" y1="120" x2="80" y2="200" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="0" y1="160" x2="40" y2="200" stroke="#00A499" strokeWidth="0.5" />
+        {/* Hexagons — bottom right */}
+        <svg className="absolute bottom-[3%] right-[-3%] w-[450px] h-[450px]" viewBox="0 0 100 100">
+          <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
+          <polygon points="50,15 85,32.5 85,67.5 50,85 15,67.5 15,32.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.15" />
+          <polygon points="50,25 75,37.5 75,62.5 50,75 25,62.5 25,37.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.12" />
+          <polygon points="50,35 65,42.5 65,57.5 50,65 35,57.5 35,42.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
         </svg>
 
         {/* Dot grid — top right */}
-        <svg className="absolute top-[10%] right-[3%] w-[320px] h-[320px] opacity-[0.12]" viewBox="0 0 100 100">
-          {Array.from({ length: 8 }).map((_, row) =>
-            Array.from({ length: 8 }).map((_, col) => (
-              <circle key={`dot-${row}-${col}`} cx={6 + col * 13} cy={6 + row * 13} r="1.2" fill="#00A499" />
+        <svg className="absolute top-[10%] right-[3%] w-[350px] h-[350px]" viewBox="0 0 100 100">
+          {Array.from({ length: 10 }).map((_, row) =>
+            Array.from({ length: 10 }).map((_, col) => (
+              <circle key={`dot-${row}-${col}`} cx={5 + col * 10} cy={5 + row * 10} r="0.8" fill="#00A499" opacity="0.2" />
             ))
           )}
         </svg>
 
         {/* Rounded squares — mid left */}
-        <svg className="absolute top-[48%] left-[2%] w-[300px] h-[300px] opacity-[0.08]" viewBox="0 0 200 200">
-          <rect x="15" y="15" width="170" height="170" rx="30" fill="none" stroke="#F97316" strokeWidth="0.6" />
-          <rect x="40" y="40" width="120" height="120" rx="22" fill="none" stroke="#F97316" strokeWidth="0.6" />
-          <rect x="65" y="65" width="70" height="70" rx="14" fill="none" stroke="#F97316" strokeWidth="0.6" />
+        <svg className="absolute top-[48%] left-[2%] w-[320px] h-[320px]" viewBox="0 0 100 100">
+          <rect x="8" y="8" width="84" height="84" rx="15" fill="none" stroke="#F97316" strokeWidth="0.2" opacity="0.18" />
+          <rect x="20" y="20" width="60" height="60" rx="11" fill="none" stroke="#F97316" strokeWidth="0.2" opacity="0.14" />
+          <rect x="32" y="32" width="36" height="36" rx="7" fill="none" stroke="#F97316" strokeWidth="0.2" opacity="0.1" />
         </svg>
 
         {/* Circle cluster — bottom left */}
-        <svg className="absolute bottom-[12%] left-[12%] w-[250px] h-[250px] opacity-[0.1]" viewBox="0 0 100 100">
-          <circle cx="30" cy="30" r="22" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="62" cy="22" r="14" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="45" cy="58" r="18" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="78" cy="55" r="10" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="22" cy="72" r="12" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="68" cy="78" r="8" fill="none" stroke="#00A499" strokeWidth="0.5" />
-        </svg>
-
-        {/* Arc waves — top center */}
-        <svg className="absolute top-[2%] left-[35%] w-[400px] h-[220px] opacity-[0.07]" viewBox="0 0 200 100">
-          <path d="M 5 95 Q 100 -20 195 95" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <path d="M 25 95 Q 100 5 175 95" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <path d="M 45 95 Q 100 25 155 95" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <path d="M 65 95 Q 100 45 135 95" fill="none" stroke="#00A499" strokeWidth="0.5" />
+        <svg className="absolute bottom-[12%] left-[12%] w-[280px] h-[280px]" viewBox="0 0 100 100">
+          <circle cx="30" cy="30" r="22" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
+          <circle cx="62" cy="22" r="14" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.15" />
+          <circle cx="45" cy="58" r="18" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.16" />
+          <circle cx="78" cy="55" r="10" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.14" />
+          <circle cx="22" cy="72" r="12" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.12" />
+          <circle cx="68" cy="78" r="8" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
         </svg>
 
         {/* Diamond — right center */}
-        <svg className="absolute top-[38%] right-[6%] w-[220px] h-[220px] opacity-[0.08]" viewBox="0 0 100 100">
-          <polygon points="50,3 97,50 50,97 3,50" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <polygon points="50,16 84,50 50,84 16,50" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <polygon points="50,29 71,50 50,71 29,50" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <line x1="50" y1="3" x2="50" y2="97" stroke="#00A499" strokeWidth="0.3" />
-          <line x1="3" y1="50" x2="97" y2="50" stroke="#00A499" strokeWidth="0.3" />
+        <svg className="absolute top-[38%] right-[6%] w-[240px] h-[240px]" viewBox="0 0 100 100">
+          <polygon points="50,3 97,50 50,97 3,50" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
+          <polygon points="50,16 84,50 50,84 16,50" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.14" />
+          <polygon points="50,29 71,50 50,71 29,50" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
+          <line x1="50" y1="3" x2="50" y2="97" stroke="#00A499" strokeWidth="0.08" opacity="0.12" />
+          <line x1="3" y1="50" x2="97" y2="50" stroke="#00A499" strokeWidth="0.08" opacity="0.12" />
         </svg>
 
-        {/* Small crosses pattern — bottom center */}
-        <svg className="absolute bottom-[5%] left-[40%] w-[300px] h-[150px] opacity-[0.08]" viewBox="0 0 200 80">
-          {Array.from({ length: 4 }).map((_, row) =>
-            Array.from({ length: 7 }).map((_, col) => (
+        {/* Cross pattern — bottom center */}
+        <svg className="absolute bottom-[5%] left-[38%] w-[350px] h-[180px]" viewBox="0 0 100 50">
+          {Array.from({ length: 5 }).map((_, row) =>
+            Array.from({ length: 9 }).map((_, col) => (
               <g key={`cross-${row}-${col}`}>
-                <line x1={14 + col * 28 - 4} y1={12 + row * 20} x2={14 + col * 28 + 4} y2={12 + row * 20} stroke="#00A499" strokeWidth="0.5" />
-                <line x1={14 + col * 28} y1={12 + row * 20 - 4} x2={14 + col * 28} y2={12 + row * 20 + 4} stroke="#00A499" strokeWidth="0.5" />
+                <line x1={5 + col * 11 - 2.5} y1={5 + row * 10} x2={5 + col * 11 + 2.5} y2={5 + row * 10} stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
+                <line x1={5 + col * 11} y1={5 + row * 10 - 2.5} x2={5 + col * 11} y2={5 + row * 10 + 2.5} stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
               </g>
             ))
           )}
         </svg>
 
-        {/* Color blobs */}
-        <div className="absolute top-[18%] right-[20%] w-[350px] h-[350px] rounded-full bg-[#00A499]/[0.04] blur-[80px]" />
-        <div className="absolute bottom-[20%] left-[5%] w-[300px] h-[300px] rounded-full bg-[#F97316]/[0.035] blur-[80px]" />
-        <div className="absolute top-[55%] left-[45%] w-[250px] h-[250px] rounded-full bg-[#00A499]/[0.03] blur-[60px]" />
-        <div className="absolute top-[5%] left-[60%] w-[200px] h-[200px] rounded-full bg-[#F97316]/[0.025] blur-[60px]" />
+        {/* Color blobs — much more visible */}
+        <div className="absolute top-[15%] right-[18%] w-[400px] h-[400px] rounded-full bg-[#00A499]/[0.07] blur-[100px]" />
+        <div className="absolute bottom-[15%] left-[3%] w-[350px] h-[350px] rounded-full bg-[#F97316]/[0.06] blur-[100px]" />
+        <div className="absolute top-[50%] left-[40%] w-[300px] h-[300px] rounded-full bg-[#00A499]/[0.05] blur-[80px]" />
+        <div className="absolute top-[3%] left-[55%] w-[250px] h-[250px] rounded-full bg-[#F97316]/[0.04] blur-[80px]" />
       </div>
 
       <div className="relative z-10">
