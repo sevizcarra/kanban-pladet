@@ -221,26 +221,79 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative">
-      {/* Subtle decorative background */}
+      {/* Decorative background graphics */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <svg className="absolute top-[15%] left-[-5%] w-[500px] h-[500px] opacity-[0.03]" viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r="80" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="100" cy="100" r="60" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="100" cy="100" r="40" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <circle cx="100" cy="100" r="20" fill="none" stroke="#00A499" strokeWidth="0.5" />
+        {/* Concentric circles — top left */}
+        <svg className="absolute top-[8%] left-[-2%] w-[420px] h-[420px] opacity-[0.06]" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="90" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="100" cy="100" r="50" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="100" cy="100" r="30" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="100" cy="100" r="10" fill="none" stroke="#00A499" strokeWidth="0.3" />
         </svg>
-        <svg className="absolute bottom-[10%] right-[-3%] w-[400px] h-[400px] opacity-[0.03]" viewBox="0 0 200 200">
-          <polygon points="100,10 190,60 190,140 100,190 10,140 10,60" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <polygon points="100,30 170,65 170,135 100,170 30,135 30,65" fill="none" stroke="#00A499" strokeWidth="0.5" />
-          <polygon points="100,50 150,70 150,130 100,150 50,130 50,70" fill="none" stroke="#00A499" strokeWidth="0.5" />
+
+        {/* Hexagon nest — bottom right */}
+        <svg className="absolute bottom-[5%] right-[-2%] w-[380px] h-[380px] opacity-[0.06]" viewBox="0 0 200 200">
+          <polygon points="100,10 190,55 190,145 100,190 10,145 10,55" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <polygon points="100,30 170,60 170,140 100,170 30,140 30,60" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <polygon points="100,50 150,68 150,132 100,150 50,132 50,68" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <polygon points="100,70 130,80 130,120 100,130 70,120 70,80" fill="none" stroke="#00A499" strokeWidth="0.3" />
         </svg>
-        <svg className="absolute top-[60%] left-[50%] w-[300px] h-[300px] opacity-[0.02]" viewBox="0 0 200 200">
-          <rect x="30" y="30" width="140" height="140" rx="20" fill="none" stroke="#F97316" strokeWidth="0.5" />
-          <rect x="50" y="50" width="100" height="100" rx="15" fill="none" stroke="#F97316" strokeWidth="0.5" />
-          <rect x="70" y="70" width="60" height="60" rx="10" fill="none" stroke="#F97316" strokeWidth="0.5" />
+
+        {/* Diagonal crosshatch lines — center area */}
+        <svg className="absolute top-[25%] left-[30%] w-[500px] h-[500px] opacity-[0.03]" viewBox="0 0 200 200">
+          <line x1="0" y1="0" x2="200" y2="200" stroke="#00A499" strokeWidth="0.3" />
+          <line x1="40" y1="0" x2="200" y2="160" stroke="#00A499" strokeWidth="0.3" />
+          <line x1="80" y1="0" x2="200" y2="120" stroke="#00A499" strokeWidth="0.3" />
+          <line x1="120" y1="0" x2="200" y2="80" stroke="#00A499" strokeWidth="0.3" />
+          <line x1="0" y1="40" x2="160" y2="200" stroke="#00A499" strokeWidth="0.3" />
+          <line x1="0" y1="80" x2="120" y2="200" stroke="#00A499" strokeWidth="0.3" />
+          <line x1="0" y1="120" x2="80" y2="200" stroke="#00A499" strokeWidth="0.3" />
         </svg>
-        <div className="absolute top-[30%] right-[20%] w-[200px] h-[200px] rounded-full bg-[#00A499]/[0.02] blur-3xl" />
-        <div className="absolute bottom-[20%] left-[10%] w-[250px] h-[250px] rounded-full bg-[#F97316]/[0.02] blur-3xl" />
+
+        {/* Dotted grid — top right */}
+        <svg className="absolute top-[12%] right-[5%] w-[280px] h-[280px] opacity-[0.07]" viewBox="0 0 100 100">
+          {Array.from({ length: 6 }).map((_, row) =>
+            Array.from({ length: 6 }).map((_, col) => (
+              <circle key={`dot-${row}-${col}`} cx={10 + col * 18} cy={10 + row * 18} r="1" fill="#00A499" />
+            ))
+          )}
+        </svg>
+
+        {/* Rounded rectangles — mid left */}
+        <svg className="absolute top-[50%] left-[3%] w-[260px] h-[260px] opacity-[0.05]" viewBox="0 0 200 200">
+          <rect x="20" y="20" width="160" height="160" rx="30" fill="none" stroke="#F97316" strokeWidth="0.4" />
+          <rect x="45" y="45" width="110" height="110" rx="22" fill="none" stroke="#F97316" strokeWidth="0.4" />
+          <rect x="70" y="70" width="60" height="60" rx="14" fill="none" stroke="#F97316" strokeWidth="0.4" />
+        </svg>
+
+        {/* Small circle cluster — bottom left */}
+        <svg className="absolute bottom-[15%] left-[15%] w-[200px] h-[200px] opacity-[0.06]" viewBox="0 0 100 100">
+          <circle cx="30" cy="30" r="20" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="60" cy="25" r="12" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="45" cy="60" r="16" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="75" cy="55" r="8" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <circle cx="25" cy="70" r="10" fill="none" stroke="#00A499" strokeWidth="0.3" />
+        </svg>
+
+        {/* Thin arc lines — top center */}
+        <svg className="absolute top-[3%] left-[40%] w-[350px] h-[200px] opacity-[0.05]" viewBox="0 0 200 100">
+          <path d="M 10 90 Q 100 -10 190 90" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <path d="M 30 90 Q 100 10 170 90" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <path d="M 50 90 Q 100 30 150 90" fill="none" stroke="#00A499" strokeWidth="0.3" />
+        </svg>
+
+        {/* Diamond — right center */}
+        <svg className="absolute top-[40%] right-[8%] w-[180px] h-[180px] opacity-[0.05]" viewBox="0 0 100 100">
+          <polygon points="50,5 95,50 50,95 5,50" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <polygon points="50,18 82,50 50,82 18,50" fill="none" stroke="#00A499" strokeWidth="0.3" />
+          <polygon points="50,31 69,50 50,69 31,50" fill="none" stroke="#00A499" strokeWidth="0.3" />
+        </svg>
+
+        {/* Soft glow blobs */}
+        <div className="absolute top-[20%] right-[25%] w-[300px] h-[300px] rounded-full bg-[#00A499]/[0.025] blur-3xl" />
+        <div className="absolute bottom-[25%] left-[8%] w-[250px] h-[250px] rounded-full bg-[#F97316]/[0.02] blur-3xl" />
+        <div className="absolute top-[65%] right-[40%] w-[200px] h-[200px] rounded-full bg-[#00A499]/[0.015] blur-3xl" />
       </div>
 
       <div className="relative z-10">
