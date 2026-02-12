@@ -72,6 +72,9 @@ export default function ProjectDetail({
     project.jefeProyectoId || -1
   );
   const [inspectorId, setInspectorId] = useState(project.inspectorId || -1);
+  const [profesionalAsignado, setProfesionalAsignado] = useState(
+    project.profesionalAsignado || ""
+  );
   const [especialidades, setEspecialidades] = useState(
     project.especialidades || []
   );
@@ -144,6 +147,7 @@ export default function ProjectDetail({
       fechaVencimientoRecursos,
       jefeProyectoId: jefeProyectoId === -1 ? undefined : jefeProyectoId,
       inspectorId: inspectorId === -1 ? undefined : inspectorId,
+      profesionalAsignado: profesionalAsignado || undefined,
       especialidades,
       edpCount,
       retCount,
@@ -278,7 +282,7 @@ export default function ProjectDetail({
                       ? "bg-green-50 text-green-700"
                       : idx === statusIndex
                         ? "bg-blue-50 text-blue-700 font-semibold"
-                        : "text-gray-400"
+                        : "text-gray-500"
                   }`}
                 >
                   {idx < statusIndex ? (
@@ -511,6 +515,35 @@ export default function ProjectDetail({
                   {INSPECTORS.map((inspector, idx) => (
                     <option key={idx} value={idx}>
                       {inspector}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Profesional Asignado - para seguimiento de carga */}
+            <div className="border-t border-gray-200 pt-4 mb-4">
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                <label className="block text-xs text-teal-800 font-semibold mb-1">
+                  Profesional Asignado (Desarrollo Activo)
+                </label>
+                <p className="text-[11px] text-teal-600 mb-2">
+                  Profesional que está desarrollando activamente este proyecto
+                </p>
+                <select
+                  value={profesionalAsignado}
+                  onChange={(e) => setProfesionalAsignado(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-teal-300 text-sm focus:border-[#00A499] outline-none bg-white"
+                >
+                  <option value="">Sin asignar</option>
+                  {MANAGERS.map((manager) => (
+                    <option key={manager} value={manager}>
+                      {manager}
+                    </option>
+                  ))}
+                  {SPECIALISTS.map((specialist) => (
+                    <option key={specialist.name} value={specialist.name}>
+                      {specialist.name} ({specialist.discipline})
                     </option>
                   ))}
                 </select>

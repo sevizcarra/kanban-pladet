@@ -95,11 +95,22 @@ export default function TimelineView({ projects, onProjectClick }: TimelineViewP
                           </Badge>
                         </div>
 
-                        {/* Memorandum Number and Requesting Unit */}
-                        <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
+                        {/* Memorandum Number, Requesting Unit, and Assigned Professional */}
+                        <div className="flex items-center gap-2 mb-3 text-sm text-gray-600 flex-wrap">
                           <span>Memo: {project.memorandumNumber}</span>
-                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-500">•</span>
                           <span>{project.requestingUnit}</span>
+                          {project.profesionalAsignado && (
+                            <>
+                              <span className="text-gray-500">•</span>
+                              <span className="inline-flex items-center gap-1 text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full text-xs font-medium">
+                                <span className="w-4 h-4 rounded-full bg-teal-200 text-teal-800 flex items-center justify-center text-[9px] font-bold">
+                                  {project.profesionalAsignado.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                </span>
+                                {project.profesionalAsignado}
+                              </span>
+                            </>
+                          )}
                         </div>
 
                         {/* Progress Bar */}
@@ -133,7 +144,7 @@ export default function TimelineView({ projects, onProjectClick }: TimelineViewP
                     );
                   })
                 ) : (
-                  <div className="text-center py-6 text-gray-400">
+                  <div className="text-center py-6 text-gray-500">
                     No hay proyectos en esta etapa
                   </div>
                 )}

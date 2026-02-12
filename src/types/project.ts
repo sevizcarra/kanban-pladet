@@ -24,6 +24,7 @@ export interface Project {
   // Equipo
   jefeProyectoId?: number;
   inspectorId?: number;
+  profesionalAsignado?: string;
   especialidades?: string[];
   // Ejecución
   fechaInicioObra?: string;

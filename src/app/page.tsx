@@ -197,7 +197,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
               {/* Status Filter */}
               <div className="flex items-center gap-2">
-                <Filter size={18} className="text-gray-400" />
+                <Filter size={18} className="text-gray-500" />
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
@@ -228,7 +228,7 @@ export default function Home() {
 
               {/* Search Input */}
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <Search size={18} className="text-gray-400" />
+                <Search size={18} className="text-gray-500" />
                 <input
                   type="text"
                   placeholder="Buscar por título o memorándum..."

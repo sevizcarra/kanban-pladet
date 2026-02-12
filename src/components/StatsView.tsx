@@ -1,6 +1,6 @@
 "use client";
 
-import { STATUSES, PRIORITIES, fmt } from "@/lib/constants";
+import { STATUSES, PRIORITIES, MANAGERS, SPECIALISTS, fmt } from "@/lib/constants";
 import { Project } from "@/types/project";
 import {
   BarChart,
@@ -79,6 +79,21 @@ export default function StatsView({ projects }: StatsViewProps) {
     );
   };
 
+  // Prepare data for professional workload
+  const allProfessionals = [...MANAGERS, ...SPECIALISTS.map(s => s.name)];
+  const workloadData = allProfessionals.map((name) => {
+    const assigned = projects.filter((p) => p.profesionalAsignado === name);
+    const active = assigned.filter((p) => p.status !== "terminada");
+    return {
+      name: name.split(" ")[0], // First name for chart
+      fullName: name,
+      total: assigned.length,
+      active: active.length,
+    };
+  }).filter(d => d.total > 0 || allProfessionals.indexOf(d.fullName) < MANAGERS.length);
+
+  const WORKLOAD_COLORS = ["#0ea5e9", "#14b8a6", "#8b5cf6", "#f59e0b", "#ef4444", "#22c55e", "#f97316", "#64748b"];
+
   return (
     <div className="space-y-8 p-6">
       {/* Top Row: Stat Cards */}
@@ -91,6 +106,58 @@ export default function StatsView({ projects }: StatsViewProps) {
           colorKey="orange"
         />
         <StatCard label="Terminados" value={terminados} colorKey="gray" />
+      </div>
+
+      {/* Workload per Professional */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">
+          Carga de Trabajo por Profesional
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {workloadData.map((prof, idx) => {
+            const projectsForProf = projects.filter(p => p.profesionalAsignado === prof.fullName);
+            const activeProjects = projectsForProf.filter(p => p.status !== "terminada");
+            return (
+              <div key={prof.fullName} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                    style={{ backgroundColor: WORKLOAD_COLORS[idx % WORKLOAD_COLORS.length] }}
+                  >
+                    {prof.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{prof.fullName}</p>
+                    <p className="text-xs text-gray-500">
+                      {prof.active} activo{prof.active !== 1 ? "s" : ""} · {prof.total} total
+                    </p>
+                  </div>
+                </div>
+                {activeProjects.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {activeProjects.map((p) => {
+                      const statusObj = STATUSES.find(s => s.id === p.status);
+                      return (
+                        <div key={p.id} className="flex items-center gap-2 text-xs">
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusObj?.color || "#999" }} />
+                          <span className="text-gray-700 truncate flex-1">{p.title}</span>
+                          <span className="text-gray-500 font-medium flex-shrink-0">{statusObj?.short}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Sin proyectos activos asignados</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {workloadData.every(d => d.total === 0) && (
+          <p className="text-sm text-gray-500 text-center py-8">
+            Aún no hay profesionales asignados a proyectos. Asigna un profesional desde el detalle de cada proyecto.
+          </p>
+        )}
       </div>
 
       {/* Two-Column Grid: Charts */}
