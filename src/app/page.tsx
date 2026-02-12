@@ -221,80 +221,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative">
-      {/* Decorative background graphics */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Concentric circles — top left */}
-        <svg className="absolute top-[6%] left-[-3%] w-[500px] h-[500px]" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="48" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.2" />
-          <circle cx="50" cy="50" r="38" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
-          <circle cx="50" cy="50" r="28" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.15" />
-          <circle cx="50" cy="50" r="18" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.12" />
-          <circle cx="50" cy="50" r="8" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
-          <line x1="50" y1="2" x2="50" y2="98" stroke="#00A499" strokeWidth="0.1" opacity="0.12" />
-          <line x1="2" y1="50" x2="98" y2="50" stroke="#00A499" strokeWidth="0.1" opacity="0.12" />
-        </svg>
-
-        {/* Hexagons — bottom right */}
-        <svg className="absolute bottom-[3%] right-[-3%] w-[450px] h-[450px]" viewBox="0 0 100 100">
-          <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
-          <polygon points="50,15 85,32.5 85,67.5 50,85 15,67.5 15,32.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.15" />
-          <polygon points="50,25 75,37.5 75,62.5 50,75 25,62.5 25,37.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.12" />
-          <polygon points="50,35 65,42.5 65,57.5 50,65 35,57.5 35,42.5" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
-        </svg>
-
-        {/* Dot grid — top right */}
-        <svg className="absolute top-[10%] right-[3%] w-[350px] h-[350px]" viewBox="0 0 100 100">
-          {Array.from({ length: 10 }).map((_, row) =>
-            Array.from({ length: 10 }).map((_, col) => (
-              <circle key={`dot-${row}-${col}`} cx={5 + col * 10} cy={5 + row * 10} r="0.8" fill="#00A499" opacity="0.2" />
-            ))
-          )}
-        </svg>
-
-        {/* Rounded squares — mid left */}
-        <svg className="absolute top-[48%] left-[2%] w-[320px] h-[320px]" viewBox="0 0 100 100">
-          <rect x="8" y="8" width="84" height="84" rx="15" fill="none" stroke="#F97316" strokeWidth="0.2" opacity="0.18" />
-          <rect x="20" y="20" width="60" height="60" rx="11" fill="none" stroke="#F97316" strokeWidth="0.2" opacity="0.14" />
-          <rect x="32" y="32" width="36" height="36" rx="7" fill="none" stroke="#F97316" strokeWidth="0.2" opacity="0.1" />
-        </svg>
-
-        {/* Circle cluster — bottom left */}
-        <svg className="absolute bottom-[12%] left-[12%] w-[280px] h-[280px]" viewBox="0 0 100 100">
-          <circle cx="30" cy="30" r="22" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
-          <circle cx="62" cy="22" r="14" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.15" />
-          <circle cx="45" cy="58" r="18" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.16" />
-          <circle cx="78" cy="55" r="10" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.14" />
-          <circle cx="22" cy="72" r="12" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.12" />
-          <circle cx="68" cy="78" r="8" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
-        </svg>
-
-        {/* Diamond — right center */}
-        <svg className="absolute top-[38%] right-[6%] w-[240px] h-[240px]" viewBox="0 0 100 100">
-          <polygon points="50,3 97,50 50,97 3,50" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
-          <polygon points="50,16 84,50 50,84 16,50" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.14" />
-          <polygon points="50,29 71,50 50,71 29,50" fill="none" stroke="#00A499" strokeWidth="0.15" opacity="0.1" />
-          <line x1="50" y1="3" x2="50" y2="97" stroke="#00A499" strokeWidth="0.08" opacity="0.12" />
-          <line x1="3" y1="50" x2="97" y2="50" stroke="#00A499" strokeWidth="0.08" opacity="0.12" />
-        </svg>
-
-        {/* Cross pattern — bottom center */}
-        <svg className="absolute bottom-[5%] left-[38%] w-[350px] h-[180px]" viewBox="0 0 100 50">
-          {Array.from({ length: 5 }).map((_, row) =>
-            Array.from({ length: 9 }).map((_, col) => (
-              <g key={`cross-${row}-${col}`}>
-                <line x1={5 + col * 11 - 2.5} y1={5 + row * 10} x2={5 + col * 11 + 2.5} y2={5 + row * 10} stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
-                <line x1={5 + col * 11} y1={5 + row * 10 - 2.5} x2={5 + col * 11} y2={5 + row * 10 + 2.5} stroke="#00A499" strokeWidth="0.15" opacity="0.18" />
-              </g>
-            ))
-          )}
-        </svg>
-
-        {/* Color blobs — much more visible */}
-        <div className="absolute top-[15%] right-[18%] w-[400px] h-[400px] rounded-full bg-[#00A499]/[0.07] blur-[100px]" />
-        <div className="absolute bottom-[15%] left-[3%] w-[350px] h-[350px] rounded-full bg-[#F97316]/[0.06] blur-[100px]" />
-        <div className="absolute top-[50%] left-[40%] w-[300px] h-[300px] rounded-full bg-[#00A499]/[0.05] blur-[80px]" />
-        <div className="absolute top-[3%] left-[55%] w-[250px] h-[250px] rounded-full bg-[#F97316]/[0.04] blur-[80px]" />
-      </div>
+      {/* Dot grid background — full screen */}
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, #00A499 1px, transparent 1px)', backgroundSize: '28px 28px', opacity: 0.15 }} />
 
       <div className="relative z-10">
         <Header userEmail={authUser.email} onLogout={handleLogout} />
