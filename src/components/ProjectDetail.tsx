@@ -50,6 +50,12 @@ export default function ProjectDetail({
   onDelete,
 }: ProjectDetailProps) {
   // Local editable state
+  const [fechaRecepcionMemo, setFechaRecepcionMemo] = useState(
+    project.fechaRecepcionMemo || ""
+  );
+  const [fechaEstEntrega, setFechaEstEntrega] = useState(
+    project.dueDate || ""
+  );
   const [descripcion, setDescripcion] = useState(project.description || "");
   const [fechaLicitacion, setFechaLicitacion] = useState(
     project.fechaLicitacion || ""
@@ -144,6 +150,8 @@ export default function ProjectDetail({
   const handleSave = () => {
     const updated: Project = {
       ...project,
+      fechaRecepcionMemo: fechaRecepcionMemo || "",
+      dueDate: fechaEstEntrega || "",
       description: descripcion,
       fechaLicitacion: fechaLicitacion || "",
       fechaPublicacion: fechaPublicacion || "",
@@ -591,16 +599,16 @@ export default function ProjectDetail({
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
-              {/* Fecha Creación */}
+              {/* Fecha Recepción Memorándum */}
               <div>
                 <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Creación
+                  Fecha Recepción Memorándum
                 </label>
                 <input
-                  type="text"
-                  disabled
-                  value={fmtDate(project.createdAt)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600"
+                  type="date"
+                  value={fechaRecepcionMemo}
+                  onChange={(e) => setFechaRecepcionMemo(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
                 />
               </div>
 
@@ -610,10 +618,10 @@ export default function ProjectDetail({
                   Fecha Est. Entrega
                 </label>
                 <input
-                  type="text"
-                  disabled
-                  value={fmtDate(project.dueDate)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600"
+                  type="date"
+                  value={fechaEstEntrega}
+                  onChange={(e) => setFechaEstEntrega(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
                 />
               </div>
 
