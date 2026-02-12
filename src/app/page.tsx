@@ -222,7 +222,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative">
       {/* Dot grid background — full screen */}
-      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, #00A499 1px, transparent 1px)', backgroundSize: '28px 28px', opacity: 0.15 }} />
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, #00A499 2.5px, transparent 2.5px)', backgroundSize: '28px 28px', opacity: 0.25 }} />
 
       <div className="relative z-10">
         <Header userEmail={authUser.email} onLogout={handleLogout} />
