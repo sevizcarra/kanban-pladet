@@ -34,15 +34,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#003B5C] to-[#00A499] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
-        <div className="bg-[#003B5C] px-8 py-6 text-center">
-          <h1 className="text-2xl font-bold text-white tracking-wide">
-            PLADET — USACH
-          </h1>
-          <p className="text-sm text-white/70 mt-1">
+        <div className="bg-[#F97316] px-8 py-6 text-center">
+          <h1 className="text-xl font-bold text-white tracking-wide">
             Dirección de Planificación y Desarrollo Territorial
+          </h1>
+          <p className="text-sm text-white/80 mt-1">
+            Sistema de seguimiento de proyectos
           </p>
         </div>
 
