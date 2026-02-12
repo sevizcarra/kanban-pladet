@@ -23,6 +23,7 @@ import {
   MANAGERS,
   INSPECTORS,
   SPECIALISTS,
+  BIDDING_TYPES,
   fmt,
   fmtDate,
   getStatusObj,
@@ -82,8 +83,12 @@ export default function ProjectDetail({
       disenoArquitectura: false,
       disenoEspecialidades: false,
       compraCDP: false,
-      compraDOCL: false,
+      compraEnProceso: false,
+      compraEvaluacionAdj: false,
     }
+  );
+  const [tipoLicitacion, setTipoLicitacion] = useState(
+    project.tipoLicitacion || ""
   );
   const [edpCount, setEdpCount] = useState(project.edpCount || 1);
   const [retCount, setRetCount] = useState(project.retCount || 0);
@@ -148,6 +153,7 @@ export default function ProjectDetail({
       fechaPublicacion,
       budget: montoAsignado,
       tipoFinanciamiento,
+      tipoLicitacion: tipoLicitacion || undefined,
       idLicitacion,
       codigoProyectoDCI,
       fechaVencimientoRecursos,
@@ -348,11 +354,20 @@ export default function ProjectDetail({
                         <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
                           <input
                             type="checkbox"
-                            checked={!!subEtapas.compraDOCL}
-                            onChange={() => handleSubEtapaChange("compraDOCL")}
+                            checked={!!subEtapas.compraEnProceso}
+                            onChange={() => handleSubEtapaChange("compraEnProceso")}
                             className="rounded border-gray-300 text-teal-500 focus:ring-teal-400 w-3 h-3 flex-shrink-0"
                           />
-                          <span>En Depto. Operativo de Compras y Logística</span>
+                          <span>En proceso de compra</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={!!subEtapas.compraEvaluacionAdj}
+                            onChange={() => handleSubEtapaChange("compraEvaluacionAdj")}
+                            className="rounded border-gray-300 text-teal-500 focus:ring-teal-400 w-3 h-3 flex-shrink-0"
+                          />
+                          <span>Evaluación/Adjudicación</span>
                         </label>
                       </div>
                     )}
@@ -462,8 +477,27 @@ export default function ProjectDetail({
                 </select>
               </div>
 
-              {/* ID Licitación - full width */}
-              <div className="col-span-2">
+              {/* Tipo Licitación */}
+              <div>
+                <label className="block text-xs text-gray-600 font-semibold mb-1">
+                  Tipo de Licitación
+                </label>
+                <select
+                  value={tipoLicitacion}
+                  onChange={(e) => setTipoLicitacion(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                >
+                  <option value="">Seleccionar...</option>
+                  {BIDDING_TYPES.map((bt) => (
+                    <option key={bt.value} value={bt.value}>
+                      {bt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* ID Licitación */}
+              <div>
                 <label className="block text-xs text-gray-600 font-semibold mb-1">
                   ID Licitación
                 </label>

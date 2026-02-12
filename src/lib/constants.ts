@@ -44,6 +44,13 @@ export const REQUESTING_UNITS = [
   "SECGEN", "CU", "FARAC", "FING", "FACIMED", "FACCM", "FADER", "FAHU", "FAE", "FACTEC", "FQYB", "BACH",
 ];
 
+export const BIDDING_TYPES = [
+  { value: "compra_agil", label: "Compra Ágil" },
+  { value: "L1", label: "L1" },
+  { value: "licitacion", label: "Licitación" },
+  { value: "materiales_ejecucion", label: "Materiales para ejecución interna" },
+];
+
 export const SECTORS = [
   { value: "1", label: "Sector 1" }, { value: "2", label: "Sector 2" },
   { value: "3", label: "Sector 3" }, { value: "4", label: "Sector 4" },
@@ -69,20 +76,23 @@ export const getStatusObj = (id: string) => STATUSES.find((s) => s.id === id) ||
 export const getStatusIndex = (id: string) => STATUSES.findIndex((s) => s.id === id);
 export const getProgress = (
   id: string,
-  subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraDOCL?: boolean }
+  subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean }
 ) => {
-  // Base progress from main stage (each stage = ~12.5% for 7+1 stages approach)
-  // We use a weighted system: 7 main stages + 4 sub-stages = 11 total checkpoints
   const mainIdx = getStatusIndex(id);
-  let completed = mainIdx + 1; // stages completed (including current)
-  const totalCheckpoints = STATUSES.length + 4; // 7 main + 4 sub-stages
 
-  // Add sub-stage bonuses
+  // Terminada = 100% siempre
+  if (id === "terminada") return 100;
+
+  // 7 etapas principales + 5 sub-etapas = 12 checkpoints totales
+  let completed = mainIdx + 1;
+  const totalCheckpoints = STATUSES.length + 5;
+
   if (subEtapas) {
     if (subEtapas.disenoArquitectura) completed++;
     if (subEtapas.disenoEspecialidades) completed++;
     if (subEtapas.compraCDP) completed++;
-    if (subEtapas.compraDOCL) completed++;
+    if (subEtapas.compraEnProceso) completed++;
+    if (subEtapas.compraEvaluacionAdj) completed++;
   }
 
   return Math.min(100, Math.round((completed / totalCheckpoints) * 100));

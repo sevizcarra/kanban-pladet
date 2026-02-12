@@ -26,12 +26,14 @@ export interface Project {
   inspectorId?: number;
   profesionalAsignado?: string;
   especialidades?: string[];
+  tipoLicitacion?: string;
   // Sub-etapas (checkboxes de avance)
   subEtapas?: {
     disenoArquitectura?: boolean;
     disenoEspecialidades?: boolean;
     compraCDP?: boolean;
-    compraDOCL?: boolean;
+    compraEnProceso?: boolean;
+    compraEvaluacionAdj?: boolean;
   };
   // Ejecución
   fechaInicioObra?: string;
