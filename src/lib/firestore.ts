@@ -39,7 +39,14 @@ export async function createProject(project: Omit<Project, "id">): Promise<strin
 
 export async function updateProject(id: string, data: Partial<Project>): Promise<void> {
   const ref = doc(db, COLLECTION, id);
-  await updateDoc(ref, data);
+  // Strip undefined values and 'id' field — Firestore rejects undefined
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (key !== "id" && value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+  await updateDoc(ref, cleanData);
 }
 
 export async function deleteProject(id: string): Promise<void> {

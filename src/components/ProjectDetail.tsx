@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronLeft,
+  Save,
   CheckCircle,
   Trash2,
   AlertTriangle,
@@ -109,74 +110,10 @@ export default function ProjectDetail({
   );
 
   // UI state
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
   const [showPDF, setShowPDF] = useState(false);
-
-  // Auto-save refs (stable references to avoid infinite loops)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isFirstRender = useRef(true);
-  const onUpdateRef = useRef(onUpdate);
-  const projectRef = useRef(project);
-  onUpdateRef.current = onUpdate;
-  projectRef.current = project;
-
-  // Serialized snapshot of all editable fields for change detection
-  const editableSnapshot = JSON.stringify({
-    descripcion, fechaLicitacion, fechaPublicacion, montoAsignado,
-    tipoFinanciamiento, tipoLicitacion, idLicitacion, codigoProyectoDCI,
-    fechaVencimientoRecursos, jefeProyectoId, inspectorId, profesionalAsignado,
-    especialidades, subEtapas, edpCount, retCount, ndcCount, fechaInicioObra,
-    plazoEjecucion, fechaVencGarantia, fechaRecProviso, fechaRecDefinitiva,
-  });
-
-  // Auto-save with debounce — fires when any editable field changes
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
-    setSaveStatus("saving");
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      const updated: Project = {
-        ...projectRef.current,
-        description: descripcion,
-        fechaLicitacion,
-        fechaPublicacion,
-        budget: montoAsignado,
-        tipoFinanciamiento,
-        tipoLicitacion: tipoLicitacion || undefined,
-        idLicitacion,
-        codigoProyectoDCI,
-        fechaVencimientoRecursos,
-        jefeProyectoId: jefeProyectoId === -1 ? undefined : jefeProyectoId,
-        inspectorId: inspectorId === -1 ? undefined : inspectorId,
-        profesionalAsignado: profesionalAsignado || undefined,
-        especialidades,
-        subEtapas,
-        edpCount,
-        retCount,
-        ndcCount,
-        fechaInicioObra,
-        plazoEjecucion: plazoEjecucion.toString(),
-        fechaVencGarantia,
-        fechaRecProviso,
-        fechaRecDefinitiva,
-      };
-      onUpdateRef.current(updated);
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 2000);
-    }, 800);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editableSnapshot]);
 
   // Computed values
   const fechaEstTermino = useMemo(() => {
@@ -202,6 +139,37 @@ export default function ProjectDetail({
   const progress = getProgress(project.status, project.subEtapas);
 
   // Handlers
+  const handleSave = () => {
+    const updated: Project = {
+      ...project,
+      description: descripcion,
+      fechaLicitacion: fechaLicitacion || "",
+      fechaPublicacion: fechaPublicacion || "",
+      budget: montoAsignado,
+      tipoFinanciamiento,
+      tipoLicitacion: tipoLicitacion || "",
+      idLicitacion: idLicitacion || "",
+      codigoProyectoDCI: codigoProyectoDCI || "",
+      fechaVencimientoRecursos: fechaVencimientoRecursos || "",
+      jefeProyectoId: jefeProyectoId === -1 ? 0 : jefeProyectoId,
+      inspectorId: inspectorId === -1 ? 0 : inspectorId,
+      profesionalAsignado: profesionalAsignado || "",
+      especialidades,
+      subEtapas,
+      edpCount,
+      retCount,
+      ndcCount,
+      fechaInicioObra: fechaInicioObra || "",
+      plazoEjecucion: plazoEjecucion.toString(),
+      fechaVencGarantia: fechaVencGarantia || "",
+      fechaRecProviso: fechaRecProviso || "",
+      fechaRecDefinitiva: fechaRecDefinitiva || "",
+    };
+    onUpdate(updated);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
   const handleToggleEspecialidad = (name: string) => {
     setEspecialidades((prev) =>
       prev.includes(name) ? prev.filter((e) => e !== name) : [...prev, name]
@@ -214,18 +182,18 @@ export default function ProjectDetail({
   };
 
   const handleStatusCheckbox = (clickedIdx: number) => {
-    const clickedStatus = STATUSES[clickedIdx];
+    let newStatusId = project.status;
     if (clickedIdx <= statusIndex) {
-      // Clicking current or past: go back to that stage (or previous if unchecking current)
       if (clickedIdx === statusIndex && clickedIdx > 0) {
-        const prevStatus = STATUSES[clickedIdx - 1];
-        onUpdate({ ...project, status: prevStatus.id });
+        newStatusId = STATUSES[clickedIdx - 1].id;
       } else if (clickedIdx < statusIndex) {
-        onUpdate({ ...project, status: clickedStatus.id });
+        newStatusId = STATUSES[clickedIdx].id;
       }
     } else {
-      // Clicking a future stage: advance to it
-      onUpdate({ ...project, status: clickedStatus.id });
+      newStatusId = STATUSES[clickedIdx].id;
+    }
+    if (newStatusId !== project.status) {
+      onUpdate({ ...project, status: newStatusId });
     }
   };
 
@@ -249,26 +217,27 @@ export default function ProjectDetail({
             Memorándum: {project.memorandumNumber}
           </p>
         </div>
-        {/* Auto-save indicator */}
-        {saveStatus !== "idle" && (
-          <div className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
-            saveStatus === "saving"
-              ? "bg-amber-50 text-amber-600"
-              : "bg-green-50 text-green-600"
-          }`}>
-            {saveStatus === "saving" ? (
-              <>
-                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-3.5 h-3.5" />
-                Guardado
-              </>
-            )}
-          </div>
-        )}
+        {/* Save button in header */}
+        <button
+          onClick={handleSave}
+          className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all ${
+            saved
+              ? "bg-green-500 text-white"
+              : "bg-[#00A499] hover:bg-[#00A499]/90 text-white"
+          }`}
+        >
+          {saved ? (
+            <>
+              <CheckCircle className="w-4 h-4" />
+              Guardado
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Guardar
+            </>
+          )}
+        </button>
       </div>
 
       <div className="grid grid-cols-[1fr_2fr] gap-6 p-6 max-w-7xl mx-auto">
