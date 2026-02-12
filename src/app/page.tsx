@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { User } from 'firebase/auth';
 import Header from '@/components/Header';
+import LoginPage from '@/components/LoginPage';
 import KanbanBoard from '@/components/KanbanBoard';
 import ProjectDetail from '@/components/ProjectDetail';
 import StatsView from '@/components/StatsView';
 import TimelineView from '@/components/TimelineView';
 import CreateProjectModal from '@/components/CreateProjectModal';
+import AdminPanel from '@/components/AdminPanel';
 import {
   subscribeProjects,
   createProject,
@@ -14,7 +17,9 @@ import {
   deleteProject,
   seedIfEmpty,
 } from '@/lib/firestore';
+import { onAuthChange, logout, isAdmin, getUserProfile, ensureAdminProfile } from '@/lib/auth';
 import { Project } from '@/types/project';
+import { AppUser } from '@/types/user';
 import {
   LayoutDashboard,
   BarChart3,
@@ -22,14 +27,21 @@ import {
   Plus,
   Filter,
   Search,
+  Users,
 } from 'lucide-react';
 import { STATUSES, PRIORITIES } from '@/lib/constants';
 
+type Tab = 'dashboard' | 'stats' | 'timeline' | 'users';
+
 export default function Home() {
+  // Auth state
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // App state
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'stats' | 'timeline'>(
-    'dashboard'
-  );
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
@@ -37,31 +49,65 @@ export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Listen to Firebase Auth state
   useEffect(() => {
+    const unsubscribe = onAuthChange(async (user) => {
+      setAuthUser(user);
+      if (user) {
+        // Check if user has a profile in Firestore
+        let profile = await getUserProfile(user.uid);
+        if (!profile && isAdmin(user.email)) {
+          // Auto-create admin profile on first login
+          profile = await ensureAdminProfile(user);
+        }
+        if (profile) {
+          setAppUser(profile);
+        } else {
+          // User exists in Firebase Auth but not in Firestore users collection
+          // This means they were removed by admin — sign them out
+          await logout();
+          setAuthUser(null);
+          setAppUser(null);
+        }
+      } else {
+        setAppUser(null);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to projects only when authenticated
+  useEffect(() => {
+    if (!authUser) return;
+
+    let unsubscribe: (() => void) | undefined;
+
     const initializeAndSubscribe = async () => {
       try {
         await seedIfEmpty();
-        const unsubscribe = subscribeProjects((newProjects) => {
+        unsubscribe = subscribeProjects((newProjects) => {
           setProjects(newProjects);
           setLoading(false);
         });
-        return unsubscribe;
       } catch (error) {
         console.error('Error initializing projects:', error);
         setLoading(false);
       }
     };
 
-    let unsubscribe: (() => void) | undefined;
-    initializeAndSubscribe().then((unsub) => {
-      unsubscribe = unsub;
-    });
+    initializeAndSubscribe();
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      if (unsubscribe) unsubscribe();
     };
+  }, [authUser]);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    setAuthUser(null);
+    setAppUser(null);
+    setActiveTab('dashboard');
   }, []);
 
   const handleCreate = useCallback(
@@ -120,6 +166,26 @@ export default function Home() {
     ? projects.find((p) => p.id === selectedProject.id) || null
     : null;
 
+  const userIsAdmin = isAdmin(authUser?.email);
+
+  // Auth loading spinner
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-gray-300 border-t-teal-500 rounded-full animate-spin"></div>
+          <p className="text-gray-600">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated — show login
+  if (!authUser) {
+    return <LoginPage onLogin={() => {}} />;
+  }
+
+  // Data loading spinner
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -131,10 +197,11 @@ export default function Home() {
     );
   }
 
+  // Project detail view
   if (selectedProject && matchingProject) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header userEmail={authUser.email} onLogout={handleLogout} />
         <ProjectDetail
           project={matchingProject}
           onUpdate={handleUpdate}
@@ -147,7 +214,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header userEmail={authUser.email} onLogout={handleLogout} />
 
       {/* Tab Bar */}
       <div className="bg-white border-b border-gray-200">
@@ -186,70 +253,87 @@ export default function Home() {
               <Clock size={18} />
               Línea de Tiempo
             </button>
+
+            {/* Admin-only: Users tab */}
+            {userIsAdmin && (
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
+                  activeTab === 'users'
+                    ? 'border-teal-500 text-teal-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Users size={18} />
+                Usuarios
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-              {/* Status Filter */}
-              <div className="flex items-center gap-2">
-                <Filter size={18} className="text-gray-500" />
+      {/* Filter Bar — hide on admin panel */}
+      {activeTab !== 'users' && (
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
+                {/* Status Filter */}
+                <div className="flex items-center gap-2">
+                  <Filter size={18} className="text-gray-500" />
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="all">Todos los Estados</option>
+                    {STATUSES.map((status) => (
+                      <option key={status.id} value={status.id}>
+                        {status.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Priority Filter */}
                 <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  <option value="all">Todos los Estados</option>
-                  {STATUSES.map((status) => (
-                    <option key={status.id} value={status.id}>
-                      {status.label}
+                  <option value="all">Todas las Prioridades</option>
+                  {Object.entries(PRIORITIES).map(([key, prio]) => (
+                    <option key={key} value={key}>
+                      {prio.label}
                     </option>
                   ))}
                 </select>
+
+                {/* Search Input */}
+                <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                  <Search size={18} className="text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por título o memorándum..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg flex-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
               </div>
 
-              {/* Priority Filter */}
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              {/* Create Project Button */}
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors whitespace-nowrap"
               >
-                <option value="all">Todas las Prioridades</option>
-                {Object.entries(PRIORITIES).map(([key, prio]) => (
-                  <option key={key} value={key}>
-                    {prio.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Search Input */}
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <Search size={18} className="text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Buscar por título o memorándum..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg flex-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
+                <Plus size={18} />
+                Nuevo Proyecto
+              </button>
             </div>
-
-            {/* Create Project Button */}
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors whitespace-nowrap"
-            >
-              <Plus size={18} />
-              Nuevo Proyecto
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -269,6 +353,10 @@ export default function Home() {
             projects={filteredProjects}
             onProjectClick={setSelectedProject}
           />
+        )}
+
+        {activeTab === 'users' && userIsAdmin && (
+          <AdminPanel />
         )}
       </div>
 

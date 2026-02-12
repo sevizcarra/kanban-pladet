@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,3 +13,12 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
+
+// Lazy auth initialization — avoids crash during SSR/prerender
+let _auth: Auth | null = null;
+export function getFirebaseAuth(): Auth {
+  if (!_auth) {
+    _auth = getAuth(app);
+  }
+  return _auth;
+}
