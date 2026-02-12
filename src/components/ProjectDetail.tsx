@@ -466,6 +466,94 @@ export default function ProjectDetail({
                 </div>
               </div>
 
+              {/* Equipo del Proyecto (FTE) */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-[#00A499]" />
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Equipo del Proyecto
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {/* Jefe de Proyecto */}
+                  <div>
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">
+                      Jefe de Proyecto
+                    </label>
+                    <select
+                      value={jefeProyectoId === -1 ? "" : jefeProyectoId}
+                      onChange={(e) =>
+                        setJefeProyectoId(
+                          e.target.value ? parseInt(e.target.value) : -1
+                        )
+                      }
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                    >
+                      <option value="">Seleccionar...</option>
+                      {PROFESSIONALS.map((prof, idx) => (
+                        <option key={idx} value={idx}>
+                          {prof.name} — {prof.role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Inspector Técnico */}
+                  <div>
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">
+                      Inspector Técnico
+                    </label>
+                    <select
+                      value={inspectorId === -1 ? "" : inspectorId}
+                      onChange={(e) =>
+                        setInspectorId(
+                          e.target.value ? parseInt(e.target.value) : -1
+                        )
+                      }
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                    >
+                      <option value="">Seleccionar...</option>
+                      {INSPECTORS.map((inspector, idx) => (
+                        <option key={idx} value={idx}>
+                          {inspector}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Especialistas checkboxes */}
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-xs text-gray-600 font-semibold mb-3">
+                    Especialistas
+                  </p>
+                  <div className="space-y-2">
+                    {SPECIALISTS.map((specialist) => (
+                      <label
+                        key={specialist.name}
+                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={especialidades.includes(specialist.name)}
+                          onChange={() => handleToggleEspecialidad(specialist.name)}
+                          className="rounded border-gray-300 text-[#00A499] focus:ring-[#00A499]"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">
+                            {specialist.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {specialist.discipline}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               {/* Informe de Factibilidad */}
               <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
                 <div className="flex items-center gap-2 mb-4">

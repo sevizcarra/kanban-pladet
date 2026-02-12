@@ -23,7 +23,7 @@ export default function KanbanBoard({ projects, onProjectClick }: Props) {
           <div key={s.id} className="min-w-[240px] max-w-[280px] flex-shrink-0">
             <div className="flex items-center gap-2 mb-3 py-2">
               <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-              <span className="text-sm font-semibold text-gray-700">{s.short}</span>
+              <span className="text-sm font-semibold text-gray-700">{s.label}</span>
               <span className="text-xs text-gray-600 bg-gray-200 rounded-full px-2">{cols.length}</span>
             </div>
             <div className="flex flex-col gap-2 min-h-[100px] p-1 bg-gray-50 rounded-xl">
