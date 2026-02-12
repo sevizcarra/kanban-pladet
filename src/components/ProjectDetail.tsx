@@ -14,8 +14,6 @@ import {
   Calendar,
   Briefcase,
   ClipboardList,
-  Eye,
-  Download,
   Pencil,
   Check,
 } from "lucide-react";
@@ -128,7 +126,6 @@ export default function ProjectDetail({
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
-  const [showPDF, setShowPDF] = useState(false);
 
   // Computed values
   const fechaEstTermino = useMemo(() => {
@@ -347,15 +344,6 @@ export default function ProjectDetail({
               </div>
               <ProgressBar value={progress} color={statusObj.color} />
             </div>
-
-            {/* View summary button */}
-            <button
-              onClick={() => setShowPDF(true)}
-              className="w-full px-3 py-2 rounded-lg border border-[#00A499] text-[#00A499] text-sm font-semibold hover:bg-[#00A499]/5 transition flex items-center justify-center gap-2 mb-5"
-            >
-              <Eye className="w-4 h-4" />
-              Ver Resumen / Imprimir
-            </button>
 
             {/* Status flow with checkboxes */}
             <div className="space-y-1">
@@ -1248,63 +1236,6 @@ export default function ProjectDetail({
         </div>
       )}
 
-      {/* PDF Summary modal placeholder */}
-      {showPDF && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] overflow-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">
-                Resumen / Impresión
-              </h3>
-              <button
-                onClick={() => setShowPDF(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
-              >
-                <X className="w-5 h-5 text-gray-700" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  {project.title}
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Memorándum: {project.memorandumNumber}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-200">
-                <div>
-                  <p className="text-xs text-gray-500 font-semibold uppercase">
-                    Estado
-                  </p>
-                  <Badge
-                    color={statusObj.color}
-                    bg={statusObj.color + "20"}
-                  >
-                    {statusObj.label}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-semibold uppercase">
-                    Progreso
-                  </p>
-                  <p className="text-sm font-bold text-gray-900">{progress}%</p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => window.print()}
-                className="w-full px-4 py-2 rounded-lg bg-[#00A499] hover:bg-[#00A499]/90 text-white text-sm font-semibold transition flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Descargar / Imprimir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
