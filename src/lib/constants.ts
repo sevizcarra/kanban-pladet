@@ -67,4 +67,23 @@ export const daysLeft = (d: string | null | undefined) => {
 
 export const getStatusObj = (id: string) => STATUSES.find((s) => s.id === id) || STATUSES[0];
 export const getStatusIndex = (id: string) => STATUSES.findIndex((s) => s.id === id);
-export const getProgress = (id: string) => Math.round(((getStatusIndex(id) + 1) / STATUSES.length) * 100);
+export const getProgress = (
+  id: string,
+  subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraDOCL?: boolean }
+) => {
+  // Base progress from main stage (each stage = ~12.5% for 7+1 stages approach)
+  // We use a weighted system: 7 main stages + 4 sub-stages = 11 total checkpoints
+  const mainIdx = getStatusIndex(id);
+  let completed = mainIdx + 1; // stages completed (including current)
+  const totalCheckpoints = STATUSES.length + 4; // 7 main + 4 sub-stages
+
+  // Add sub-stage bonuses
+  if (subEtapas) {
+    if (subEtapas.disenoArquitectura) completed++;
+    if (subEtapas.disenoEspecialidades) completed++;
+    if (subEtapas.compraCDP) completed++;
+    if (subEtapas.compraDOCL) completed++;
+  }
+
+  return Math.min(100, Math.round((completed / totalCheckpoints) * 100));
+};

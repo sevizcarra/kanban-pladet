@@ -25,7 +25,7 @@ export default function PDFPreview({ project, onClose }: PDFPreviewProps) {
 
   // Get status info
   const statusObj = getStatusObj(project.status);
-  const progress = getProgress(project.status);
+  const progress = getProgress(project.status, project.subEtapas);
 
   // Get priority label
   const priorityLabels: Record<string, string> = {

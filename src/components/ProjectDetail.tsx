@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import {
   ChevronLeft,
-  ArrowRight,
   Save,
   CheckCircle,
   Trash2,
@@ -78,6 +77,14 @@ export default function ProjectDetail({
   const [especialidades, setEspecialidades] = useState(
     project.especialidades || []
   );
+  const [subEtapas, setSubEtapas] = useState(
+    project.subEtapas || {
+      disenoArquitectura: false,
+      disenoEspecialidades: false,
+      compraCDP: false,
+      compraDOCL: false,
+    }
+  );
   const [edpCount, setEdpCount] = useState(project.edpCount || 1);
   const [retCount, setRetCount] = useState(project.retCount || 0);
   const [ndcCount, setNdcCount] = useState(project.ndcCount || 4);
@@ -124,8 +131,7 @@ export default function ProjectDetail({
 
   const statusObj = getStatusObj(project.status);
   const statusIndex = getStatusIndex(project.status);
-  const progress = getProgress(project.status);
-  const isLastStatus = statusIndex === STATUSES.length - 1;
+  const progress = getProgress(project.status, project.subEtapas);
 
   // Handlers
   const handleToggleEspecialidad = (name: string) => {
@@ -149,6 +155,7 @@ export default function ProjectDetail({
       inspectorId: inspectorId === -1 ? undefined : inspectorId,
       profesionalAsignado: profesionalAsignado || undefined,
       especialidades,
+      subEtapas,
       edpCount,
       retCount,
       ndcCount,
@@ -168,11 +175,24 @@ export default function ProjectDetail({
     setShowDeleteConfirm(false);
   };
 
-  const handleAdvanceStatus = () => {
-    if (!isLastStatus) {
-      const nextStatus = STATUSES[statusIndex + 1];
-      onUpdate({ ...project, status: nextStatus.id });
+  const handleStatusCheckbox = (clickedIdx: number) => {
+    const clickedStatus = STATUSES[clickedIdx];
+    if (clickedIdx <= statusIndex) {
+      // Clicking current or past: go back to that stage (or previous if unchecking current)
+      if (clickedIdx === statusIndex && clickedIdx > 0) {
+        const prevStatus = STATUSES[clickedIdx - 1];
+        onUpdate({ ...project, status: prevStatus.id });
+      } else if (clickedIdx < statusIndex) {
+        onUpdate({ ...project, status: clickedStatus.id });
+      }
+    } else {
+      // Clicking a future stage: advance to it
+      onUpdate({ ...project, status: clickedStatus.id });
     }
+  };
+
+  const handleSubEtapaChange = (key: keyof typeof subEtapas) => {
+    setSubEtapas((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -249,17 +269,6 @@ export default function ProjectDetail({
               <ProgressBar value={progress} color={statusObj.color} />
             </div>
 
-            {/* Advance status button */}
-            {!isLastStatus && (
-              <button
-                onClick={handleAdvanceStatus}
-                className="w-full mb-3 px-3 py-2 rounded-lg bg-[#00A499] hover:bg-[#00A499]/90 text-white text-sm font-semibold transition flex items-center justify-center gap-2"
-              >
-                Avanzar a: {STATUSES[statusIndex + 1].label}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            )}
-
             {/* View summary button */}
             <button
               onClick={() => setShowPDF(true)}
@@ -269,30 +278,87 @@ export default function ProjectDetail({
               Ver Resumen / Imprimir
             </button>
 
-            {/* Status flow mini */}
-            <div className="space-y-2">
+            {/* Status flow with checkboxes */}
+            <div className="space-y-1">
               <p className="text-xs text-gray-500 uppercase font-semibold mb-3">
                 Flujo de Estado
               </p>
-              {STATUSES.map((status, idx) => (
-                <div
-                  key={status.id}
-                  className={`flex items-center gap-2 text-xs p-2 rounded-lg transition ${
-                    idx < statusIndex
-                      ? "bg-green-50 text-green-700"
-                      : idx === statusIndex
-                        ? "bg-blue-50 text-blue-700 font-semibold"
-                        : "text-gray-500"
-                  }`}
-                >
-                  {idx < statusIndex ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    <div className="w-4 h-4 rounded-full border border-current" />
-                  )}
-                  <span>{status.short}</span>
-                </div>
-              ))}
+              {STATUSES.map((status, idx) => {
+                const isChecked = idx <= statusIndex;
+                const isCurrent = idx === statusIndex;
+                const isPast = idx < statusIndex;
+
+                return (
+                  <div key={status.id}>
+                    {/* Main stage checkbox */}
+                    <label
+                      className={`flex items-center gap-2.5 text-xs p-2 rounded-lg cursor-pointer transition-colors ${
+                        isPast
+                          ? "bg-green-50 text-green-700"
+                          : isCurrent
+                            ? "bg-blue-50 text-blue-700 font-semibold"
+                            : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleStatusCheckbox(idx)}
+                        className="rounded border-gray-300 text-[#00A499] focus:ring-[#00A499] w-3.5 h-3.5 flex-shrink-0"
+                      />
+                      <span className="leading-tight">{status.label}</span>
+                    </label>
+
+                    {/* Sub-checkboxes for "En Diseño" */}
+                    {status.id === "en_diseno" && (
+                      <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-amber-200 pl-3">
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-amber-50 transition-colors text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={!!subEtapas.disenoArquitectura}
+                            onChange={() => handleSubEtapaChange("disenoArquitectura")}
+                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3 h-3 flex-shrink-0"
+                          />
+                          <span>Arquitectura</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-amber-50 transition-colors text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={!!subEtapas.disenoEspecialidades}
+                            onChange={() => handleSubEtapaChange("disenoEspecialidades")}
+                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3 h-3 flex-shrink-0"
+                          />
+                          <span>Especialidades</span>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* Sub-checkboxes for "En Gestión de Compra" */}
+                    {status.id === "gestion_compra" && (
+                      <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-teal-200 pl-3">
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={!!subEtapas.compraCDP}
+                            onChange={() => handleSubEtapaChange("compraCDP")}
+                            className="rounded border-gray-300 text-teal-500 focus:ring-teal-400 w-3 h-3 flex-shrink-0"
+                          />
+                          <span>CDP solicitado</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={!!subEtapas.compraDOCL}
+                            onChange={() => handleSubEtapaChange("compraDOCL")}
+                            className="rounded border-gray-300 text-teal-500 focus:ring-teal-400 w-3 h-3 flex-shrink-0"
+                          />
+                          <span>En Depto. Operativo de Compras y Logística</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -26,6 +26,13 @@ export interface Project {
   inspectorId?: number;
   profesionalAsignado?: string;
   especialidades?: string[];
+  // Sub-etapas (checkboxes de avance)
+  subEtapas?: {
+    disenoArquitectura?: boolean;
+    disenoEspecialidades?: boolean;
+    compraCDP?: boolean;
+    compraDOCL?: boolean;
+  };
   // Ejecución
   fechaInicioObra?: string;
   plazoEjecucion?: string;
