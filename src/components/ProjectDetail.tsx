@@ -72,9 +72,7 @@ export default function ProjectDetail({
     project.jefeProyectoId || -1
   );
   const [inspectorId, setInspectorId] = useState(project.inspectorId || -1);
-  const [profesionalAsignado, setProfesionalAsignado] = useState(
-    project.profesionalAsignado || ""
-  );
+  // profesionalAsignado removido — el Jefe de Proyecto desarrolla la propuesta
   const [especialidades, setEspecialidades] = useState(
     project.especialidades || []
   );
@@ -153,7 +151,7 @@ export default function ProjectDetail({
       fechaVencimientoRecursos: fechaVencimientoRecursos || "",
       jefeProyectoId: jefeProyectoId === -1 ? 0 : jefeProyectoId,
       inspectorId: inspectorId === -1 ? 0 : inspectorId,
-      profesionalAsignado: profesionalAsignado || "",
+      profesionalAsignado: "",
       especialidades,
       subEtapas,
       edpCount,
@@ -636,30 +634,6 @@ export default function ProjectDetail({
                   {INSPECTORS.map((inspector, idx) => (
                     <option key={idx} value={idx}>
                       {inspector}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Profesional Asignado - para seguimiento de carga */}
-            <div className="border-t border-gray-200 pt-4 mb-4">
-              <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                <label className="block text-xs text-teal-800 font-semibold mb-1">
-                  Profesional Asignado (Desarrollo Activo)
-                </label>
-                <p className="text-[11px] text-teal-600 mb-2">
-                  Profesional que está desarrollando activamente este proyecto
-                </p>
-                <select
-                  value={profesionalAsignado}
-                  onChange={(e) => setProfesionalAsignado(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-teal-300 text-sm focus:border-[#00A499] outline-none bg-white"
-                >
-                  <option value="">Sin asignar</option>
-                  {PROFESSIONALS.map((prof) => (
-                    <option key={prof.name} value={prof.name}>
-                      {prof.name} — {prof.role}
                     </option>
                   ))}
                 </select>

@@ -1,5 +1,5 @@
 "use client";
-import { STATUSES, PRIORITIES, getProgress } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress } from "@/lib/constants";
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
@@ -38,12 +38,12 @@ export default function KanbanBoard({ projects, onProjectClick }: Props) {
                       <Badge color={prio.color} bg={prio.bg}>{prio.label}</Badge>
                       <span className="text-[10px] text-gray-600 font-medium">{p.requestingUnit}</span>
                     </div>
-                    {p.profesionalAsignado && (
+                    {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] && (
                       <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
                         <div className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-[9px] font-bold flex-shrink-0">
-                          {getInitials(p.profesionalAsignado)}
+                          {getInitials(PROFESSIONALS[p.jefeProyectoId].name)}
                         </div>
-                        <span className="text-[10px] text-gray-700 truncate">{p.profesionalAsignado}</span>
+                        <span className="text-[10px] text-gray-700 truncate">{PROFESSIONALS[p.jefeProyectoId].name}</span>
                       </div>
                     )}
                   </div>

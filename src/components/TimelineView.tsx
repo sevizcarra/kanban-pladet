@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
-import { STATUSES, PRIORITIES, fmtDate, daysLeft, fmt, getProgress } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, fmtDate, daysLeft, fmt, getProgress } from "@/lib/constants";
 import { Project } from "@/types/project";
 
 interface TimelineViewProps {
@@ -100,14 +100,14 @@ export default function TimelineView({ projects, onProjectClick }: TimelineViewP
                           <span>Memo: {project.memorandumNumber}</span>
                           <span className="text-gray-500">•</span>
                           <span>{project.requestingUnit}</span>
-                          {project.profesionalAsignado && (
+                          {project.jefeProyectoId !== undefined && project.jefeProyectoId >= 0 && PROFESSIONALS[project.jefeProyectoId] && (
                             <>
                               <span className="text-gray-500">•</span>
                               <span className="inline-flex items-center gap-1 text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full text-xs font-medium">
                                 <span className="w-4 h-4 rounded-full bg-teal-200 text-teal-800 flex items-center justify-center text-[9px] font-bold">
-                                  {project.profesionalAsignado.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                  {PROFESSIONALS[project.jefeProyectoId].name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                                 </span>
-                                {project.profesionalAsignado}
+                                {PROFESSIONALS[project.jefeProyectoId].name}
                               </span>
                             </>
                           )}

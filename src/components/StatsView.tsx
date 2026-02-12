@@ -79,14 +79,14 @@ export default function StatsView({ projects }: StatsViewProps) {
     );
   };
 
-  // Prepare data for professional workload
-  const allProfessionals = PROFESSIONALS.map(p => p.name);
-  const workloadData = allProfessionals.map((name) => {
-    const assigned = projects.filter((p) => p.profesionalAsignado === name);
+  // Prepare data for professional workload (by Jefe de Proyecto)
+  const workloadData = PROFESSIONALS.map((prof, idx) => {
+    const assigned = projects.filter((p) => p.jefeProyectoId === idx);
     const active = assigned.filter((p) => p.status !== "terminada");
     return {
-      name: name.split(" ")[0], // First name for chart
-      fullName: name,
+      name: prof.name.split(" ")[0],
+      fullName: prof.name,
+      profIdx: idx,
       total: assigned.length,
       active: active.length,
     };
