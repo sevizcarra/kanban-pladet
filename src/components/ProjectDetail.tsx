@@ -91,10 +91,6 @@ export default function ProjectDetail({
   const [edpCount, setEdpCount] = useState(project.edpCount || 1);
   const [retCount, setRetCount] = useState(project.retCount || 0);
   const [ndcCount, setNdcCount] = useState(project.ndcCount || 4);
-  const [mcdCount, setMcdCount] = useState(project.mcdCount || 0);
-  const [mcdData, setMcdData] = useState(
-    project.mcdData || [] as Array<{ monto?: string; descripcion?: string; fecha?: string }>
-  );
   const [fechaInicioObra, setFechaInicioObra] = useState(
     project.fechaInicioObra || ""
   );
@@ -161,12 +157,6 @@ export default function ProjectDetail({
       edpCount,
       retCount,
       ndcCount,
-      mcdCount,
-      mcdData: mcdData.map((m) => ({
-        monto: m.monto || "",
-        descripcion: m.descripcion || "",
-        fecha: m.fecha || "",
-      })),
       fechaInicioObra: fechaInicioObra || "",
       plazoEjecucion: plazoEjecucion.toString(),
       fechaVencGarantia: fechaVencGarantia || "",
@@ -923,135 +913,26 @@ export default function ProjectDetail({
             </button>
           </div>
 
-          {/* 9. Modificaciones de Contrato (MCD) */}
+          {/* 9. Modificación de Contrato (MCD) */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-[#00A499]" />
-                <h2 className="text-lg font-bold text-gray-900">
-                  Modificaciones de Contrato (MCD)
-                </h2>
-              </div>
-              <span className="text-xs text-gray-600 font-semibold">
-                Total: {mcdCount}
-              </span>
+            <div className="flex items-center gap-2 mb-4">
+              <ClipboardList className="w-5 h-5 text-[#00A499]" />
+              <h2 className="text-lg font-bold text-gray-900">
+                Modificación de Contrato (MCD)
+              </h2>
             </div>
 
-            {mcdCount > 0 && (
-              <div className="space-y-4 mb-4">
-                {Array.from({ length: mcdCount }).map((_, idx) => {
-                  const mcd = mcdData[idx] || { monto: "", descripcion: "", fecha: "" };
-                  return (
-                    <div
-                      key={`mcd-${idx}`}
-                      className="border border-purple-200 bg-purple-50/50 rounded-lg p-4"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-bold text-purple-800">
-                          MCD {idx + 1}
-                        </p>
-                        <button
-                          onClick={() => {
-                            const newData = [...mcdData];
-                            newData.splice(idx, 1);
-                            setMcdData(newData);
-                            setMcdCount((prev) => prev - 1);
-                          }}
-                          className="text-xs text-red-500 hover:text-red-700 font-medium transition"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs text-gray-600 font-semibold mb-1">
-                            Monto CLP
-                          </label>
-                          <div className="flex items-center">
-                            <span className="text-sm text-gray-600 mr-2">$</span>
-                            <input
-                              type="text"
-                              value={mcd.monto || ""}
-                              onChange={(e) => {
-                                const newData = [...mcdData];
-                                if (!newData[idx]) newData[idx] = {};
-                                newData[idx] = { ...newData[idx], monto: e.target.value };
-                                setMcdData(newData);
-                              }}
-                              className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none bg-white"
-                              placeholder="0"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-600 font-semibold mb-1">
-                            Fecha
-                          </label>
-                          <input
-                            type="date"
-                            value={mcd.fecha || ""}
-                            onChange={(e) => {
-                              const newData = [...mcdData];
-                              if (!newData[idx]) newData[idx] = {};
-                              newData[idx] = { ...newData[idx], fecha: e.target.value };
-                              setMcdData(newData);
-                            }}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none bg-white"
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">
-                          Descripción
-                        </label>
-                        <textarea
-                          value={mcd.descripcion || ""}
-                          onChange={(e) => {
-                            const newData = [...mcdData];
-                            if (!newData[idx]) newData[idx] = {};
-                            newData[idx] = { ...newData[idx], descripcion: e.target.value };
-                            setMcdData(newData);
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none resize-none h-16 bg-white"
-                          placeholder="Descripción de la modificación..."
-                        />
-                      </div>
-
-                      {/* Documentos asociados a la MCD */}
-                      <div className="mt-3 pt-3 border-t border-purple-200">
-                        <p className="text-xs text-purple-700 font-semibold mb-2">
-                          Documentos
-                        </p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <button className="border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1.5 text-purple-600 hover:text-purple-700">
-                            <Upload className="w-4 h-4" />
-                            <span className="text-[11px] font-medium leading-tight">Libro de Obras</span>
-                          </button>
-                          <button className="border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1.5 text-purple-600 hover:text-purple-700">
-                            <Upload className="w-4 h-4" />
-                            <span className="text-[11px] font-medium leading-tight">CDP</span>
-                          </button>
-                          <button className="border-2 border-dashed border-purple-300 hover:border-purple-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1.5 text-purple-600 hover:text-purple-700">
-                            <Upload className="w-4 h-4" />
-                            <span className="text-[11px] font-medium leading-tight">MCD Propuesta</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <button
-              onClick={() => {
-                setMcdCount((prev) => prev + 1);
-                setMcdData((prev) => [...prev, { monto: "", descripcion: "", fecha: "" }]);
-              }}
-              className="w-full px-3 py-2 rounded-lg border border-purple-500 text-purple-600 text-sm font-semibold hover:bg-purple-50 transition"
-            >
-              + Agregar MCD
-            </button>
+            <div className="grid grid-cols-3 gap-4">
+              {["Libro de Obra", "CDP MCD", "Modificación"].map((doc) => (
+                <button
+                  key={doc}
+                  className="border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]"
+                >
+                  <Upload className="w-5 h-5" />
+                  <span className="text-sm font-medium">{doc}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* DELETE button */}
