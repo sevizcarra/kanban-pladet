@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   ChevronLeft,
   CheckCircle,
@@ -114,9 +114,69 @@ export default function ProjectDetail({
   const [deleteReason, setDeleteReason] = useState("");
   const [showPDF, setShowPDF] = useState(false);
 
-  // Auto-save refs
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  // Auto-save refs (stable references to avoid infinite loops)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRender = useRef(true);
+  const onUpdateRef = useRef(onUpdate);
+  const projectRef = useRef(project);
+  onUpdateRef.current = onUpdate;
+  projectRef.current = project;
+
+  // Serialized snapshot of all editable fields for change detection
+  const editableSnapshot = JSON.stringify({
+    descripcion, fechaLicitacion, fechaPublicacion, montoAsignado,
+    tipoFinanciamiento, tipoLicitacion, idLicitacion, codigoProyectoDCI,
+    fechaVencimientoRecursos, jefeProyectoId, inspectorId, profesionalAsignado,
+    especialidades, subEtapas, edpCount, retCount, ndcCount, fechaInicioObra,
+    plazoEjecucion, fechaVencGarantia, fechaRecProviso, fechaRecDefinitiva,
+  });
+
+  // Auto-save with debounce — fires when any editable field changes
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    setSaveStatus("saving");
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const updated: Project = {
+        ...projectRef.current,
+        description: descripcion,
+        fechaLicitacion,
+        fechaPublicacion,
+        budget: montoAsignado,
+        tipoFinanciamiento,
+        tipoLicitacion: tipoLicitacion || undefined,
+        idLicitacion,
+        codigoProyectoDCI,
+        fechaVencimientoRecursos,
+        jefeProyectoId: jefeProyectoId === -1 ? undefined : jefeProyectoId,
+        inspectorId: inspectorId === -1 ? undefined : inspectorId,
+        profesionalAsignado: profesionalAsignado || undefined,
+        especialidades,
+        subEtapas,
+        edpCount,
+        retCount,
+        ndcCount,
+        fechaInicioObra,
+        plazoEjecucion: plazoEjecucion.toString(),
+        fechaVencGarantia,
+        fechaRecProviso,
+        fechaRecDefinitiva,
+      };
+      onUpdateRef.current(updated);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    }, 800);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editableSnapshot]);
 
   // Computed values
   const fechaEstTermino = useMemo(() => {
@@ -140,66 +200,6 @@ export default function ProjectDetail({
   const statusObj = getStatusObj(project.status);
   const statusIndex = getStatusIndex(project.status);
   const progress = getProgress(project.status, project.subEtapas);
-
-  // Build the updated project object
-  const buildUpdatedProject = useCallback((): Project => ({
-    ...project,
-    description: descripcion,
-    fechaLicitacion,
-    fechaPublicacion,
-    budget: montoAsignado,
-    tipoFinanciamiento,
-    tipoLicitacion: tipoLicitacion || undefined,
-    idLicitacion,
-    codigoProyectoDCI,
-    fechaVencimientoRecursos,
-    jefeProyectoId: jefeProyectoId === -1 ? undefined : jefeProyectoId,
-    inspectorId: inspectorId === -1 ? undefined : inspectorId,
-    profesionalAsignado: profesionalAsignado || undefined,
-    especialidades,
-    subEtapas,
-    edpCount,
-    retCount,
-    ndcCount,
-    fechaInicioObra,
-    plazoEjecucion: plazoEjecucion.toString(),
-    fechaVencGarantia,
-    fechaRecProviso,
-    fechaRecDefinitiva,
-  }), [
-    project, descripcion, fechaLicitacion, fechaPublicacion, montoAsignado,
-    tipoFinanciamiento, tipoLicitacion, idLicitacion, codigoProyectoDCI,
-    fechaVencimientoRecursos, jefeProyectoId, inspectorId, profesionalAsignado,
-    especialidades, subEtapas, edpCount, retCount, ndcCount, fechaInicioObra,
-    plazoEjecucion, fechaVencGarantia, fechaRecProviso, fechaRecDefinitiva,
-  ]);
-
-  // Auto-save with debounce
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
-    setSaveStatus("saving");
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      onUpdate(buildUpdatedProject());
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 2000);
-    }, 800);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [
-    descripcion, fechaLicitacion, fechaPublicacion, montoAsignado,
-    tipoFinanciamiento, tipoLicitacion, idLicitacion, codigoProyectoDCI,
-    fechaVencimientoRecursos, jefeProyectoId, inspectorId, profesionalAsignado,
-    especialidades, subEtapas, edpCount, retCount, ndcCount, fechaInicioObra,
-    plazoEjecucion, fechaVencGarantia, fechaRecProviso, fechaRecDefinitiva,
-  ]);
 
   // Handlers
   const handleToggleEspecialidad = (name: string) => {
