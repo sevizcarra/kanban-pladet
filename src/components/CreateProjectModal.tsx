@@ -38,25 +38,22 @@ export default function CreateProjectModal({
   });
 
   const generatedCode = useMemo(() => {
+    const yearShort = form.year ? form.year.slice(-2) : "00";
     return [
       form.memorandum || "0",
-      form.year || "0000",
+      yearShort,
+      form.tipoLicitacion,
       form.tipoDesarrollo,
       form.disciplinaLider,
-      form.unidadRequirente,
-      "S" + form.sector,
-      form.tipoLicitacion,
     ]
       .filter(Boolean)
       .join("-");
   }, [
     form.memorandum,
     form.year,
+    form.tipoLicitacion,
     form.tipoDesarrollo,
     form.disciplinaLider,
-    form.unidadRequirente,
-    form.sector,
-    form.tipoLicitacion,
   ]);
 
   const canSubmit = form.nombre.trim().length > 0;

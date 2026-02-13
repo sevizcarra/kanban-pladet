@@ -181,14 +181,13 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
       setPromoting(item.id);
 
       // Generate PLADET code same as CreateProjectModal
+      const yearShort = (item.year || new Date().getFullYear().toString()).slice(-2);
       const generatedCode = [
         item.memorandum || "0",
-        item.year || new Date().getFullYear().toString(),
+        yearShort,
+        item.tipoLicitacion,
         item.tipoDesarrollo,
         item.disciplinaLider,
-        item.requestingUnit,
-        item.sector ? "S" + item.sector : "",
-        item.tipoLicitacion,
       ]
         .filter(Boolean)
         .join("-");
@@ -418,12 +417,10 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
                         <span className="font-medium">Código: </span>
                         {[
                           (editingData.memorandum !== undefined ? editingData.memorandum : currentItem.memorandum) || "0",
-                          (editingData.year !== undefined ? editingData.year : currentItem.year) || "0000",
+                          ((editingData.year !== undefined ? editingData.year : currentItem.year) || "0000").slice(-2),
+                          editingData.tipoLicitacion || currentItem.tipoLicitacion,
                           editingData.tipoDesarrollo || currentItem.tipoDesarrollo,
                           editingData.disciplinaLider || currentItem.disciplinaLider,
-                          editingData.requestingUnit || currentItem.requestingUnit,
-                          (editingData.sector || currentItem.sector) ? "S" + (editingData.sector || currentItem.sector) : "",
-                          editingData.tipoLicitacion || currentItem.tipoLicitacion,
                         ].filter(Boolean).join("-") || "—"}
                       </div>
                     </div>
