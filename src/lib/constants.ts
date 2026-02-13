@@ -157,7 +157,7 @@ export const getAntecedentesIncompletos = (p: {
   const campos: { campo: string; valor: unknown }[] = [
     { campo: "Fecha Recepción Memorándum", valor: p.fechaRecepcionMemo },
     { campo: "Fecha Est. Entrega", valor: p.dueDate },
-    { campo: "Fecha Licitación", valor: p.fechaLicitacion },
+    { campo: "Fecha de envío a DOCL", valor: p.fechaLicitacion },
     { campo: "Fecha Publicación", valor: p.fechaPublicacion },
     { campo: "Monto Asignado", valor: p.budget && p.budget !== "0" ? p.budget : null },
     { campo: "Tipo Financiamiento", valor: p.tipoFinanciamiento },

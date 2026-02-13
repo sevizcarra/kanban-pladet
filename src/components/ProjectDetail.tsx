@@ -700,10 +700,10 @@ export default function ProjectDetail({
                 />
               </div>
 
-              {/* Fecha Licitación */}
+              {/* Fecha de envío a DOCL */}
               <div>
                 <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Licitación
+                  Fecha de envío a DOCL
                 </label>
                 <input
                   type="date"
