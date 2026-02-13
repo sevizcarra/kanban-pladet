@@ -760,6 +760,25 @@ export default function ProjectDetail({
                 </select>
               </div>
 
+              {/* Tipo de Licitación */}
+              <div>
+                <label className="block text-xs text-gray-600 font-semibold mb-1">
+                  Tipo de Licitación
+                </label>
+                <select
+                  value={tipoLicitacion}
+                  onChange={(e) => setTipoLicitacion(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
+                >
+                  <option value="">Seleccionar...</option>
+                  {BIDDING_TYPES.map((bt) => (
+                    <option key={bt.value} value={bt.value}>
+                      {bt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* ID Licitación */}
               <div>
                 <label className="block text-xs text-gray-600 font-semibold mb-1">
