@@ -15,6 +15,7 @@ import ExportButton from '@/components/ExportButton';
 import MapView from '@/components/MapView';
 import CreateProjectModal from '@/components/CreateProjectModal';
 import AdminPanel from '@/components/AdminPanel';
+import BacklogView from '@/components/BacklogView';
 import {
   subscribeProjects,
   createProject,
@@ -36,10 +37,11 @@ import {
   Users,
   Columns3,
   List,
+  Lightbulb,
 } from 'lucide-react';
 import { STATUSES, PRIORITIES } from '@/lib/constants';
 
-type Tab = 'dashboard' | 'stats' | 'gantt' | 'map' | 'timeline' | 'users';
+type Tab = 'dashboard' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
 
 export default function Home() {
   // Auth state
@@ -227,6 +229,7 @@ export default function Home() {
     { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
     { id: 'map', label: 'Mapa', icon: <MapPin size={18} /> },
     { id: 'timeline', label: 'Línea de Tiempo', icon: <Clock size={18} /> },
+    ...(userIsAdmin ? [{ id: 'backlog' as Tab, label: 'Backlog', icon: <Lightbulb size={18} />, adminOnly: true }] : []),
     ...(userIsAdmin ? [{ id: 'users' as Tab, label: 'Usuarios', icon: <Users size={18} />, adminOnly: true }] : []),
   ];
 
@@ -264,7 +267,7 @@ export default function Home() {
         </div>
 
         {/* Filter Bar — hide on admin panel */}
-        {activeTab !== 'users' && (
+        {activeTab !== 'users' && activeTab !== 'backlog' && (
           <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200/60">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
@@ -401,6 +404,15 @@ export default function Home() {
             <TimelineView
               projects={filteredProjects}
               onProjectClick={setSelectedProject}
+            />
+          )}
+
+          {activeTab === 'backlog' && userIsAdmin && (
+            <BacklogView
+              userEmail={authUser.email || ''}
+              onPromoteToProject={async (data) => {
+                await handleCreate(data);
+              }}
             />
           )}
 

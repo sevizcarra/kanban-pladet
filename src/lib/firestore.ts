@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Project, Comment } from "@/types/project";
+import type { BacklogItem } from "@/types/backlog";
 
 const COLLECTION = "projects";
 
@@ -93,5 +94,38 @@ export async function deleteComment(
   const projectSnap = await getDoc(projectRef);
   const currentCount = projectSnap.data()?.commentCount || 0;
   await updateDoc(projectRef, { commentCount: Math.max(0, currentCount - 1) });
+}
+
+// ── Backlog (collection: backlog) ──
+const BACKLOG_COLLECTION = "backlog";
+
+export function subscribeBacklog(callback: (items: BacklogItem[]) => void): Unsubscribe {
+  const q = query(collection(db, BACKLOG_COLLECTION), orderBy("createdAt", "desc"));
+  return onSnapshot(q, (snapshot) => {
+    const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as BacklogItem));
+    callback(items);
+  });
+}
+
+export async function createBacklogItem(item: Omit<BacklogItem, "id">): Promise<string> {
+  const docRef = await addDoc(collection(db, BACKLOG_COLLECTION), item);
+  return docRef.id;
+}
+
+export async function updateBacklogItem(id: string, data: Partial<BacklogItem>): Promise<void> {
+  const ref = doc(db, BACKLOG_COLLECTION, id);
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (key !== "id" && value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+  cleanData.updatedAt = new Date().toISOString();
+  await updateDoc(ref, cleanData);
+}
+
+export async function deleteBacklogItem(id: string): Promise<void> {
+  const ref = doc(db, BACKLOG_COLLECTION, id);
+  await deleteDoc(ref);
 }
 
