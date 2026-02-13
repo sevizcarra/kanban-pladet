@@ -82,7 +82,7 @@ export const REQUESTING_UNITS = [
 export const BIDDING_TYPES = [
   { value: "CA", label: "CA - Compra Ágil" },
   { value: "CM", label: "CM - Convenio Marco" },
-  { value: "L1", label: "L1 - Licitación Privada" },
+  { value: "L1", label: "L1 - Licitación de menor cuantía" },
   { value: "LIC", label: "LIC - Licitación Pública" },
   { value: "MEI", label: "MEI - Materiales ejecución interna" },
 ];
