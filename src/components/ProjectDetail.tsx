@@ -152,6 +152,25 @@ export default function ProjectDetail({
     [deleteReason]
   );
 
+  // Generate PLADET code dynamically from project fields
+  const generatedCode = useMemo(() => {
+    // Parse memorandumNumber: "MEM-2026-1234" → memo="1234", year="26"
+    const parts = (project.memorandumNumber || "").split("-");
+    const memo = parts.length >= 3 ? parts[2] : "0";
+    const yearFull = parts.length >= 2 ? parts[1] : "";
+    const yearShort = yearFull ? yearFull.slice(-2) : "00";
+
+    return [
+      memo,
+      yearShort,
+      tipoLicitacion || project.tipoLicitacion,
+      project.tipoDesarrollo,
+      project.disciplinaLider,
+    ]
+      .filter(Boolean)
+      .join("-");
+  }, [project.memorandumNumber, tipoLicitacion, project.tipoLicitacion, project.tipoDesarrollo, project.disciplinaLider]);
+
   const projectIsFTE = isFTE(project.tipoDesarrollo);
   const projectStatuses = getStatusesForProject(project.tipoDesarrollo);
   const statusObj = getStatusObj(project.status, project.tipoDesarrollo);
@@ -170,6 +189,7 @@ export default function ProjectDetail({
       budget: montoAsignado,
       tipoFinanciamiento,
       tipoLicitacion: tipoLicitacion || "",
+      codigoProyectoUsa: generatedCode,
       idLicitacion: idLicitacion || "",
       codigoProyectoDCI: codigoProyectoDCI || "",
       fechaVencimientoRecursos: fechaVencimientoRecursos || "",
@@ -272,7 +292,7 @@ export default function ProjectDetail({
             )}
           </div>
           <p className="text-sm text-gray-500">
-            Código: {project.codigoProyectoUsa || "—"}
+            Código: {generatedCode || "—"}
           </p>
         </div>
         {/* Save button in header */}
@@ -316,7 +336,7 @@ export default function ProjectDetail({
                   Código Proyecto PLADET
                 </p>
                 <p className="text-sm font-medium text-gray-900">
-                  {project.codigoProyectoUsa || "—"}
+                  {generatedCode || "—"}
                 </p>
               </div>
               <div>
