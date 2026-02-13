@@ -246,14 +246,14 @@ export default function ExportButton({ projects }: ExportButtonProps) {
   <style>
     @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; color: #333; }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #00A499; padding-bottom: 16px; margin-bottom: 30px; }
-    .header h1 { font-size: 22px; color: #00A499; margin: 0; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #F97316; padding-bottom: 16px; margin-bottom: 30px; }
+    .header h1 { font-size: 22px; color: #F97316; margin: 0; }
     .header .date { font-size: 13px; color: #666; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 30px; }
     .kpi { padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb; text-align: center; }
     .kpi .value { font-size: 28px; font-weight: 700; }
     .kpi .label { font-size: 11px; color: #666; text-transform: uppercase; margin-top: 4px; }
-    h2 { font-size: 15px; color: #00A499; text-transform: uppercase; letter-spacing: 1px; margin-top: 30px; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+    h2 { font-size: 15px; color: #F97316; text-transform: uppercase; letter-spacing: 1px; margin-top: 30px; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     th { background: #f8fafc; padding: 8px; border: 1px solid #ddd; text-align: left; font-size: 11px; text-transform: uppercase; color: #555; }
     .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #e5e7eb; padding-top: 12px; }
@@ -272,7 +272,7 @@ export default function ExportButton({ projects }: ExportButtonProps) {
     <div class="kpi"><div class="value" style="color:#0ea5e9;">${total}</div><div class="label">Total Proyectos</div></div>
     <div class="kpi"><div class="value" style="color:#22c55e;">${activos}</div><div class="label">Activos</div></div>
     <div class="kpi"><div class="value" style="color:#ef4444;">${overdue.length}</div><div class="label">Atrasados</div></div>
-    <div class="kpi"><div class="value" style="color:#14b8a6;">${fmt(totalBudget)}</div><div class="label">Presupuesto Total</div></div>
+    <div class="kpi"><div class="value" style="color:#F97316;">${fmt(totalBudget)}</div><div class="label">Presupuesto Total</div></div>
   </div>
 
   <h2>Resumen por Estado</h2>
@@ -311,7 +311,7 @@ export default function ExportButton({ projects }: ExportButtonProps) {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-sm transition-all shadow-sm"
       >
-        <Download size={16} className="text-[#00A499]" />
+        <Download size={16} className="text-[#F97316]" />
         Exportar
       </button>
 
@@ -327,7 +327,7 @@ export default function ExportButton({ projects }: ExportButtonProps) {
             <button
               onClick={handleExportExcel}
               disabled={exporting}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors text-left"
             >
               <FileSpreadsheet size={18} className="text-green-600" />
               <div>
@@ -342,7 +342,7 @@ export default function ExportButton({ projects }: ExportButtonProps) {
             <div className="border-t border-gray-100" />
             <button
               onClick={handlePrintReport}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-teal-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors text-left"
             >
               <Printer size={18} className="text-blue-600" />
               <div>

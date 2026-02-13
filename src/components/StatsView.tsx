@@ -124,9 +124,9 @@ export default function StatsView({ projects }: StatsViewProps) {
   const COLORS = [
     "#0ea5e9",
     "#8b5cf6",
-    "#f59e0b",
-    "#14b8a6",
-    "#f97316",
+    "#6B7280",
+    "#F97316",
+    "#4B5563",
     "#22c55e",
     "#ef4444",
     "#64748b",
@@ -165,7 +165,7 @@ export default function StatsView({ projects }: StatsViewProps) {
             label: "Vencen pronto",
             value: dueThisWeek.length,
             icon: CalendarClock,
-            color: "#f59e0b",
+            color: "#6B7280",
           },
           {
             label: "Avance prom.",
@@ -177,7 +177,7 @@ export default function StatsView({ projects }: StatsViewProps) {
             label: "Presupuesto",
             value: fmt(totalBudget),
             icon: FolderKanban,
-            color: "#14b8a6",
+            color: "#F97316",
           },
         ].map((kpi) => {
           const Icon = kpi.icon;
@@ -407,7 +407,7 @@ export default function StatsView({ projects }: StatsViewProps) {
       {/* ── Workload per Professional ── */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-[#00A499]" />
+          <Users className="w-5 h-5 text-[#F97316]" />
           <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
             Carga de Trabajo por Jefe de Proyecto
           </h3>

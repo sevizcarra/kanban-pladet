@@ -1,16 +1,16 @@
 export const STATUSES = [
   { id: "recepcion_requerimiento", label: "Recepción Requerimiento", short: "REC", color: "#0ea5e9" },
   { id: "asignacion_profesional", label: "En Asignación de Profesional", short: "ASI", color: "#8b5cf6" },
-  { id: "en_diseno", label: "En Diseño", short: "DIS", color: "#f59e0b" },
-  { id: "gestion_compra", label: "En Gestión de Compra", short: "COM", color: "#14b8a6" },
-  { id: "coordinacion_ejecucion", label: "En Coord. de Ejecución", short: "COE", color: "#f97316" },
+  { id: "en_diseno", label: "En Diseño", short: "DIS", color: "#6B7280" },
+  { id: "gestion_compra", label: "En Gestión de Compra", short: "COM", color: "#F97316" },
+  { id: "coordinacion_ejecucion", label: "En Coord. de Ejecución", short: "COE", color: "#4B5563" },
   { id: "en_ejecucion", label: "En Ejecución", short: "EJE", color: "#22c55e" },
   { id: "terminada", label: "Terminada", short: "TER", color: "#64748b" },
 ];
 
 export const PRIORITIES: Record<string, { label: string; color: string; bg: string }> = {
   alta: { label: "Alta", color: "#ef4444", bg: "#fef2f2" },
-  media: { label: "Media", color: "#f59e0b", bg: "#fffbeb" },
+  media: { label: "Media", color: "#6B7280", bg: "#F3F4F6" },
   baja: { label: "Baja", color: "#22c55e", bg: "#f0fdf4" },
 };
 
@@ -98,7 +98,7 @@ export const SECTORS = [
 export const FTE_STATUSES = [
   { id: "recepcion_requerimiento", label: "Recepción Requerimiento", short: "REC", color: "#0ea5e9" },
   { id: "asignacion_profesional", label: "En Asignación de Profesional", short: "ASI", color: "#8b5cf6" },
-  { id: "en_diseno", label: "En Diseño", short: "DIS", color: "#f59e0b" },
+  { id: "en_diseno", label: "En Diseño", short: "DIS", color: "#6B7280" },
   { id: "terminada", label: "Terminada", short: "TER", color: "#64748b" },
 ];
 

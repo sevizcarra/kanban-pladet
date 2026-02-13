@@ -103,8 +103,8 @@ export default function TimelineView({ projects, onProjectClick }: TimelineViewP
                           {project.jefeProyectoId !== undefined && project.jefeProyectoId >= 0 && PROFESSIONALS[project.jefeProyectoId] && (
                             <>
                               <span className="text-gray-500">•</span>
-                              <span className="inline-flex items-center gap-1 text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full text-xs font-medium">
-                                <span className="w-4 h-4 rounded-full bg-teal-200 text-teal-800 flex items-center justify-center text-[9px] font-bold">
+                              <span className="inline-flex items-center gap-1 text-orange-700 bg-orange-50 px-2 py-0.5 rounded-full text-xs font-medium">
+                                <span className="w-4 h-4 rounded-full bg-orange-200 text-orange-800 flex items-center justify-center text-[9px] font-bold">
                                   {PROFESSIONALS[project.jefeProyectoId].name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                                 </span>
                                 {PROFESSIONALS[project.jefeProyectoId].name}

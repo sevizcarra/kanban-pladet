@@ -154,7 +154,7 @@ export default function CommentsSection({
           return (
             <span
               key={i}
-              className="inline-flex items-center bg-[#00A499]/10 text-[#00A499] font-semibold px-1 rounded text-xs"
+              className="inline-flex items-center bg-[#F97316]/10 text-[#F97316] font-semibold px-1 rounded text-xs"
             >
               @{name}
             </span>
@@ -177,12 +177,12 @@ export default function CommentsSection({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 border-l-4 border-l-[#00A499] shadow-sm">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 border-l-4 border-l-[#F97316] shadow-sm">
       <div className="flex items-center gap-2 mb-3">
-        <MessageCircle className="w-4 h-4 text-[#00A499]" />
+        <MessageCircle className="w-4 h-4 text-[#F97316]" />
         <p className="text-xs text-gray-500 uppercase font-semibold">Comentarios</p>
         {comments.length > 0 && (
-          <span className="text-[10px] font-bold bg-[#00A499]/10 text-[#00A499] px-1.5 py-0.5 rounded-full">
+          <span className="text-[10px] font-bold bg-[#F97316]/10 text-[#F97316] px-1.5 py-0.5 rounded-full">
             {comments.length}
           </span>
         )}
@@ -197,7 +197,7 @@ export default function CommentsSection({
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Escribe un comentario... usa @ para mencionar"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-[#00A499] outline-none resize-none h-16"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-[#F97316] outline-none resize-none h-16"
           />
 
           {/* Mention autocomplete dropdown */}
@@ -209,11 +209,11 @@ export default function CommentsSection({
                   onClick={() => insertMention(person.name)}
                   className={`w-full text-left px-3 py-2 flex items-center gap-2 text-xs transition ${
                     idx === mentionIndex
-                      ? "bg-[#00A499]/10 text-[#00A499]"
+                      ? "bg-[#F97316]/10 text-[#F97316]"
                       : "hover:bg-gray-50 text-gray-700"
                   }`}
                 >
-                  <div className="w-6 h-6 rounded-full bg-[#00A499]/15 flex items-center justify-center text-[9px] font-bold text-[#00A499] flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-[#F97316]/15 flex items-center justify-center text-[9px] font-bold text-[#F97316] flex-shrink-0">
                     {person.name
                       .split(" ")
                       .map((n) => n[0])
@@ -247,7 +247,7 @@ export default function CommentsSection({
                 }, 0);
               }
             }}
-            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-[#00A499] transition"
+            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-[#F97316] transition"
             title="Mencionar colaborador"
           >
             <AtSign className="w-3.5 h-3.5" />
@@ -257,7 +257,7 @@ export default function CommentsSection({
             disabled={!draft.trim()}
             className={`flex-1 p-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${
               draft.trim()
-                ? "bg-[#00A499] text-white hover:bg-[#00A499]/90"
+                ? "bg-[#F97316] text-white hover:bg-[#F97316]/90"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
             title="Enviar comentario"
@@ -298,7 +298,7 @@ export default function CommentsSection({
                       {c.mentions.map((name) => (
                         <span
                           key={name}
-                          className="text-[9px] bg-[#00A499]/10 text-[#00A499] px-1.5 py-0.5 rounded-full font-medium"
+                          className="text-[9px] bg-[#F97316]/10 text-[#F97316] px-1.5 py-0.5 rounded-full font-medium"
                         >
                           @{name}
                         </span>

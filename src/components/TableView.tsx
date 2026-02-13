@@ -116,9 +116,9 @@ export default function TableView({ projects, onProjectClick }: Props) {
     if (sortKey !== col)
       return <ChevronsUpDown className="w-3 h-3 text-gray-400" />;
     return sortDir === "asc" ? (
-      <ChevronUp className="w-3 h-3 text-[#00A499]" />
+      <ChevronUp className="w-3 h-3 text-[#F97316]" />
     ) : (
-      <ChevronDown className="w-3 h-3 text-[#00A499]" />
+      <ChevronDown className="w-3 h-3 text-[#F97316]" />
     );
   };
 
@@ -178,7 +178,7 @@ export default function TableView({ projects, onProjectClick }: Props) {
                   key={p.id}
                   onClick={() => onProjectClick(p)}
                   className={`cursor-pointer transition-colors group ${
-                    isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-teal-50/40"
+                    isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-orange-50/40"
                   }`}
                 >
                   {/* Proyecto */}
@@ -188,7 +188,7 @@ export default function TableView({ projects, onProjectClick }: Props) {
                       {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold text-gray-900 group-hover:text-[#00A499] transition-colors leading-snug">
+                          <p className="text-sm font-semibold text-gray-900 group-hover:text-[#F97316] transition-colors leading-snug">
                             {p.title}
                           </p>
                           {antecedentes.incompleto && (

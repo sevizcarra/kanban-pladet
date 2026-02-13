@@ -92,8 +92,8 @@ export default function AdminPanel() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#00A499]/10 flex items-center justify-center">
-            <Users className="w-5 h-5 text-[#00A499]" />
+          <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 flex items-center justify-center">
+            <Users className="w-5 h-5 text-[#F97316]" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900">
@@ -109,7 +109,7 @@ export default function AdminPanel() {
             setShowForm(!showForm);
             setFormError("");
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00A499] hover:bg-[#00A499]/90 text-white text-sm font-semibold transition"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F97316] hover:bg-[#F97316]/90 text-white text-sm font-semibold transition"
         >
           <Plus className="w-4 h-4" />
           Agregar Colaborador
@@ -140,7 +140,7 @@ export default function AdminPanel() {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Nombre Apellido"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                   required
                 />
               </div>
@@ -153,7 +153,7 @@ export default function AdminPanel() {
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="nombre@usach.cl"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                   required
                 />
               </div>
@@ -166,7 +166,7 @@ export default function AdminPanel() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                   required
                 />
               </div>
@@ -185,7 +185,7 @@ export default function AdminPanel() {
                 className={`px-4 py-2 rounded-lg text-white text-sm font-semibold transition ${
                   formLoading
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#00A499] hover:bg-[#00A499]/90"
+                    : "bg-[#F97316] hover:bg-[#F97316]/90"
                 }`}
               >
                 {formLoading ? "Creando..." : "Crear Usuario"}
@@ -229,7 +229,7 @@ export default function AdminPanel() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold ${
-                      user.role === "admin" ? "bg-[#003B5C]" : "bg-[#00A499]"
+                      user.role === "admin" ? "bg-[#003B5C]" : "bg-[#F97316]"
                     }`}
                   >
                     {user.name
@@ -254,7 +254,7 @@ export default function AdminPanel() {
                       Admin
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-[#00A499] bg-[#00A499]/10 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-[#F97316] bg-[#F97316]/10 px-2.5 py-1 rounded-full">
                       <User className="w-3 h-3" />
                       Colaborador
                     </span>

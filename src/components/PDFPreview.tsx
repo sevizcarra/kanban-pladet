@@ -108,7 +108,7 @@ export default function PDFPreview({ project, onClose }: PDFPreviewProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors font-medium"
             >
               <Download size={18} />
               Imprimir / Guardar PDF
@@ -127,21 +127,21 @@ export default function PDFPreview({ project, onClose }: PDFPreviewProps) {
           <div className="p-8 space-y-8 print:p-6 bg-white">
             {/* Header with gradient */}
             <div
-              className="bg-gradient-to-r from-[#00A499] to-[#00897B] text-white rounded-lg p-6"
+              className="bg-gradient-to-r from-[#F97316] to-[#C2410C] text-white rounded-lg p-6"
               style={{
-                background: "linear-gradient(to right, #00A499, #00897B)",
+                background: "linear-gradient(to right, #F97316, #C2410C)",
               }}
             >
               <h1 className="text-2xl font-bold mb-1">
                 Dirección de Planificación y Desarrollo Territorial
               </h1>
-              <p className="text-teal-100">
+              <p className="text-orange-100">
                 USACH — Sistema de Seguimiento de Proyectos
               </p>
             </div>
 
             {/* Title bar with status */}
-            <div className="border-b-2 border-teal-600 pb-4">
+            <div className="border-b-2 border-orange-600 pb-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">
@@ -166,7 +166,7 @@ export default function PDFPreview({ project, onClose }: PDFPreviewProps) {
             {/* Data sections */}
             {sections.map((section, idx) => (
               <div key={idx}>
-                <h3 className="text-lg font-bold text-gray-900 pb-2 border-b-2 border-teal-600 mb-4">
+                <h3 className="text-lg font-bold text-gray-900 pb-2 border-b-2 border-orange-600 mb-4">
                   {section.title}
                 </h3>
                 <div className="overflow-x-auto">
@@ -193,7 +193,7 @@ export default function PDFPreview({ project, onClose }: PDFPreviewProps) {
             {/* Description box */}
             {project.description && (
               <div>
-                <h3 className="text-lg font-bold text-gray-900 pb-2 border-b-2 border-teal-600 mb-4">
+                <h3 className="text-lg font-bold text-gray-900 pb-2 border-b-2 border-orange-600 mb-4">
                   Descripción
                 </h3>
                 <div className="bg-gray-50 rounded-lg p-4 text-gray-700 whitespace-pre-wrap">
@@ -204,7 +204,7 @@ export default function PDFPreview({ project, onClose }: PDFPreviewProps) {
 
             {/* Status flow */}
             <div>
-              <h3 className="text-lg font-bold text-gray-900 pb-2 border-b-2 border-teal-600 mb-4">
+              <h3 className="text-lg font-bold text-gray-900 pb-2 border-b-2 border-orange-600 mb-4">
                 Flujo de Estado
               </h3>
               <div className="flex flex-wrap gap-2 items-center justify-between">

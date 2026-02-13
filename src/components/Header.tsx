@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export default function Header({ userEmail, onLogout }: HeaderProps) {
   return (
-    <header className="relative bg-gradient-to-r from-[#00A499] via-[#00B4A8] to-[#00A499] text-white px-6 py-4 flex items-center justify-between overflow-hidden">
+    <header className="relative bg-gradient-to-r from-[#F97316] via-[#FB923C] to-[#F97316] text-white px-6 py-4 flex items-center justify-between overflow-hidden">
       {/* Decorative circles */}
       <div className="absolute top-[-30px] left-[-20px] w-[100px] h-[100px] rounded-full bg-white/5" />
       <div className="absolute bottom-[-40px] left-[200px] w-[80px] h-[80px] rounded-full bg-white/5" />

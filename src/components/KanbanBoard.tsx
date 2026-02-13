@@ -64,7 +64,7 @@ export default function KanbanBoard({ projects, onProjectClick }: Props) {
                     <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${isOverdue ? '#ef4444' : s.color}, ${isOverdue ? '#ef444480' : s.color + '80'})` }} />
 
                     <div className="flex items-start justify-between gap-1 mb-2">
-                      <p className="text-xs font-bold text-gray-900 leading-snug group-hover:text-[#00A499] transition-colors flex-1">{p.title}</p>
+                      <p className="text-xs font-bold text-gray-900 leading-snug group-hover:text-[#F97316] transition-colors flex-1">{p.title}</p>
                       {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
                       {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                     </div>

@@ -8,7 +8,7 @@ const LocationPickerMap = dynamic(() => import("./LocationPickerMap"), {
   ssr: false,
   loading: () => (
     <div className="h-full flex items-center justify-center bg-gray-50">
-      <div className="w-6 h-6 border-2 border-gray-200 border-t-[#00A499] rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-gray-200 border-t-[#F97316] rounded-full animate-spin" />
     </div>
   ),
 });
@@ -108,7 +108,7 @@ export default function LocationPicker({
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-        <MapPin className="w-4 h-4 text-[#00A499]" />
+        <MapPin className="w-4 h-4 text-[#F97316]" />
         <h3 className="text-sm font-bold text-gray-800">Ubicación del Proyecto</h3>
       </div>
 
@@ -123,13 +123,13 @@ export default function LocationPicker({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+              className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400"
             />
           </div>
           <button
             onClick={handleSearch}
             disabled={searching}
-            className="px-3 py-2 bg-[#00A499] text-white rounded-lg text-xs font-medium hover:bg-[#008F85] transition-colors disabled:opacity-50"
+            className="px-3 py-2 bg-[#F97316] text-white rounded-lg text-xs font-medium hover:bg-[#008F85] transition-colors disabled:opacity-50"
           >
             {searching ? "..." : "Buscar"}
           </button>
@@ -137,10 +137,10 @@ export default function LocationPicker({
 
         {/* Current location display */}
         {markerPos && localNombre && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 rounded-lg border border-teal-100">
-            <Navigation size={12} className="text-[#00A499] flex-shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg border border-orange-100">
+            <Navigation size={12} className="text-[#F97316] flex-shrink-0" />
             <span className="text-xs text-gray-700 flex-1 truncate">{localNombre}</span>
-            <button onClick={handleClearLocation} className="p-0.5 hover:bg-teal-100 rounded transition-colors">
+            <button onClick={handleClearLocation} className="p-0.5 hover:bg-orange-100 rounded transition-colors">
               <X size={12} className="text-gray-400" />
             </button>
           </div>
@@ -157,7 +157,7 @@ export default function LocationPicker({
               onLocationChange(markerPos[0], markerPos[1], e.target.value);
             }
           }}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400"
         />
 
         {/* Map */}

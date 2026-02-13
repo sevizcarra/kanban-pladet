@@ -34,7 +34,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#00A499] to-white flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#F97316] to-white flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated background shapes */}
       <style>{`
         @keyframes float1 {
@@ -54,7 +54,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <div className="absolute top-[-80px] left-[-80px] w-[300px] h-[300px] rounded-full bg-[#00A499]/20 blur-3xl" style={{ animation: "float1 8s ease-in-out infinite" }} />
+      <div className="absolute top-[-80px] left-[-80px] w-[300px] h-[300px] rounded-full bg-[#F97316]/20 blur-3xl" style={{ animation: "float1 8s ease-in-out infinite" }} />
       <div className="absolute bottom-[-60px] right-[-60px] w-[250px] h-[250px] rounded-full bg-white/30 blur-3xl" style={{ animation: "float2 10s ease-in-out infinite" }} />
       <div className="absolute top-[40%] right-[10%] w-[180px] h-[180px] rounded-full bg-[#F97316]/10 blur-2xl" style={{ animation: "float3 12s ease-in-out infinite" }} />
 
@@ -89,7 +89,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="nombre@usach.cl"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] focus:ring-2 focus:ring-[#00A499]/20 outline-none transition"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20 outline-none transition"
               required
             />
           </div>
@@ -103,7 +103,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] focus:ring-2 focus:ring-[#00A499]/20 outline-none transition"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20 outline-none transition"
               required
             />
           </div>
@@ -120,7 +120,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             className={`w-full py-3 rounded-lg text-white font-semibold text-sm transition ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#00A499] hover:bg-[#00A499]/90 active:scale-[0.98]"
+                : "bg-[#F97316] hover:bg-[#F97316]/90 active:scale-[0.98]"
             }`}
           >
             {loading ? "Ingresando..." : "Ingresar"}

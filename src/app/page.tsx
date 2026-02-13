@@ -181,7 +181,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-gray-300 border-t-teal-500 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
           <p className="text-gray-600">Verificando sesión...</p>
         </div>
       </div>
@@ -198,7 +198,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-gray-300 border-t-teal-500 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
           <p className="text-gray-600">Cargando proyectos...</p>
         </div>
       </div>
@@ -231,9 +231,9 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30 relative">
       {/* Dot grid background — full screen */}
-      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, #00A499 1.5px, transparent 1.5px)', backgroundSize: '28px 28px', opacity: 0.25 }} />
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, #F97316 1.5px, transparent 1.5px)', backgroundSize: '28px 28px', opacity: 0.25 }} />
 
       <div className="relative z-10">
         <Header userEmail={authUser.email} onLogout={handleLogout} />
@@ -248,14 +248,14 @@ export default function Home() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`py-3.5 px-4 font-medium text-sm flex items-center gap-2 transition-all rounded-t-lg relative ${
                     activeTab === tab.id
-                      ? 'text-teal-700 bg-teal-50/60'
+                      ? 'text-orange-700 bg-orange-50/60'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
                   }`}
                 >
                   {tab.icon}
                   {tab.label}
                   {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#00A499] rounded-full" />
+                    <div className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#F97316] rounded-full" />
                   )}
                 </button>
               ))}
@@ -275,7 +275,7 @@ export default function Home() {
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 shadow-sm"
+                      className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 shadow-sm"
                     >
                       <option value="all">Todos los Estados</option>
                       {STATUSES.map((status) => (
@@ -290,7 +290,7 @@ export default function Home() {
                   <select
                     value={filterPriority}
                     onChange={(e) => setFilterPriority(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 shadow-sm"
+                    className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 shadow-sm"
                   >
                     <option value="all">Todas las Prioridades</option>
                     {Object.entries(PRIORITIES).map(([key, prio]) => (
@@ -308,7 +308,7 @@ export default function Home() {
                       placeholder="Buscar por título o memorándum..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 shadow-sm"
+                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 shadow-sm"
                     />
                   </div>
                 </div>
@@ -321,7 +321,7 @@ export default function Home() {
                         onClick={() => setViewMode('kanban')}
                         className={`p-2 rounded-md transition-all ${
                           viewMode === 'kanban'
-                            ? 'bg-white text-[#00A499] shadow-sm'
+                            ? 'bg-white text-[#F97316] shadow-sm'
                             : 'text-gray-400 hover:text-gray-600'
                         }`}
                         title="Vista Kanban"
@@ -332,7 +332,7 @@ export default function Home() {
                         onClick={() => setViewMode('table')}
                         className={`p-2 rounded-md transition-all ${
                           viewMode === 'table'
-                            ? 'bg-white text-[#00A499] shadow-sm'
+                            ? 'bg-white text-[#F97316] shadow-sm'
                             : 'text-gray-400 hover:text-gray-600'
                         }`}
                         title="Vista Tabla"
@@ -348,7 +348,7 @@ export default function Home() {
                   {/* Create Project Button */}
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#00A499] to-[#00B4A8] text-white rounded-lg font-semibold text-sm hover:shadow-lg hover:shadow-teal-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white rounded-lg font-semibold text-sm hover:shadow-lg hover:shadow-orange-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
                   >
                     <Plus size={18} />
                     Nuevo Proyecto

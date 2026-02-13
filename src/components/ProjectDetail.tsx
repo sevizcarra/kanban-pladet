@@ -252,7 +252,7 @@ export default function ProjectDetail({
                   value={titleDraft}
                   onChange={(e) => setTitleDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleTitleSave(); if (e.key === "Escape") { setEditingTitle(false); setTitleDraft(project.title); } }}
-                  className="text-xl font-bold text-gray-900 border-b-2 border-[#00A499] outline-none bg-transparent flex-1 py-0.5"
+                  className="text-xl font-bold text-gray-900 border-b-2 border-[#F97316] outline-none bg-transparent flex-1 py-0.5"
                   autoFocus
                 />
                 <button onClick={handleTitleSave} className="p-1.5 hover:bg-green-50 rounded-lg transition text-green-600">
@@ -281,7 +281,7 @@ export default function ProjectDetail({
           className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all ${
             saved
               ? "bg-green-500 text-white"
-              : "bg-[#00A499] hover:bg-[#00A499]/90 text-white"
+              : "bg-[#F97316] hover:bg-[#F97316]/90 text-white"
           }`}
         >
           {saved ? (
@@ -301,9 +301,9 @@ export default function ProjectDetail({
       <div className="grid grid-cols-[1fr_2fr] gap-6 p-6 max-w-7xl mx-auto">
         {/* LEFT COLUMN - Sticky card */}
         <div className="sticky top-20 h-fit">
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4 border-l-4 border-l-[#00A499] shadow-sm">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4 border-l-4 border-l-[#F97316] shadow-sm">
             <div className="flex items-center gap-2 mb-4">
-              <ClipboardList className="w-5 h-5 text-[#00A499]" />
+              <ClipboardList className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Información del Proyecto
               </h2>
@@ -380,7 +380,7 @@ export default function ProjectDetail({
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => handleStatusCheckbox(idx)}
-                        className="rounded border-gray-300 text-[#00A499] focus:ring-[#00A499] w-3.5 h-3.5 flex-shrink-0"
+                        className="rounded border-gray-300 text-[#F97316] focus:ring-[#F97316] w-3.5 h-3.5 flex-shrink-0"
                       />
                       <span className="leading-tight">{status.label}</span>
                     </label>
@@ -411,31 +411,31 @@ export default function ProjectDetail({
 
                     {/* Sub-checkboxes for "En Gestión de Compra" (not for FTE) */}
                     {!projectIsFTE && status.id === "gestion_compra" && (
-                      <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-teal-200 pl-3">
-                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
+                      <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-orange-200 pl-3">
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
                           <input
                             type="checkbox"
                             checked={!!subEtapas.compraCDP}
                             onChange={() => handleSubEtapaChange("compraCDP")}
-                            className="rounded border-gray-300 text-teal-500 focus:ring-teal-400 w-3 h-3 flex-shrink-0"
+                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
                           />
                           <span>CDP solicitado</span>
                         </label>
-                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
                           <input
                             type="checkbox"
                             checked={!!subEtapas.compraEnProceso}
                             onChange={() => handleSubEtapaChange("compraEnProceso")}
-                            className="rounded border-gray-300 text-teal-500 focus:ring-teal-400 w-3 h-3 flex-shrink-0"
+                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
                           />
                           <span>En proceso de compra</span>
                         </label>
-                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-teal-50 transition-colors text-gray-700">
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
                           <input
                             type="checkbox"
                             checked={!!subEtapas.compraEvaluacionAdj}
                             onChange={() => handleSubEtapaChange("compraEvaluacionAdj")}
-                            className="rounded border-gray-300 text-teal-500 focus:ring-teal-400 w-3 h-3 flex-shrink-0"
+                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
                           />
                           <span>Evaluación/Adjudicación</span>
                         </label>
@@ -471,7 +471,7 @@ export default function ProjectDetail({
               {/* Resumen de creación */}
               <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-5 h-5 text-[#00A499]" />
+                  <FileText className="w-5 h-5 text-[#F97316]" />
                   <h2 className="text-lg font-bold text-gray-900">
                     Resumen del Requerimiento
                   </h2>
@@ -531,7 +531,7 @@ export default function ProjectDetail({
               {/* Equipo del Proyecto (FTE) */}
               <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-5 h-5 text-[#00A499]" />
+                  <Users className="w-5 h-5 text-[#F97316]" />
                   <h2 className="text-lg font-bold text-gray-900">
                     Equipo del Proyecto
                   </h2>
@@ -550,7 +550,7 @@ export default function ProjectDetail({
                           e.target.value ? parseInt(e.target.value) : -1
                         )
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                     >
                       <option value="">Seleccionar...</option>
                       {PROFESSIONALS.map((prof, idx) => (
@@ -573,7 +573,7 @@ export default function ProjectDetail({
                           e.target.value ? parseInt(e.target.value) : -1
                         )
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                     >
                       <option value="">Seleccionar...</option>
                       {INSPECTORS.map((inspector, idx) => (
@@ -600,7 +600,7 @@ export default function ProjectDetail({
                           type="checkbox"
                           checked={especialidades.includes(specialist.name)}
                           onChange={() => handleToggleEspecialidad(specialist.name)}
-                          className="rounded border-gray-300 text-[#00A499] focus:ring-[#00A499]"
+                          className="rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">
@@ -619,13 +619,13 @@ export default function ProjectDetail({
               {/* Informe de Factibilidad */}
               <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <Upload className="w-5 h-5 text-[#00A499]" />
+                  <Upload className="w-5 h-5 text-[#F97316]" />
                   <h2 className="text-lg font-bold text-gray-900">
                     Informe de Factibilidad
                   </h2>
                 </div>
 
-                <button className="w-full border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-6 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]">
+                <button className="w-full border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-6 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
                   <Upload className="w-6 h-6" />
                   <span className="text-sm font-medium">Adjuntar Informe de Factibilidad</span>
                   <span className="text-xs text-gray-400">PDF, DOC o imagen</span>
@@ -646,7 +646,7 @@ export default function ProjectDetail({
           {/* 1. Antecedentes Generales */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-[#00A499]" />
+              <Calendar className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Antecedentes Generales
               </h2>
@@ -662,7 +662,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaRecepcionMemo}
                   onChange={(e) => setFechaRecepcionMemo(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -675,7 +675,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaEstEntrega}
                   onChange={(e) => setFechaEstEntrega(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -688,7 +688,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaLicitacion}
                   onChange={(e) => setFechaLicitacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -701,7 +701,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaPublicacion}
                   onChange={(e) => setFechaPublicacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -716,7 +716,7 @@ export default function ProjectDetail({
                     type="text"
                     value={montoAsignado}
                     onChange={(e) => setMontoAsignado(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                     placeholder="0"
                   />
                 </div>
@@ -730,7 +730,7 @@ export default function ProjectDetail({
                 <select
                   value={tipoFinanciamiento}
                   onChange={(e) => setTipoFinanciamiento(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 >
                   <option value="Capital">Capital</option>
                   <option value="Corriente">Corriente</option>
@@ -748,7 +748,7 @@ export default function ProjectDetail({
                 <select
                   value={tipoLicitacion}
                   onChange={(e) => setTipoLicitacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 >
                   <option value="">Seleccionar...</option>
                   {BIDDING_TYPES.map((bt) => (
@@ -768,7 +768,7 @@ export default function ProjectDetail({
                   type="text"
                   value={idLicitacion}
                   onChange={(e) => setIdLicitacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -782,7 +782,7 @@ export default function ProjectDetail({
                     type="text"
                     value={codigoProyectoDCI}
                     onChange={(e) => setCodigoProyectoDCI(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                   />
                 </div>
               )}
@@ -797,7 +797,7 @@ export default function ProjectDetail({
                     type="date"
                     value={fechaVencimientoRecursos}
                     onChange={(e) => setFechaVencimientoRecursos(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                   />
                 </div>
               )}
@@ -807,7 +807,7 @@ export default function ProjectDetail({
           {/* 2. Descripción del Proyecto */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
-              <FileText className="w-5 h-5 text-[#00A499]" />
+              <FileText className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Descripción del Proyecto
               </h2>
@@ -821,7 +821,7 @@ export default function ProjectDetail({
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value.slice(0, 200))}
                 maxLength={200}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none resize-none h-20"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none resize-none h-20"
                 placeholder="Ingrese la descripción del proyecto..."
               />
             </div>
@@ -830,7 +830,7 @@ export default function ProjectDetail({
           {/* 3. Equipo del Proyecto */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-[#00A499]" />
+              <Users className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Equipo del Proyecto
               </h2>
@@ -849,7 +849,7 @@ export default function ProjectDetail({
                       e.target.value ? parseInt(e.target.value) : -1
                     )
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 >
                   <option value="">Seleccionar...</option>
                   {PROFESSIONALS.map((prof, idx) => (
@@ -872,7 +872,7 @@ export default function ProjectDetail({
                       e.target.value ? parseInt(e.target.value) : -1
                     )
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 >
                   <option value="">Seleccionar...</option>
                   {INSPECTORS.map((inspector, idx) => (
@@ -899,7 +899,7 @@ export default function ProjectDetail({
                       type="checkbox"
                       checked={especialidades.includes(specialist.name)}
                       onChange={() => handleToggleEspecialidad(specialist.name)}
-                      className="rounded border-gray-300 text-[#00A499] focus:ring-[#00A499]"
+                      className="rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
                     />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">
@@ -918,7 +918,7 @@ export default function ProjectDetail({
           {/* 4. Documentación de Diseño */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-5 h-5 text-[#00A499]" />
+              <Briefcase className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Documentación de Diseño
               </h2>
@@ -933,7 +933,7 @@ export default function ProjectDetail({
               ].map((doc) => (
                 <button
                   key={doc}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]"
+                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
                 >
                   <Upload className="w-5 h-5" />
                   <span className="text-sm font-medium">{doc}</span>
@@ -945,7 +945,7 @@ export default function ProjectDetail({
           {/* 5. Antecedentes de Compra */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-5 h-5 text-[#00A499]" />
+              <Briefcase className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Antecedentes de Compra
               </h2>
@@ -962,7 +962,7 @@ export default function ProjectDetail({
               ].map((doc) => (
                 <button
                   key={doc}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]"
+                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
                 >
                   <Upload className="w-5 h-5" />
                   <span className="text-sm font-medium">{doc}</span>
@@ -974,7 +974,7 @@ export default function ProjectDetail({
           {/* 6. Antecedentes de Ejecución */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-[#00A499]" />
+              <Calendar className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Antecedentes de Ejecución
               </h2>
@@ -990,7 +990,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaInicioObra}
                   onChange={(e) => setFechaInicioObra(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -1003,7 +1003,7 @@ export default function ProjectDetail({
                   type="number"
                   value={plazoEjecucion}
                   onChange={(e) => setPlazoEjecucion(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                   placeholder="0"
                 />
               </div>
@@ -1030,7 +1030,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaVencGarantia}
                   onChange={(e) => setFechaVencGarantia(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -1043,7 +1043,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaRecProviso}
                   onChange={(e) => setFechaRecProviso(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
 
@@ -1056,7 +1056,7 @@ export default function ProjectDetail({
                   type="date"
                   value={fechaRecDefinitiva}
                   onChange={(e) => setFechaRecDefinitiva(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#00A499] outline-none"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
                 />
               </div>
             </div>
@@ -1066,7 +1066,7 @@ export default function ProjectDetail({
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-[#00A499]" />
+                <Briefcase className="w-5 h-5 text-[#F97316]" />
                 <h2 className="text-lg font-bold text-gray-900">EDPs</h2>
               </div>
               <span className="text-xs text-gray-600 font-semibold">
@@ -1078,7 +1078,7 @@ export default function ProjectDetail({
               {Array.from({ length: edpCount }).map((_, idx) => (
                 <button
                   key={`edp-${idx}`}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]"
+                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
                 >
                   <Upload className="w-5 h-5" />
                   <span className="text-sm font-medium">EDP {idx + 1}</span>
@@ -1096,7 +1096,7 @@ export default function ProjectDetail({
                     {Array.from({ length: retCount }).map((_, idx) => (
                       <button
                         key={`ret-${idx}`}
-                        className="border-2 border-dashed border-orange-300 hover:border-orange-500 rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-orange-600 hover:text-orange-700"
+                        className="border-2 border-dashed border-gray-300 hover:border-gray-500 rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-gray-700"
                       >
                         <Upload className="w-5 h-5" />
                         <span className="text-sm font-medium">
@@ -1112,13 +1112,13 @@ export default function ProjectDetail({
             <div className="flex gap-2">
               <button
                 onClick={() => setEdpCount((prev) => prev + 1)}
-                className="flex-1 px-3 py-2 rounded-lg border border-[#00A499] text-[#00A499] text-sm font-semibold hover:bg-[#00A499]/5 transition"
+                className="flex-1 px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition"
               >
                 + Agregar EDP
               </button>
               <button
                 onClick={() => setRetCount((prev) => prev + 1)}
-                className="flex-1 px-3 py-2 rounded-lg border border-orange-500 text-orange-600 text-sm font-semibold hover:bg-orange-50 transition"
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-500 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition"
               >
                 + Agregar Retención
               </button>
@@ -1129,7 +1129,7 @@ export default function ProjectDetail({
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-[#00A499]" />
+                <Briefcase className="w-5 h-5 text-[#F97316]" />
                 <h2 className="text-lg font-bold text-gray-900">NDCs</h2>
               </div>
               <span className="text-xs text-gray-600 font-semibold">
@@ -1141,7 +1141,7 @@ export default function ProjectDetail({
               {Array.from({ length: ndcCount }).map((_, idx) => (
                 <button
                   key={`ndc-${idx}`}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]"
+                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
                 >
                   <Upload className="w-5 h-5" />
                   <span className="text-sm font-medium">NDC {idx + 1}</span>
@@ -1151,7 +1151,7 @@ export default function ProjectDetail({
 
             <button
               onClick={() => setNdcCount((prev) => prev + 1)}
-              className="w-full px-3 py-2 rounded-lg border border-[#00A499] text-[#00A499] text-sm font-semibold hover:bg-[#00A499]/5 transition"
+              className="w-full px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition"
             >
               + Agregar NDC
             </button>
@@ -1160,7 +1160,7 @@ export default function ProjectDetail({
           {/* 9. Modificación de Contrato (MCD) */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
             <div className="flex items-center gap-2 mb-4">
-              <ClipboardList className="w-5 h-5 text-[#00A499]" />
+              <ClipboardList className="w-5 h-5 text-[#F97316]" />
               <h2 className="text-lg font-bold text-gray-900">
                 Modificación de Contrato (MCD)
               </h2>
@@ -1170,7 +1170,7 @@ export default function ProjectDetail({
               {["Libro de Obra", "CDP MCD", "Modificación"].map((doc) => (
                 <button
                   key={doc}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#00A499] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#00A499]"
+                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
                 >
                   <Upload className="w-5 h-5" />
                   <span className="text-sm font-medium">{doc}</span>

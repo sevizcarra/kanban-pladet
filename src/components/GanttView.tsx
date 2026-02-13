@@ -128,7 +128,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
         <div className="flex items-center gap-2">
           <button
             onClick={scrollToToday}
-            className="px-3 py-1.5 text-xs font-medium bg-[#00A499] text-white rounded-md hover:bg-[#008F85] transition-colors"
+            className="px-3 py-1.5 text-xs font-medium bg-[#F97316] text-white rounded-md hover:bg-[#008F85] transition-colors"
           >
             Hoy
           </button>
@@ -137,7 +137,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
               onClick={() => setZoom("months")}
               className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 zoom === "months"
-                  ? "bg-[#00A499] text-white"
+                  ? "bg-[#F97316] text-white"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >
@@ -147,7 +147,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
               onClick={() => setZoom("weeks")}
               className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 zoom === "weeks"
-                  ? "bg-[#00A499] text-white"
+                  ? "bg-[#F97316] text-white"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >
@@ -186,7 +186,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
               return (
                 <div
                   key={p.id}
-                  className={`flex items-center gap-2 px-3 border-b border-gray-100 cursor-pointer hover:bg-teal-50/40 transition-colors ${
+                  className={`flex items-center gap-2 px-3 border-b border-gray-100 cursor-pointer hover:bg-orange-50/40 transition-colors ${
                     isOverdue ? "bg-red-50/30" : ""
                   }`}
                   style={{ height: ROW_HEIGHT }}
@@ -228,13 +228,13 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
                     <div
                       key={`${m.year}-${m.month}`}
                       className={`border-r border-gray-200 flex flex-col justify-end px-1.5 pb-1.5 ${
-                        isCurrentMonth ? "bg-teal-50/50" : ""
+                        isCurrentMonth ? "bg-orange-50/50" : ""
                       }`}
                       style={{ width: m.days * dayWidth, minWidth: 0 }}
                     >
                       <span
                         className={`text-[10px] font-bold uppercase ${
-                          isCurrentMonth ? "text-[#00A499]" : "text-gray-500"
+                          isCurrentMonth ? "text-[#F97316]" : "text-gray-500"
                         }`}
                       >
                         {m.label}

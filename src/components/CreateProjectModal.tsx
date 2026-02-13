@@ -94,7 +94,7 @@ export default function CreateProjectModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-auto">
         {/* Header */}
-        <div className="bg-[#00A499] text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0">
+        <div className="bg-[#F97316] text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0">
           <h2 className="text-xl font-semibold">Nuevo Proyecto</h2>
           <button
             onClick={onClose}
@@ -123,7 +123,7 @@ export default function CreateProjectModal({
                     value={form.memorandum}
                     onChange={handleInputChange}
                     placeholder="Ej: 1234"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   />
                 </div>
                 <div>
@@ -136,7 +136,7 @@ export default function CreateProjectModal({
                     value={form.year}
                     onChange={handleInputChange}
                     placeholder="Año"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   />
                 </div>
               </div>
@@ -170,7 +170,7 @@ export default function CreateProjectModal({
                   name="tipoDesarrollo"
                   value={form.tipoDesarrollo}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 >
                   <option value="">Seleccionar...</option>
                   {WORK_TYPES.map((type) => (
@@ -188,7 +188,7 @@ export default function CreateProjectModal({
                   name="disciplinaLider"
                   value={form.disciplinaLider}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 >
                   <option value="">Seleccionar...</option>
                   {LEADING_DISCIPLINE.map((discipline) => (
@@ -206,7 +206,7 @@ export default function CreateProjectModal({
                   name="unidadRequirente"
                   value={form.unidadRequirente}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 >
                   <option value="">Seleccionar...</option>
                   {REQUESTING_UNITS.map((unit) => (
@@ -224,7 +224,7 @@ export default function CreateProjectModal({
                   name="sector"
                   value={form.sector}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 >
                   <option value="">Seleccionar...</option>
                   {SECTORS.map((sector) => (
@@ -254,7 +254,7 @@ export default function CreateProjectModal({
                   value={form.nombre}
                   onChange={handleInputChange}
                   placeholder="Nombre del proyecto"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 />
               </div>
 
@@ -268,7 +268,7 @@ export default function CreateProjectModal({
                     name="prioridad"
                     value={form.prioridad}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   >
                     <option value="alta">Alta</option>
                     <option value="media">Media</option>
@@ -284,7 +284,7 @@ export default function CreateProjectModal({
                     name="fechaEntrega"
                     value={form.fechaEntrega}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   />
                 </div>
               </div>
@@ -300,7 +300,7 @@ export default function CreateProjectModal({
                   value={form.nombreContacto}
                   onChange={handleInputChange}
                   placeholder="Nombre completo"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 />
               </div>
 
@@ -314,7 +314,7 @@ export default function CreateProjectModal({
                   value={form.emailContacto}
                   onChange={handleInputChange}
                   placeholder="correo@ejemplo.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00A499]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 />
               </div>
             </div>
@@ -334,7 +334,7 @@ export default function CreateProjectModal({
               disabled={!canSubmit}
               className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition ${
                 canSubmit
-                  ? "bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600"
+                  ? "bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >

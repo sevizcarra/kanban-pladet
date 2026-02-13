@@ -60,7 +60,7 @@ export default function DashboardSummary({ projects }: Props) {
       value: dueThisWeek.length,
       sub: dueThisWeek.length > 0 ? dueThisWeek.map((p) => p.title.slice(0, 25)).join(", ") : "Ninguno",
       icon: CalendarClock,
-      color: "#f59e0b",
+      color: "#d97706",
       bg: "bg-amber-50",
     },
     {
@@ -68,8 +68,8 @@ export default function DashboardSummary({ projects }: Props) {
       value: inDesign,
       sub: "proyectos",
       icon: Clock,
-      color: "#f59e0b",
-      bg: "bg-amber-50",
+      color: "#6B7280",
+      bg: "bg-gray-50",
     },
     {
       label: "En Ejecución",

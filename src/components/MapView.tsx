@@ -10,7 +10,7 @@ const MapViewInner = dynamic(() => import("./MapViewInner"), {
   ssr: false,
   loading: () => (
     <div className="h-full flex items-center justify-center bg-gray-50">
-      <div className="w-10 h-10 border-4 border-gray-200 border-t-[#00A499] rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-gray-200 border-t-[#F97316] rounded-full animate-spin" />
     </div>
   ),
 });
@@ -36,14 +36,14 @@ export default function MapView({ projects, onProjectClick }: MapViewProps) {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50/50">
           <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-[#00A499]" />
+            <MapPin className="w-5 h-5 text-[#F97316]" />
             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
               Mapa de Proyectos
             </h3>
           </div>
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <MapPin size={12} className="text-[#00A499]" />
+              <MapPin size={12} className="text-[#F97316]" />
               {geoProjects.length} con ubicación
             </span>
             <span className="flex items-center gap-1 text-gray-400">
@@ -73,7 +73,7 @@ export default function MapView({ projects, onProjectClick }: MapViewProps) {
                 <button
                   key={p.id}
                   onClick={() => onProjectClick(p)}
-                  className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 hover:bg-teal-50/40 transition-colors text-left"
+                  className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 hover:bg-orange-50/40 transition-colors text-left"
                 >
                   <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusObj.color }} />
                   <span className="text-xs text-gray-800 truncate flex-1 font-medium">{p.title}</span>

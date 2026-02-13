@@ -128,7 +128,7 @@ export default function MapViewInner({ projects, onProjectClick }: MapViewInnerP
                   onClick={() => onProjectClick(p)}
                   style={{
                     marginTop: 8, width: "100%", padding: "6px 0",
-                    backgroundColor: "#00A499", color: "white", border: "none",
+                    backgroundColor: "#F97316", color: "white", border: "none",
                     borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer",
                   }}
                 >
