@@ -61,6 +61,7 @@ export interface Project {
   // Metadata
   createdAt?: string;
   commentCount?: number;
+  flagged?: boolean; // Baliza de alerta visual
 }
 
 export interface Comment {

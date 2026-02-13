@@ -8,6 +8,7 @@ import {
   MessageCircle,
   AlertTriangle,
   AlertCircle,
+  Siren,
 } from "lucide-react";
 import {
   STATUSES,
@@ -36,6 +37,7 @@ type SortDir = "asc" | "desc";
 interface Props {
   projects: Project[];
   onProjectClick: (p: Project) => void;
+  onToggleFlag?: (p: Project) => void;
 }
 
 const STATUS_ORDER = Object.fromEntries(
@@ -47,7 +49,7 @@ const PRIORITY_ORDER: Record<string, number> = {
   baja: 2,
 };
 
-export default function TableView({ projects, onProjectClick }: Props) {
+export default function TableView({ projects, onProjectClick, onToggleFlag }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("status");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
@@ -172,18 +174,37 @@ export default function TableView({ projects, onProjectClick }: Props) {
               const isOverdue = dl !== null && dl < 0;
               const isDueSoon = dl !== null && dl >= 0 && dl <= 7;
               const antecedentes = getAntecedentesIncompletos(p);
+              const isFlagged = !!p.flagged;
 
               return (
                 <tr
                   key={p.id}
                   onClick={() => onProjectClick(p)}
                   className={`cursor-pointer transition-colors group ${
-                    isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-orange-50/40"
+                    isFlagged ? "bg-red-50 hover:bg-red-100/80" : isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-orange-50/40"
                   }`}
                 >
                   {/* Proyecto */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
+                      {isFlagged && onToggleFlag && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleFlag(p); }}
+                          title="Quitar alerta"
+                          className="p-1 rounded bg-red-100 text-red-600 hover:bg-red-200 transition flex-shrink-0"
+                        >
+                          <Siren className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {!isFlagged && onToggleFlag && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleFlag(p); }}
+                          title="Marcar con alerta"
+                          className="p-1 rounded text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-red-500 transition flex-shrink-0"
+                        >
+                          <Siren className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
                       {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                       <div>

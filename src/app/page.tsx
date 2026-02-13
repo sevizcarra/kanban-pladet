@@ -156,6 +156,18 @@ export default function Home() {
     []
   );
 
+  const handleToggleFlag = useCallback(
+    async (project: Project) => {
+      try {
+        const updated = { ...project, flagged: !project.flagged };
+        await updateProject(project.id, updated);
+      } catch (error) {
+        console.error('Error toggling flag:', error);
+      }
+    },
+    []
+  );
+
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
       const statusMatch =
@@ -386,6 +398,7 @@ export default function Home() {
                 <KanbanBoard
                   projects={filteredProjects}
                   onProjectClick={setSelectedProject}
+                  onToggleFlag={handleToggleFlag}
                 />
               )}
 
@@ -393,6 +406,7 @@ export default function Home() {
                 <TableView
                   projects={filteredProjects}
                   onProjectClick={setSelectedProject}
+                  onToggleFlag={handleToggleFlag}
                 />
               )}
 
