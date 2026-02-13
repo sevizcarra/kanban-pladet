@@ -7,6 +7,7 @@ import {
   LEADING_DISCIPLINE,
   REQUESTING_UNITS,
   SECTORS,
+  BIDDING_TYPES,
 } from "@/lib/constants";
 import { Project } from "@/types/project";
 
@@ -28,6 +29,7 @@ export default function CreateProjectModal({
     disciplinaLider: "",
     unidadRequirente: "",
     sector: "",
+    tipoLicitacion: "",
     nombre: "",
     prioridad: "media" as "alta" | "media" | "baja",
     fechaEntrega: "",
@@ -43,6 +45,7 @@ export default function CreateProjectModal({
       form.disciplinaLider,
       form.unidadRequirente,
       "S" + form.sector,
+      form.tipoLicitacion,
     ]
       .filter(Boolean)
       .join("-");
@@ -53,6 +56,7 @@ export default function CreateProjectModal({
     form.disciplinaLider,
     form.unidadRequirente,
     form.sector,
+    form.tipoLicitacion,
   ]);
 
   const canSubmit = form.nombre.trim().length > 0;
@@ -85,6 +89,7 @@ export default function CreateProjectModal({
       tipoDesarrollo: form.tipoDesarrollo,
       disciplinaLider: form.disciplinaLider,
       sector: form.sector,
+      tipoLicitacion: form.tipoLicitacion,
     };
 
     onCreate(newProject);
@@ -230,6 +235,24 @@ export default function CreateProjectModal({
                   {SECTORS.map((sector) => (
                     <option key={sector.value} value={sector.value}>
                       {sector.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Tipo de Licitación
+                </label>
+                <select
+                  name="tipoLicitacion"
+                  value={form.tipoLicitacion}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                >
+                  <option value="">Seleccionar...</option>
+                  {BIDDING_TYPES.map((bt) => (
+                    <option key={bt.value} value={bt.value}>
+                      {bt.label}
                     </option>
                   ))}
                 </select>

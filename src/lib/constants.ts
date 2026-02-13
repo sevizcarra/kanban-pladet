@@ -80,11 +80,11 @@ export const REQUESTING_UNITS = [
 ];
 
 export const BIDDING_TYPES = [
-  { value: "compra_agil", label: "Compra Ágil" },
-  { value: "convenio_marco", label: "Convenio Marco" },
-  { value: "L1", label: "L1" },
-  { value: "licitacion", label: "Licitación" },
-  { value: "materiales_ejecucion", label: "Materiales para ejecución interna" },
+  { value: "CA", label: "CA - Compra Ágil" },
+  { value: "CM", label: "CM - Convenio Marco" },
+  { value: "L1", label: "L1 - Licitación Privada" },
+  { value: "LIC", label: "LIC - Licitación Pública" },
+  { value: "MEI", label: "MEI - Materiales ejecución interna" },
 ];
 
 export const SECTORS = [
@@ -139,7 +139,6 @@ export const getAntecedentesIncompletos = (p: {
   fechaPublicacion?: string;
   budget?: string;
   tipoFinanciamiento?: string | null;
-  tipoLicitacion?: string;
   idLicitacion?: string;
 }) => {
   const campos: { campo: string; valor: unknown }[] = [
@@ -149,7 +148,6 @@ export const getAntecedentesIncompletos = (p: {
     { campo: "Fecha Publicación", valor: p.fechaPublicacion },
     { campo: "Monto Asignado", valor: p.budget && p.budget !== "0" ? p.budget : null },
     { campo: "Tipo Financiamiento", valor: p.tipoFinanciamiento },
-    { campo: "Tipo de Licitación", valor: p.tipoLicitacion },
     { campo: "ID Licitación", valor: p.idLicitacion },
   ];
   const faltantes = campos.filter(c => !c.valor).map(c => c.campo);
