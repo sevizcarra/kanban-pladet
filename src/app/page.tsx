@@ -234,195 +234,207 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30 relative">
+    <div className="min-h-screen bg-gray-50 relative">
       {/* Dot grid background — full screen */}
-      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, #F97316 1.5px, transparent 1.5px)', backgroundSize: '28px 28px', opacity: 0.25 }} />
+      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, #F97316 1px, transparent 1px)', backgroundSize: '32px 32px', opacity: 0.15 }} />
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col h-screen">
+        {/* Header */}
         <Header userEmail={authUser.email} onLogout={handleLogout} />
 
-        {/* Tab Bar */}
-        <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex gap-0.5 py-2 overflow-x-auto scrollbar-hide">
+        {/* Body: Sidebar + Content */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <aside className="w-16 hover:w-52 group/sidebar bg-white border-r border-gray-200/80 flex flex-col transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0">
+            {/* Nav items */}
+            <nav className="flex-1 py-3 px-2 space-y-1">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`group relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                    title={tab.label}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? 'bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white shadow-md shadow-orange-500/20'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/80'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <span className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
+                    <span className="flex-shrink-0 w-5 flex justify-center">
                       {tab.icon}
                     </span>
-                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
+                      {tab.label}
+                    </span>
                   </button>
                 );
               })}
+            </nav>
+
+            {/* New project button at bottom of sidebar */}
+            <div className="p-2 border-t border-gray-100">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                title="Nuevo Proyecto"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#F97316] to-[#ea580c] text-white shadow-md shadow-orange-500/15 hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.97] transition-all"
+              >
+                <span className="flex-shrink-0 w-5 flex justify-center">
+                  <Plus size={18} strokeWidth={2.5} />
+                </span>
+                <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
+                  Nuevo Proyecto
+                </span>
+              </button>
             </div>
-          </div>
-        </div>
+          </aside>
 
-        {/* Filter Bar — hide on admin panel */}
-        {activeTab !== 'users' && activeTab !== 'backlog' && (
-          <div className="bg-white/70 backdrop-blur-md border-b border-gray-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                <div className="flex flex-col sm:flex-row gap-2.5 items-start sm:items-center flex-1">
-                  {/* Status Filter */}
-                  <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 border border-gray-200/80">
-                    <Filter size={14} className="text-gray-400 flex-shrink-0" />
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="px-1 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
-                    >
-                      <option value="all">Todos los Estados</option>
-                      {STATUSES.map((status) => (
-                        <option key={status.id} value={status.id}>
-                          {status.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Priority Filter */}
-                  <div className="bg-gray-50 rounded-lg px-3 border border-gray-200/80">
-                    <select
-                      value={filterPriority}
-                      onChange={(e) => setFilterPriority(e.target.value)}
-                      className="px-0 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
-                    >
-                      <option value="all">Todas las Prioridades</option>
-                      {Object.entries(PRIORITIES).map(([key, prio]) => (
-                        <option key={key} value={key}>
-                          {prio.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Search Input */}
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Buscar por título o memorándum..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200/80 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-300 focus:bg-white transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {/* View toggle */}
-                  {activeTab === 'dashboard' && (
-                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-                      <button
-                        onClick={() => setViewMode('kanban')}
-                        className={`p-2 rounded-md transition-all ${
-                          viewMode === 'kanban'
-                            ? 'bg-white text-[#F97316] shadow-sm'
-                            : 'text-gray-400 hover:text-gray-600'
-                        }`}
-                        title="Vista Kanban"
+          {/* Main content area */}
+          <main className="flex-1 overflow-auto">
+            {/* Filter Bar — hide on admin panel and backlog */}
+            {activeTab !== 'users' && activeTab !== 'backlog' && (
+              <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
+                <div className="px-5 py-2.5">
+                  <div className="flex flex-wrap gap-2.5 items-center">
+                    {/* Status Filter */}
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 border border-gray-200/80">
+                      <Filter size={14} className="text-gray-400 flex-shrink-0" />
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="px-1 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
                       >
-                        <Columns3 size={16} />
-                      </button>
-                      <button
-                        onClick={() => setViewMode('table')}
-                        className={`p-2 rounded-md transition-all ${
-                          viewMode === 'table'
-                            ? 'bg-white text-[#F97316] shadow-sm'
-                            : 'text-gray-400 hover:text-gray-600'
-                        }`}
-                        title="Vista Tabla"
-                      >
-                        <List size={16} />
-                      </button>
+                        <option value="all">Todos los Estados</option>
+                        {STATUSES.map((status) => (
+                          <option key={status.id} value={status.id}>
+                            {status.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
 
-                  {/* Export Button */}
-                  <ExportButton projects={filteredProjects} />
+                    {/* Priority Filter */}
+                    <div className="bg-gray-50 rounded-lg px-3 border border-gray-200/80">
+                      <select
+                        value={filterPriority}
+                        onChange={(e) => setFilterPriority(e.target.value)}
+                        className="px-0 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
+                      >
+                        <option value="all">Todas las Prioridades</option>
+                        {Object.entries(PRIORITIES).map(([key, prio]) => (
+                          <option key={key} value={key}>
+                            {prio.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  {/* Create Project Button */}
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#F97316] to-[#ea580c] text-white rounded-lg font-semibold text-sm shadow-md shadow-orange-500/15 hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.97] transition-all whitespace-nowrap"
-                  >
-                    <Plus size={18} strokeWidth={2.5} />
-                    Nuevo Proyecto
-                  </button>
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[200px]">
+                      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por título o memorándum..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200/80 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-300 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* View toggle */}
+                    {activeTab === 'dashboard' && (
+                      <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+                        <button
+                          onClick={() => setViewMode('kanban')}
+                          className={`p-2 rounded-md transition-all ${
+                            viewMode === 'kanban'
+                              ? 'bg-white text-[#F97316] shadow-sm'
+                              : 'text-gray-400 hover:text-gray-600'
+                          }`}
+                          title="Vista Kanban"
+                        >
+                          <Columns3 size={16} />
+                        </button>
+                        <button
+                          onClick={() => setViewMode('table')}
+                          className={`p-2 rounded-md transition-all ${
+                            viewMode === 'table'
+                              ? 'bg-white text-[#F97316] shadow-sm'
+                              : 'text-gray-400 hover:text-gray-600'
+                          }`}
+                          title="Vista Tabla"
+                        >
+                          <List size={16} />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Export Button */}
+                    <ExportButton projects={filteredProjects} />
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Content Area — full width */}
+            <div className="px-5 py-6">
+              {activeTab === 'dashboard' && (
+                <DashboardSummary projects={filteredProjects} />
+              )}
+
+              {activeTab === 'dashboard' && viewMode === 'kanban' && (
+                <KanbanBoard
+                  projects={filteredProjects}
+                  onProjectClick={setSelectedProject}
+                />
+              )}
+
+              {activeTab === 'dashboard' && viewMode === 'table' && (
+                <TableView
+                  projects={filteredProjects}
+                  onProjectClick={setSelectedProject}
+                />
+              )}
+
+              {activeTab === 'stats' && (
+                <StatsView projects={filteredProjects} />
+              )}
+
+              {activeTab === 'gantt' && (
+                <GanttView
+                  projects={filteredProjects}
+                  onProjectClick={setSelectedProject}
+                />
+              )}
+
+              {activeTab === 'map' && (
+                <MapView
+                  projects={filteredProjects}
+                  onProjectClick={setSelectedProject}
+                />
+              )}
+
+              {activeTab === 'timeline' && (
+                <TimelineView
+                  projects={filteredProjects}
+                  onProjectClick={setSelectedProject}
+                />
+              )}
+
+              {activeTab === 'backlog' && userIsAdmin && (
+                <BacklogView
+                  userEmail={authUser.email || ''}
+                  onPromoteToProject={async (data) => {
+                    await handleCreate(data);
+                  }}
+                />
+              )}
+
+              {activeTab === 'users' && userIsAdmin && (
+                <AdminPanel />
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Content Area */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {activeTab === 'dashboard' && (
-            <DashboardSummary projects={filteredProjects} />
-          )}
-
-          {activeTab === 'dashboard' && viewMode === 'kanban' && (
-            <KanbanBoard
-              projects={filteredProjects}
-              onProjectClick={setSelectedProject}
-            />
-          )}
-
-          {activeTab === 'dashboard' && viewMode === 'table' && (
-            <TableView
-              projects={filteredProjects}
-              onProjectClick={setSelectedProject}
-            />
-          )}
-
-          {activeTab === 'stats' && (
-            <StatsView projects={filteredProjects} />
-          )}
-
-          {activeTab === 'gantt' && (
-            <GanttView
-              projects={filteredProjects}
-              onProjectClick={setSelectedProject}
-            />
-          )}
-
-          {activeTab === 'map' && (
-            <MapView
-              projects={filteredProjects}
-              onProjectClick={setSelectedProject}
-            />
-          )}
-
-          {activeTab === 'timeline' && (
-            <TimelineView
-              projects={filteredProjects}
-              onProjectClick={setSelectedProject}
-            />
-          )}
-
-          {activeTab === 'backlog' && userIsAdmin && (
-            <BacklogView
-              userEmail={authUser.email || ''}
-              onPromoteToProject={async (data) => {
-                await handleCreate(data);
-              }}
-            />
-          )}
-
-          {activeTab === 'users' && userIsAdmin && (
-            <AdminPanel />
-          )}
+          </main>
         </div>
       </div>
 
