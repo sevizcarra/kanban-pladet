@@ -57,9 +57,9 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                   >
                     {/* Flagged pulse animation */}
                     {isFlagged && (
-                      <div className="absolute -top-1 -left-1 w-3 h-3">
-                        <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                      <div className="absolute -top-1.5 -left-1.5 flex h-3 w-3">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                        <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
                       </div>
                     )}
 
