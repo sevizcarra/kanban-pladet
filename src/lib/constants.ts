@@ -80,6 +80,7 @@ export const REQUESTING_UNITS = [
 
 export const BIDDING_TYPES = [
   { value: "compra_agil", label: "Compra Ágil" },
+  { value: "convenio_marco", label: "Convenio Marco" },
   { value: "L1", label: "L1" },
   { value: "licitacion", label: "Licitación" },
   { value: "materiales_ejecucion", label: "Materiales para ejecución interna" },
