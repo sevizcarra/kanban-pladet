@@ -242,43 +242,45 @@ export default function Home() {
         <Header userEmail={authUser.email} onLogout={handleLogout} />
 
         {/* Tab Bar */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/80 shadow-sm">
+        <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex gap-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-3.5 px-4 font-medium text-sm flex items-center gap-2 transition-all rounded-t-lg relative ${
-                    activeTab === tab.id
-                      ? 'text-orange-700 bg-orange-50/60'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                  {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#F97316] rounded-full" />
-                  )}
-                </button>
-              ))}
+            <div className="flex gap-0.5 py-2 overflow-x-auto scrollbar-hide">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`group relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                      isActive
+                        ? 'bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white shadow-md shadow-orange-500/20'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/80'
+                    }`}
+                  >
+                    <span className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
+                      {tab.icon}
+                    </span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Filter Bar — hide on admin panel */}
         {activeTab !== 'users' && activeTab !== 'backlog' && (
-          <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200/60">
+          <div className="bg-white/70 backdrop-blur-md border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center flex-1">
+                <div className="flex flex-col sm:flex-row gap-2.5 items-start sm:items-center flex-1">
                   {/* Status Filter */}
-                  <div className="flex items-center gap-2">
-                    <Filter size={16} className="text-gray-400" />
+                  <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 border border-gray-200/80">
+                    <Filter size={14} className="text-gray-400 flex-shrink-0" />
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 shadow-sm"
+                      className="px-1 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
                     >
                       <option value="all">Todos los Estados</option>
                       {STATUSES.map((status) => (
@@ -290,28 +292,30 @@ export default function Home() {
                   </div>
 
                   {/* Priority Filter */}
-                  <select
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 shadow-sm"
-                  >
-                    <option value="all">Todas las Prioridades</option>
-                    {Object.entries(PRIORITIES).map(([key, prio]) => (
-                      <option key={key} value={key}>
-                        {prio.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="bg-gray-50 rounded-lg px-3 border border-gray-200/80">
+                    <select
+                      value={filterPriority}
+                      onChange={(e) => setFilterPriority(e.target.value)}
+                      className="px-0 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
+                    >
+                      <option value="all">Todas las Prioridades</option>
+                      {Object.entries(PRIORITIES).map(([key, prio]) => (
+                        <option key={key} value={key}>
+                          {prio.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   {/* Search Input */}
                   <div className="relative flex-1 min-w-[200px]">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Buscar por título o memorándum..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 shadow-sm"
+                      className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200/80 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-300 focus:bg-white transition-all"
                     />
                   </div>
                 </div>
@@ -351,9 +355,9 @@ export default function Home() {
                   {/* Create Project Button */}
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white rounded-lg font-semibold text-sm hover:shadow-lg hover:shadow-orange-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#F97316] to-[#ea580c] text-white rounded-lg font-semibold text-sm shadow-md shadow-orange-500/15 hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.97] transition-all whitespace-nowrap"
                   >
-                    <Plus size={18} />
+                    <Plus size={18} strokeWidth={2.5} />
                     Nuevo Proyecto
                   </button>
                 </div>
