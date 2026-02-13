@@ -24,6 +24,7 @@ import {
   INSPECTORS,
   SPECIALISTS,
   BIDDING_TYPES,
+  normalizeTipoLicitacion,
   fmt,
   fmtDate,
   getStatusObj,
@@ -98,7 +99,7 @@ export default function ProjectDetail({
     }
   );
   const [tipoLicitacion, setTipoLicitacion] = useState(
-    project.tipoLicitacion || ""
+    normalizeTipoLicitacion(project.tipoLicitacion || "")
   );
   const [edpCount, setEdpCount] = useState(project.edpCount || 1);
   const [retCount, setRetCount] = useState(project.retCount || 0);
@@ -163,7 +164,7 @@ export default function ProjectDetail({
     return [
       memo,
       yearShort,
-      tipoLicitacion || project.tipoLicitacion,
+      tipoLicitacion || normalizeTipoLicitacion(project.tipoLicitacion || ""),
       project.tipoDesarrollo,
       project.disciplinaLider,
     ]

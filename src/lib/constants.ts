@@ -87,6 +87,19 @@ export const BIDDING_TYPES = [
   { value: "MEI", label: "MEI - Materiales ejecución interna" },
 ];
 
+// Map old tipoLicitacion values to new abbreviations
+const BIDDING_LEGACY_MAP: Record<string, string> = {
+  compra_agil: "CA",
+  convenio_marco: "CM",
+  licitacion: "LIC",
+  materiales_ejecucion: "MEI",
+};
+
+export const normalizeTipoLicitacion = (value: string): string => {
+  if (!value) return "";
+  return BIDDING_LEGACY_MAP[value] || value;
+};
+
 export const SECTORS = [
   { value: "1", label: "Sector 1" }, { value: "2", label: "Sector 2" },
   { value: "3", label: "Sector 3" }, { value: "4", label: "Sector 4" },
