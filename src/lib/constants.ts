@@ -63,6 +63,7 @@ export const WORK_TYPES = [
   { value: "ONV", label: "ONV - Obra Nueva" },
   { value: "NOR", label: "NOR - Normalización" },
   { value: "FTE", label: "FTE - Factibilidad Técnica" },
+  { value: "PAI", label: "PAI - Paisajismo" },
 ];
 
 export const LEADING_DISCIPLINE = [
