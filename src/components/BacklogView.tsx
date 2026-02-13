@@ -29,6 +29,7 @@ import {
   REQUESTING_UNITS,
   SECTORS,
   PRIORITIES,
+  BIDDING_TYPES,
 } from "@/lib/constants";
 
 interface Props {
@@ -96,11 +97,14 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
         title: "Nueva idea",
         description: "",
         notes: "",
-        priority: "",
+        memorandum: "",
+        year: new Date().getFullYear().toString(),
         tipoDesarrollo: "",
         disciplinaLider: "",
         requestingUnit: "",
         sector: "",
+        tipoLicitacion: "",
+        priority: "",
         contactName: "",
         contactEmail: "",
         dueDate: null,
@@ -138,21 +142,24 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
   const calculateCompleteness = (item: BacklogItem) => {
     const fieldsToCheck = [
       item.title,
-      item.description,
-      item.notes,
-      item.priority,
+      item.memorandum,
+      item.year,
       item.tipoDesarrollo,
       item.disciplinaLider,
       item.requestingUnit,
       item.sector,
+      item.tipoLicitacion,
+      item.priority,
       item.contactName,
       item.contactEmail,
       item.dueDate,
       item.budget && item.budget !== "0" ? item.budget : null,
+      item.tipoFinanciamiento,
+      item.notes,
     ];
 
     const filled = fieldsToCheck.filter((f) => f && f !== "").length;
-    return { filled, total: 12 };
+    return { filled, total: fieldsToCheck.length };
   };
 
   const getMissingFieldsForPromotion = (item: BacklogItem): string[] => {
@@ -173,22 +180,36 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
     try {
       setPromoting(item.id);
 
+      // Generate PLADET code same as CreateProjectModal
+      const generatedCode = [
+        item.memorandum || "0",
+        item.year || new Date().getFullYear().toString(),
+        item.tipoDesarrollo,
+        item.disciplinaLider,
+        item.requestingUnit,
+        item.sector ? "S" + item.sector : "",
+        item.tipoLicitacion,
+      ]
+        .filter(Boolean)
+        .join("-");
+
       const projectData: Omit<Project, "id"> = {
         title: item.title,
         description: item.description,
         status: "recepcion_requerimiento",
         priority: item.priority as "alta" | "media" | "baja" || "media",
-        memorandumNumber: "",
+        memorandumNumber: `MEM-${item.year || new Date().getFullYear()}-${item.memorandum || "000"}`,
         requestingUnit: item.requestingUnit || "—",
         contactName: item.contactName || "—",
         contactEmail: item.contactEmail || "—",
         budget: item.budget || "0",
         dueDate: item.dueDate || null,
         tipoFinanciamiento: item.tipoFinanciamiento || null,
-        codigoProyectoUsa: "",
+        codigoProyectoUsa: generatedCode,
         tipoDesarrollo: item.tipoDesarrollo || "",
         disciplinaLider: item.disciplinaLider || "",
         sector: item.sector || "",
+        tipoLicitacion: item.tipoLicitacion || "",
       };
 
       onPromoteToProject(projectData);
@@ -367,6 +388,46 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
                       </button>
                     </div>
 
+                    {/* Identificación Section */}
+                    <div className="mb-4 pb-4 border-b">
+                      <label className="text-xs font-semibold text-gray-700 block mb-3">
+                        Identificación
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={editingData.memorandum !== undefined ? editingData.memorandum : currentItem.memorandum || ""}
+                          onChange={(e) =>
+                            handleFieldChange(currentItem.id, "memorandum", e.target.value)
+                          }
+                          placeholder="Nº Memorándum"
+                          className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none"
+                        />
+                        <input
+                          type="text"
+                          value={editingData.year !== undefined ? editingData.year : currentItem.year || ""}
+                          onChange={(e) =>
+                            handleFieldChange(currentItem.id, "year", e.target.value)
+                          }
+                          placeholder="Año"
+                          className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none"
+                        />
+                      </div>
+                      {/* Code preview */}
+                      <div className="bg-gray-100 px-3 py-2 rounded text-xs text-gray-500">
+                        <span className="font-medium">Código: </span>
+                        {[
+                          (editingData.memorandum !== undefined ? editingData.memorandum : currentItem.memorandum) || "0",
+                          (editingData.year !== undefined ? editingData.year : currentItem.year) || "0000",
+                          editingData.tipoDesarrollo || currentItem.tipoDesarrollo,
+                          editingData.disciplinaLider || currentItem.disciplinaLider,
+                          editingData.requestingUnit || currentItem.requestingUnit,
+                          (editingData.sector || currentItem.sector) ? "S" + (editingData.sector || currentItem.sector) : "",
+                          editingData.tipoLicitacion || currentItem.tipoLicitacion,
+                        ].filter(Boolean).join("-") || "—"}
+                      </div>
+                    </div>
+
                     {/* Notas Section */}
                     <div className="mb-4 pb-4 border-b">
                       <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-2">
@@ -446,6 +507,21 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
                           {SECTORS.map((s) => (
                             <option key={s.value} value={s.value}>
                               {s.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={editingData.tipoLicitacion || currentItem.tipoLicitacion || ""}
+                          onChange={(e) =>
+                            handleFieldChange(currentItem.id, "tipoLicitacion", e.target.value)
+                          }
+                          className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none"
+                        >
+                          <option value="">Tipo de Licitación</option>
+                          {BIDDING_TYPES.map((bt) => (
+                            <option key={bt.value} value={bt.value}>
+                              {bt.label}
                             </option>
                           ))}
                         </select>
