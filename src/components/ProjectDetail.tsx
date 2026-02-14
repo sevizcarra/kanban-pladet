@@ -264,18 +264,28 @@ export default function ProjectDetail({
     }
   };
 
-  const commitStatusChange = async (sendEmail: boolean) => {
+  const commitStatusChange = async (sendEmail: boolean, editedName?: string, editedEmail?: string) => {
     const newStatusId = emailDialog.pendingStatusId;
-    onUpdate({ ...project, status: newStatusId });
+    // Use edited contact info if provided, and save to project
+    const updatedProject = {
+      ...project,
+      status: newStatusId,
+      ...(editedName !== undefined ? { contactName: editedName } : {}),
+      ...(editedEmail !== undefined ? { contactEmail: editedEmail } : {}),
+    };
+    onUpdate(updatedProject);
 
-    if (sendEmail && project.contactEmail && project.contactEmail !== "—") {
+    const toEmail = editedEmail || project.contactEmail;
+    const toName = editedName || project.contactName;
+
+    if (sendEmail && toEmail && toEmail !== "—" && toEmail.includes("@")) {
       const res = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "status_change",
-          to: project.contactEmail,
-          contactName: project.contactName || "Estimado/a",
+          to: toEmail,
+          contactName: toName || "Estimado/a",
           projectName: project.title,
           projectCode: project.codigoProyectoUsa || "—",
           previousStatus: project.status,
@@ -1321,8 +1331,8 @@ export default function ProjectDetail({
           commitStatusChange(false);
           setEmailDialog((prev) => ({ ...prev, open: false }));
         }}
-        onConfirm={async () => {
-          await commitStatusChange(true);
+        onConfirm={async (editedName: string, editedEmail: string) => {
+          await commitStatusChange(true, editedName, editedEmail);
         }}
         onSkip={() => {
           commitStatusChange(false);

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Mail, X, Send, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Mail, X, Send, Loader2, CheckCircle2, AlertCircle, Pencil } from "lucide-react";
 
 interface EmailConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => Promise<void>;
+  onConfirm: (editedName: string, editedEmail: string) => Promise<void>;
   onSkip: () => void;
   contactName: string;
   contactEmail: string;
@@ -32,14 +32,31 @@ export default function EmailConfirmDialog({
 }: EmailConfirmDialogProps) {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<"success" | "error" | null>(null);
+  const [editName, setEditName] = useState(contactName);
+  const [editEmail, setEditEmail] = useState(contactEmail);
+  const [editing, setEditing] = useState(false);
+
+  // Sync with props when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setEditName(contactName);
+      setEditEmail(contactEmail);
+      setEditing(false);
+      setResult(null);
+      setSending(false);
+    }
+  }, [isOpen, contactName, contactEmail]);
 
   if (!isOpen) return null;
 
+  const hasValidEmail = editEmail && editEmail !== "—" && editEmail.includes("@");
+
   const handleSend = async () => {
+    if (!hasValidEmail) return;
     setSending(true);
     setResult(null);
     try {
-      await onConfirm();
+      await onConfirm(editName, editEmail);
       setResult("success");
       setTimeout(() => {
         setResult(null);
@@ -51,8 +68,6 @@ export default function EmailConfirmDialog({
       setSending(false);
     }
   };
-
-  const hasValidEmail = contactEmail && contactEmail !== "—" && contactEmail.includes("@");
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -80,51 +95,78 @@ export default function EmailConfirmDialog({
 
         {/* Body */}
         <div className="px-6 py-5">
-          {!hasValidEmail ? (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <p className="text-sm text-gray-600 mb-4">
+            {type === "creation"
+              ? "¿Deseas notificar al contacto sobre la creación del proyecto?"
+              : "¿Deseas notificar al contacto sobre el cambio de etapa?"}
+          </p>
+
+          {/* Project info */}
+          <div className="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-bold bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white px-2 py-0.5 rounded">
+                {projectCode}
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-gray-800">{projectName}</p>
+
+            {type === "status_change" && previousStatus && newStatus && (
+              <div className="flex items-center gap-2 mt-2 text-xs">
+                <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-md">{previousStatus}</span>
+                <span className="text-[#F97316] font-bold">→</span>
+                <span className="bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white px-2 py-1 rounded-md">{newStatus}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Recipient — editable */}
+          <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-blue-400 font-medium">DESTINATARIO</p>
+              {!editing && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Editar
+                </button>
+              )}
+            </div>
+            {editing ? (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Nombre del contacto"
+                  className="w-full text-sm border border-blue-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300 bg-white"
+                />
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="correo@ejemplo.cl"
+                  className="w-full text-sm border border-blue-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300 bg-white"
+                />
+              </div>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-gray-800">{editName || "—"}</p>
+                <p className="text-xs text-gray-500">{editEmail || "—"}</p>
+              </>
+            )}
+          </div>
+
+          {!hasValidEmail && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-amber-800">Sin correo de contacto</p>
-                  <p className="text-xs text-amber-600 mt-1">
-                    Este proyecto no tiene un correo de contacto registrado. No se puede enviar la notificación.
-                  </p>
-                </div>
+                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-700">
+                  Ingresa un correo válido para poder enviar la notificación.
+                </p>
               </div>
             </div>
-          ) : (
-            <>
-              <p className="text-sm text-gray-600 mb-4">
-                {type === "creation"
-                  ? "¿Deseas notificar al contacto sobre la creación del proyecto?"
-                  : "¿Deseas notificar al contacto sobre el cambio de etapa?"}
-              </p>
-
-              {/* Project info */}
-              <div className="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-bold bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white px-2 py-0.5 rounded">
-                    {projectCode}
-                  </span>
-                </div>
-                <p className="text-sm font-semibold text-gray-800">{projectName}</p>
-
-                {type === "status_change" && previousStatus && newStatus && (
-                  <div className="flex items-center gap-2 mt-2 text-xs">
-                    <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-md">{previousStatus}</span>
-                    <span className="text-[#F97316] font-bold">→</span>
-                    <span className="bg-gradient-to-r from-[#F97316] to-[#FB923C] text-white px-2 py-1 rounded-md">{newStatus}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Recipient */}
-              <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                <p className="text-xs text-blue-400 font-medium mb-1">DESTINATARIO</p>
-                <p className="text-sm font-semibold text-gray-800">{contactName}</p>
-                <p className="text-xs text-gray-500">{contactEmail}</p>
-              </div>
-            </>
           )}
 
           {/* Result message */}
@@ -151,11 +193,11 @@ export default function EmailConfirmDialog({
           >
             No enviar
           </button>
-          {hasValidEmail && !result && (
+          {!result && (
             <button
               onClick={handleSend}
-              disabled={sending}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#F97316] to-[#ea580c] rounded-lg hover:from-[#ea580c] hover:to-[#c2410c] transition-all disabled:opacity-50 shadow-sm"
+              disabled={sending || !hasValidEmail}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#F97316] to-[#ea580c] rounded-lg hover:from-[#ea580c] hover:to-[#c2410c] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {sending ? (
                 <>

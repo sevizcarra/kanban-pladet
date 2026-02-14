@@ -141,16 +141,31 @@ export default function Home() {
     []
   );
 
-  const handleCreationEmailSend = useCallback(async () => {
+  const handleCreationEmailSend = useCallback(async (editedName: string, editedEmail: string) => {
     const pd = creationEmailDialog.projectData;
     if (!pd) return;
+    // Also update the project in Firestore with the (possibly edited) contact info
+    const projectToUpdate = projects.find(
+      (p) => p.title === pd.title && p.memorandumNumber === (`MEM-${pd.memorandumNumber}` || pd.memorandumNumber)
+    ) || projects[projects.length - 1]; // fallback to last created
+    if (projectToUpdate && (editedName !== pd.contactName || editedEmail !== pd.contactEmail)) {
+      try {
+        await updateProject(projectToUpdate.id, {
+          ...projectToUpdate,
+          contactName: editedName,
+          contactEmail: editedEmail,
+        });
+      } catch (err) {
+        console.error('Error updating contact info:', err);
+      }
+    }
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'creation',
-        to: pd.contactEmail,
-        contactName: pd.contactName || 'Estimado/a',
+        to: editedEmail,
+        contactName: editedName || 'Estimado/a',
         projectName: pd.title,
         projectCode: pd.codigoProyectoUsa || '—',
         status: pd.status,
@@ -160,7 +175,7 @@ export default function Home() {
         jefeProyecto: 'Por asignar',
       }),
     });
-  }, [creationEmailDialog.projectData]);
+  }, [creationEmailDialog.projectData, projects]);
 
   const handleUpdate = useCallback(
     async (project: Project) => {
