@@ -37,6 +37,7 @@ import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
 import CommentsSection from "./CommentsSection";
 import LocationPicker from "./LocationPicker";
+import EmailConfirmDialog from "./EmailConfirmDialog";
 import { Project } from "@/types/project";
 
 interface ProjectDetailProps {
@@ -133,6 +134,12 @@ export default function ProjectDetail({
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
+  const [emailDialog, setEmailDialog] = useState<{
+    open: boolean;
+    pendingStatusId: string;
+    previousStatusLabel: string;
+    newStatusLabel: string;
+  }>({ open: false, pendingStatusId: "", previousStatusLabel: "", newStatusLabel: "" });
 
   // Computed values
   const fechaEstTermino = useMemo(() => {
@@ -246,7 +253,36 @@ export default function ProjectDetail({
       newStatusId = projectStatuses[clickedIdx].id;
     }
     if (newStatusId !== project.status) {
-      onUpdate({ ...project, status: newStatusId });
+      const prevLabel = projectStatuses.find((s) => s.id === project.status)?.label || project.status;
+      const newLabel = projectStatuses.find((s) => s.id === newStatusId)?.label || newStatusId;
+      setEmailDialog({
+        open: true,
+        pendingStatusId: newStatusId,
+        previousStatusLabel: prevLabel,
+        newStatusLabel: newLabel,
+      });
+    }
+  };
+
+  const commitStatusChange = async (sendEmail: boolean) => {
+    const newStatusId = emailDialog.pendingStatusId;
+    onUpdate({ ...project, status: newStatusId });
+
+    if (sendEmail && project.contactEmail && project.contactEmail !== "—") {
+      const res = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "status_change",
+          to: project.contactEmail,
+          contactName: project.contactName || "Estimado/a",
+          projectName: project.title,
+          projectCode: project.codigoProyectoUsa || "—",
+          previousStatus: project.status,
+          newStatus: newStatusId,
+        }),
+      });
+      if (!res.ok) throw new Error("Email send failed");
     }
   };
 
@@ -1278,6 +1314,28 @@ export default function ProjectDetail({
         </div>
       )}
 
+      {/* Email notification dialog */}
+      <EmailConfirmDialog
+        isOpen={emailDialog.open}
+        onClose={() => {
+          commitStatusChange(false);
+          setEmailDialog((prev) => ({ ...prev, open: false }));
+        }}
+        onConfirm={async () => {
+          await commitStatusChange(true);
+        }}
+        onSkip={() => {
+          commitStatusChange(false);
+          setEmailDialog((prev) => ({ ...prev, open: false }));
+        }}
+        contactName={project.contactName || "—"}
+        contactEmail={project.contactEmail || "—"}
+        projectName={project.title}
+        projectCode={project.codigoProyectoUsa || "—"}
+        type="status_change"
+        previousStatus={emailDialog.previousStatusLabel}
+        newStatus={emailDialog.newStatusLabel}
+      />
     </div>
   );
 }

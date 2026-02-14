@@ -14,6 +14,7 @@ import GanttView from '@/components/GanttView';
 import ExportButton from '@/components/ExportButton';
 import MapView from '@/components/MapView';
 import CreateProjectModal from '@/components/CreateProjectModal';
+import EmailConfirmDialog from '@/components/EmailConfirmDialog';
 import AdminPanel from '@/components/AdminPanel';
 import BacklogView from '@/components/BacklogView';
 import {
@@ -59,6 +60,10 @@ export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+  const [creationEmailDialog, setCreationEmailDialog] = useState<{
+    open: boolean;
+    projectData: Omit<Project, 'id'> | null;
+  }>({ open: false, projectData: null });
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -125,12 +130,37 @@ export default function Home() {
       try {
         await createProject(projectData);
         setShowCreateModal(false);
+        // Show email notification dialog if project has a contact email
+        if (projectData.contactEmail && projectData.contactEmail !== '—' && projectData.contactEmail.includes('@')) {
+          setCreationEmailDialog({ open: true, projectData });
+        }
       } catch (error) {
         console.error('Error creating project:', error);
       }
     },
     []
   );
+
+  const handleCreationEmailSend = useCallback(async () => {
+    const pd = creationEmailDialog.projectData;
+    if (!pd) return;
+    await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'creation',
+        to: pd.contactEmail,
+        contactName: pd.contactName || 'Estimado/a',
+        projectName: pd.title,
+        projectCode: pd.codigoProyectoUsa || '—',
+        status: pd.status,
+        tipoDesarrollo: pd.tipoDesarrollo || '—',
+        tipoLicitacion: pd.tipoLicitacion || '—',
+        disciplinaLider: pd.disciplinaLider || '—',
+        jefeProyecto: 'Por asignar',
+      }),
+    });
+  }, [creationEmailDialog.projectData]);
 
   const handleUpdate = useCallback(
     async (project: Project) => {
@@ -459,6 +489,19 @@ export default function Home() {
           onClose={() => setShowCreateModal(false)}
         />
       )}
+
+      {/* Email notification dialog for project creation */}
+      <EmailConfirmDialog
+        isOpen={creationEmailDialog.open}
+        onClose={() => setCreationEmailDialog({ open: false, projectData: null })}
+        onConfirm={handleCreationEmailSend}
+        onSkip={() => setCreationEmailDialog({ open: false, projectData: null })}
+        contactName={creationEmailDialog.projectData?.contactName || '—'}
+        contactEmail={creationEmailDialog.projectData?.contactEmail || '—'}
+        projectName={creationEmailDialog.projectData?.title || ''}
+        projectCode={creationEmailDialog.projectData?.codigoProyectoUsa || '—'}
+        type="creation"
+      />
     </div>
   );
 }
