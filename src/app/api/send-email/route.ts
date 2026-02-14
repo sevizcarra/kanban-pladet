@@ -252,6 +252,14 @@ export async function POST(req: NextRequest) {
       html,
     });
 
+    if (result.error) {
+      console.error("Resend API error:", JSON.stringify(result.error));
+      return NextResponse.json(
+        { error: result.error.message || "Error en servicio de correo" },
+        { status: 422 }
+      );
+    }
+
     return NextResponse.json({ success: true, id: result.data?.id });
   } catch (error) {
     console.error("Error sending email:", error);
