@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-function getResend() {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not configured");
-  return new Resend(apiKey);
+function getTransporter() {
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!user || !pass) throw new Error("SMTP credentials not configured");
+
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  });
 }
 
 const STATUSES = [
@@ -242,29 +247,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Tipo no válido" }, { status: 400 });
     }
 
-    const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    const transporter = getTransporter();
+    const fromAddress = process.env.SMTP_USER;
 
-    const resend = getResend();
-    const result = await resend.emails.send({
-      from: `PLADET <${fromAddress}>`,
-      to: [to],
+    const info = await transporter.sendMail({
+      from: `"PLADET - USACH" <${fromAddress}>`,
+      to,
       subject,
       html,
     });
 
-    if (result.error) {
-      console.error("Resend API error:", JSON.stringify(result.error));
-      return NextResponse.json(
-        { error: result.error.message || "Error en servicio de correo" },
-        { status: 422 }
-      );
-    }
-
-    return NextResponse.json({ success: true, id: result.data?.id });
+    console.log("Email sent:", info.messageId);
+    return NextResponse.json({ success: true, id: info.messageId });
   } catch (error) {
     console.error("Error sending email:", error);
+    const message = error instanceof Error ? error.message : "Error al enviar correo";
     return NextResponse.json(
-      { error: "Error al enviar correo" },
+      { error: message },
       { status: 500 }
     );
   }
