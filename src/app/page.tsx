@@ -130,10 +130,8 @@ export default function Home() {
       try {
         await createProject(projectData);
         setShowCreateModal(false);
-        // Show email notification dialog if project has a contact email
-        if (projectData.contactEmail && projectData.contactEmail !== '—' && projectData.contactEmail.includes('@')) {
-          setCreationEmailDialog({ open: true, projectData });
-        }
+        // Always show the email notification dialog — user can add/edit email there
+        setCreationEmailDialog({ open: true, projectData });
       } catch (error) {
         console.error('Error creating project:', error);
       }
