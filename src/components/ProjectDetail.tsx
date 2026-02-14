@@ -97,6 +97,7 @@ export default function ProjectDetail({
       compraCDP: false,
       compraEnProceso: false,
       compraEvaluacionAdj: false,
+      compraAceptacionOC: false,
     }
   );
   const [tipoLicitacion, setTipoLicitacion] = useState(
@@ -129,6 +130,12 @@ export default function ProjectDetail({
   // Title editing
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(project.title);
+
+  // Editable project info
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [infoUnit, setInfoUnit] = useState(project.requestingUnit || "—");
+  const [infoContactName, setInfoContactName] = useState(project.contactName || "—");
+  const [infoContactEmail, setInfoContactEmail] = useState(project.contactEmail || "—");
 
   // UI state
   const [saved, setSaved] = useState(false);
@@ -387,22 +394,92 @@ export default function ProjectDetail({
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold">
-                  Unidad Requirente
-                </p>
-                <p className="text-sm font-medium text-gray-900">
-                  {project.requestingUnit}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500 uppercase font-semibold">
+                    Unidad Requirente
+                  </p>
+                  {!editingInfo && (
+                    <button
+                      onClick={() => setEditingInfo(true)}
+                      className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-[#F97316] transition-colors"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      Editar
+                    </button>
+                  )}
+                </div>
+                {editingInfo ? (
+                  <input
+                    type="text"
+                    value={infoUnit}
+                    onChange={(e) => setInfoUnit(e.target.value)}
+                    className="w-full text-sm font-medium border border-gray-300 rounded-md px-2 py-1 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300"
+                  />
+                ) : (
+                  <p className="text-sm font-medium text-gray-900">
+                    {project.requestingUnit}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-xs text-gray-500 uppercase font-semibold">
                   Contacto
                 </p>
-                <p className="text-sm font-medium text-gray-900">
-                  {project.contactName}
-                </p>
-                <p className="text-xs text-gray-500">{project.contactEmail}</p>
+                {editingInfo ? (
+                  <div className="space-y-1.5 mt-1">
+                    <input
+                      type="text"
+                      value={infoContactName}
+                      onChange={(e) => setInfoContactName(e.target.value)}
+                      placeholder="Nombre del contacto"
+                      className="w-full text-sm font-medium border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300"
+                    />
+                    <input
+                      type="email"
+                      value={infoContactEmail === "—" ? "" : infoContactEmail}
+                      onChange={(e) => setInfoContactEmail(e.target.value)}
+                      placeholder="correo@ejemplo.cl"
+                      className="w-full text-xs border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-900">
+                      {project.contactName}
+                    </p>
+                    <p className="text-xs text-gray-500">{project.contactEmail}</p>
+                  </>
+                )}
               </div>
+              {editingInfo && (
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      onUpdate({
+                        ...project,
+                        requestingUnit: infoUnit,
+                        contactName: infoContactName,
+                        contactEmail: infoContactEmail || "—",
+                      });
+                      setEditingInfo(false);
+                    }}
+                    className="flex-1 text-xs font-semibold py-1.5 bg-gradient-to-r from-[#F97316] to-[#ea580c] text-white rounded-md hover:from-[#ea580c] hover:to-[#c2410c] transition-all"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setInfoUnit(project.requestingUnit || "—");
+                      setInfoContactName(project.contactName || "—");
+                      setInfoContactEmail(project.contactEmail || "—");
+                      setEditingInfo(false);
+                    }}
+                    className="flex-1 text-xs font-semibold py-1.5 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Status badge and progress */}
@@ -505,6 +582,15 @@ export default function ProjectDetail({
                             className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
                           />
                           <span>Evaluación/Adjudicación</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={!!subEtapas.compraAceptacionOC}
+                            onChange={() => handleSubEtapaChange("compraAceptacionOC")}
+                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
+                          />
+                          <span>En aceptación de OC</span>
                         </label>
                       </div>
                     )}

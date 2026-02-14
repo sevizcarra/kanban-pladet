@@ -35,6 +35,7 @@ export interface Project {
     compraCDP?: boolean;
     compraEnProceso?: boolean;
     compraEvaluacionAdj?: boolean;
+    compraAceptacionOC?: boolean;
   };
   // Ejecución
   fechaInicioObra?: string;
