@@ -16,6 +16,11 @@ import {
   ClipboardList,
   Pencil,
   Check,
+  MapPin,
+  MessageSquare,
+  Package,
+  Hammer,
+  FolderOpen,
 } from "lucide-react";
 import {
   STATUSES,
@@ -47,6 +52,16 @@ interface ProjectDetailProps {
   onDelete: (id: string, reason: string) => void;
   userEmail: string;
 }
+
+/* ── Tab definitions for regular (non-FTE) projects ── */
+const TABS = [
+  { id: "general", label: "Antecedentes", icon: Calendar },
+  { id: "equipo", label: "Equipo", icon: Users },
+  { id: "diseno", label: "Diseño", icon: FolderOpen },
+  { id: "compras", label: "Compras", icon: Package },
+  { id: "ejecucion", label: "Ejecución", icon: Hammer },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
 
 export default function ProjectDetail({
   project,
@@ -86,7 +101,6 @@ export default function ProjectDetail({
     project.jefeProyectoId || -1
   );
   const [inspectorId, setInspectorId] = useState(project.inspectorId || -1);
-  // profesionalAsignado removido — el Jefe de Proyecto desarrolla la propuesta
   const [especialidades, setEspecialidades] = useState(
     project.especialidades || []
   );
@@ -141,6 +155,7 @@ export default function ProjectDetail({
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
+  const [activeTab, setActiveTab] = useState<TabId>("general");
   const [emailDialog, setEmailDialog] = useState<{
     open: boolean;
     pendingStatusId: string;
@@ -167,9 +182,7 @@ export default function ProjectDetail({
     [deleteReason]
   );
 
-  // Generate PLADET code dynamically from project fields
   const generatedCode = useMemo(() => {
-    // Parse memorandumNumber: "MEM-2026-1234" → memo="1234", year="26"
     const parts = (project.memorandumNumber || "").split("-");
     const memo = parts.length >= 3 ? parts[2] : "0";
     const yearFull = parts.length >= 2 ? parts[1] : "";
@@ -273,7 +286,6 @@ export default function ProjectDetail({
 
   const commitStatusChange = async (sendEmail: boolean, editedName?: string, editedEmail?: string) => {
     const newStatusId = emailDialog.pendingStatusId;
-    // Use edited contact info if provided, and save to project
     const updatedProject = {
       ...project,
       status: newStatusId,
@@ -307,17 +319,33 @@ export default function ProjectDetail({
     setSubEtapas((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  /* ───────────────────────────────────────────────── */
+  /* ── Shared UI helpers                            ── */
+  /* ───────────────────────────────────────────────── */
+  const inputCls =
+    "w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none";
+  const cardCls = "bg-white rounded-xl border border-gray-200 p-5";
+  const sectionTitle = (icon: React.ReactNode, title: string) => (
+    <div className="flex items-center gap-2 mb-4">
+      {icon}
+      <h2 className="text-base font-bold text-gray-900">{title}</h2>
+    </div>
+  );
+
+  /* ───────────────────────────────────────────────── */
+  /* ── RENDER                                        ── */
+  /* ───────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4 shadow-sm">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      {/* ═══ STICKY HEADER ═══ */}
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 shadow-sm z-20">
         <button
           onClick={onBack}
           className="p-2 hover:bg-gray-100 rounded-lg transition"
         >
           <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {editingTitle ? (
               <div className="flex items-center gap-2 flex-1">
@@ -326,7 +354,7 @@ export default function ProjectDetail({
                   value={titleDraft}
                   onChange={(e) => setTitleDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleTitleSave(); if (e.key === "Escape") { setEditingTitle(false); setTitleDraft(project.title); } }}
-                  className="text-xl font-bold text-gray-900 border-b-2 border-[#F97316] outline-none bg-transparent flex-1 py-0.5"
+                  className="text-lg font-bold text-gray-900 border-b-2 border-[#F97316] outline-none bg-transparent flex-1 py-0.5"
                   autoFocus
                 />
                 <button onClick={handleTitleSave} className="p-1.5 hover:bg-green-50 rounded-lg transition text-green-600">
@@ -338,95 +366,96 @@ export default function ProjectDetail({
               </div>
             ) : (
               <>
-                <h1 className="text-xl font-bold text-gray-900">{project.title}</h1>
-                <button onClick={() => setEditingTitle(true)} className="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600">
-                  <Pencil className="w-4 h-4" />
+                <h1 className="text-lg font-bold text-gray-900 truncate">{project.title}</h1>
+                <button onClick={() => setEditingTitle(true)} className="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600 flex-shrink-0">
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
               </>
             )}
           </div>
-          <p className="text-sm text-gray-500">
-            Código: {generatedCode || "—"}
-          </p>
         </div>
-        {/* Save button in header */}
         <button
           onClick={handleSave}
-          className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all ${
+          className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all flex-shrink-0 ${
             saved
               ? "bg-green-500 text-white"
               : "bg-[#F97316] hover:bg-[#F97316]/90 text-white"
           }`}
         >
           {saved ? (
-            <>
-              <CheckCircle className="w-4 h-4" />
-              Guardado
-            </>
+            <><CheckCircle className="w-4 h-4" /> Guardado</>
           ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Guardar
-            </>
+            <><Save className="w-4 h-4" /> Guardar</>
           )}
         </button>
       </div>
 
-      <div className="grid grid-cols-[1fr_2fr] gap-6 p-6 max-w-7xl mx-auto">
-        {/* LEFT COLUMN - Sticky card */}
-        <div className="sticky top-20 h-fit">
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4 border-l-4 border-l-[#F97316] shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <ClipboardList className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Información del Proyecto
-              </h2>
+      {/* ═══ COMPACT INFO BAR ═══ */}
+      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-6 py-2.5 flex items-center gap-6 text-sm z-10">
+        <span className="bg-[#F97316]/10 text-[#F97316] px-2.5 py-0.5 rounded-md font-mono text-xs font-bold tracking-wide">
+          {generatedCode || "—"}
+        </span>
+        <div className="flex items-center gap-1.5 text-gray-600">
+          <Briefcase className="w-3.5 h-3.5" />
+          <span className="font-medium">{project.requestingUnit}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-gray-600">
+          <Users className="w-3.5 h-3.5" />
+          <span>{project.contactName || "—"}</span>
+          {project.contactEmail && project.contactEmail !== "—" && (
+            <span className="text-gray-400 text-xs">({project.contactEmail})</span>
+          )}
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <Badge color={statusObj.color} bg={statusObj.color + "20"}>
+            {statusObj.label}
+          </Badge>
+          <div className="flex items-center gap-2 min-w-[120px]">
+            <ProgressBar value={progress} color={statusObj.color} />
+            <span className="text-xs font-bold text-gray-500 w-8 text-right">{progress}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ MAIN CONTENT — two independently scrollable columns ═══ */}
+      <div className="flex-1 flex gap-0 min-h-0 max-w-[1400px] mx-auto w-full">
+
+        {/* ── LEFT COLUMN ── */}
+        <div className="w-[340px] flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 space-y-4">
+
+          {/* Project Info (editable) */}
+          <div className="border-l-4 border-l-[#F97316] rounded-lg bg-gray-50 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs text-gray-500 uppercase font-bold tracking-wide">Información</h3>
+              {!editingInfo && (
+                <button
+                  onClick={() => setEditingInfo(true)}
+                  className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-[#F97316] transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Editar
+                </button>
+              )}
             </div>
 
-            {/* Project info rows */}
-            <div className="space-y-3 mb-5 pb-5 border-b border-gray-200">
+            <div className="space-y-2.5">
               <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold">
-                  Código Proyecto PLADET
-                </p>
-                <p className="text-sm font-medium text-gray-900">
-                  {generatedCode || "—"}
-                </p>
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500 uppercase font-semibold">
-                    Unidad Requirente
-                  </p>
-                  {!editingInfo && (
-                    <button
-                      onClick={() => setEditingInfo(true)}
-                      className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-[#F97316] transition-colors"
-                    >
-                      <Pencil className="w-3 h-3" />
-                      Editar
-                    </button>
-                  )}
-                </div>
+                <p className="text-[10px] text-gray-400 uppercase font-semibold">Unidad Requirente</p>
                 {editingInfo ? (
                   <input
                     type="text"
                     value={infoUnit}
                     onChange={(e) => setInfoUnit(e.target.value)}
-                    className="w-full text-sm font-medium border border-gray-300 rounded-md px-2 py-1 mt-1 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300"
+                    className="w-full text-sm font-medium border border-gray-300 rounded-md px-2 py-1 mt-0.5 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300"
                   />
                 ) : (
-                  <p className="text-sm font-medium text-gray-900">
-                    {project.requestingUnit}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900">{project.requestingUnit}</p>
                 )}
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold">
-                  Contacto
-                </p>
+                <p className="text-[10px] text-gray-400 uppercase font-semibold">Contacto</p>
                 {editingInfo ? (
-                  <div className="space-y-1.5 mt-1">
+                  <div className="space-y-1.5 mt-0.5">
                     <input
                       type="text"
                       value={infoContactName}
@@ -444,9 +473,7 @@ export default function ProjectDetail({
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-gray-900">
-                      {project.contactName}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">{project.contactName}</p>
                     <p className="text-xs text-gray-500">{project.contactEmail}</p>
                   </>
                 )}
@@ -481,36 +508,20 @@ export default function ProjectDetail({
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Status badge and progress */}
-            <div className="mb-5">
-              <div className="flex items-center justify-between mb-2">
-                <Badge
-                  color={statusObj.color}
-                  bg={statusObj.color + "20"}
-                >
-                  {statusObj.label}
-                </Badge>
-                <span className="text-xs font-semibold text-gray-600">
-                  {progress}%
-                </span>
-              </div>
-              <ProgressBar value={progress} color={statusObj.color} />
-            </div>
-
-            {/* Status flow with checkboxes */}
-            <div className="space-y-1">
-              <p className="text-xs text-gray-500 uppercase font-semibold mb-3">
-                Flujo de Estado
-              </p>
+          {/* Status flow */}
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wide mb-2 px-1">
+              Flujo de Estado
+            </p>
+            <div className="space-y-0.5">
               {projectStatuses.map((status, idx) => {
                 const isChecked = idx <= statusIndex;
                 const isCurrent = idx === statusIndex;
                 const isPast = idx < statusIndex;
-
                 return (
                   <div key={status.id}>
-                    {/* Main stage checkbox */}
                     <label
                       className={`flex items-center gap-2.5 text-xs p-2 rounded-lg cursor-pointer transition-colors ${
                         isPast
@@ -529,69 +540,32 @@ export default function ProjectDetail({
                       <span className="leading-tight">{status.label}</span>
                     </label>
 
-                    {/* Sub-checkboxes for "En Diseño" (not for FTE) */}
                     {!projectIsFTE && status.id === "en_diseno" && (
-                      <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-amber-200 pl-3">
+                      <div className="ml-7 mt-1 mb-1 space-y-0.5 border-l-2 border-amber-200 pl-3">
                         <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-amber-50 transition-colors text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={!!subEtapas.disenoArquitectura}
-                            onChange={() => handleSubEtapaChange("disenoArquitectura")}
-                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3 h-3 flex-shrink-0"
-                          />
+                          <input type="checkbox" checked={!!subEtapas.disenoArquitectura} onChange={() => handleSubEtapaChange("disenoArquitectura")} className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3 h-3 flex-shrink-0" />
                           <span>Arquitectura</span>
                         </label>
                         <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-amber-50 transition-colors text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={!!subEtapas.disenoEspecialidades}
-                            onChange={() => handleSubEtapaChange("disenoEspecialidades")}
-                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3 h-3 flex-shrink-0"
-                          />
+                          <input type="checkbox" checked={!!subEtapas.disenoEspecialidades} onChange={() => handleSubEtapaChange("disenoEspecialidades")} className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3 h-3 flex-shrink-0" />
                           <span>Especialidades</span>
                         </label>
                       </div>
                     )}
 
-                    {/* Sub-checkboxes for "En Gestión de Compra" (not for FTE) */}
                     {!projectIsFTE && status.id === "gestion_compra" && (
-                      <div className="ml-7 mt-1 mb-1 space-y-1 border-l-2 border-orange-200 pl-3">
-                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={!!subEtapas.compraCDP}
-                            onChange={() => handleSubEtapaChange("compraCDP")}
-                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
-                          />
-                          <span>CDP solicitado</span>
-                        </label>
-                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={!!subEtapas.compraEnProceso}
-                            onChange={() => handleSubEtapaChange("compraEnProceso")}
-                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
-                          />
-                          <span>En proceso de compra</span>
-                        </label>
-                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={!!subEtapas.compraEvaluacionAdj}
-                            onChange={() => handleSubEtapaChange("compraEvaluacionAdj")}
-                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
-                          />
-                          <span>Evaluación/Adjudicación</span>
-                        </label>
-                        <label className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={!!subEtapas.compraAceptacionOC}
-                            onChange={() => handleSubEtapaChange("compraAceptacionOC")}
-                            className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0"
-                          />
-                          <span>En aceptación de OC</span>
-                        </label>
+                      <div className="ml-7 mt-1 mb-1 space-y-0.5 border-l-2 border-orange-200 pl-3">
+                        {([
+                          ["compraCDP", "CDP solicitado"],
+                          ["compraEnProceso", "En proceso de compra"],
+                          ["compraEvaluacionAdj", "Evaluación/Adjudicación"],
+                          ["compraAceptacionOC", "En aceptación de OC"],
+                        ] as const).map(([key, label]) => (
+                          <label key={key} className="flex items-center gap-2 text-xs p-1.5 rounded cursor-pointer hover:bg-orange-50 transition-colors text-gray-700">
+                            <input type="checkbox" checked={!!subEtapas[key]} onChange={() => handleSubEtapaChange(key)} className="rounded border-gray-300 text-orange-500 focus:ring-orange-400 w-3 h-3 flex-shrink-0" />
+                            <span>{label}</span>
+                          </label>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -600,10 +574,10 @@ export default function ProjectDetail({
             </div>
           </div>
 
-          {/* Comentarios — left sidebar */}
+          {/* Comments */}
           <CommentsSection projectId={project.id} userEmail={userEmail} />
 
-          {/* Ubicación */}
+          {/* Location */}
           <LocationPicker
             lat={ubicacionLat}
             lng={ubicacionLng}
@@ -614,155 +588,71 @@ export default function ProjectDetail({
               setUbicacionNombre(nombre);
             }}
           />
+
+          {/* Delete button at bottom of sidebar */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full px-3 py-2.5 rounded-lg border border-red-300 text-red-500 text-sm font-semibold hover:bg-red-50 transition flex items-center justify-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Eliminar Proyecto
+          </button>
         </div>
 
-        {/* RIGHT COLUMN - Multiple cards */}
-        <div>
-          {/* FTE: Vista simplificada — solo resumen + adjuntar informe */}
-          {projectIsFTE ? (
-            <>
-              {/* Resumen de creación */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-5 h-5 text-[#F97316]" />
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Resumen del Requerimiento
-                  </h2>
-                </div>
+        {/* ── RIGHT COLUMN ── */}
+        <div className="flex-1 overflow-y-auto min-w-0">
 
+          {/* FTE: simplified view */}
+          {projectIsFTE ? (
+            <div className="p-6 space-y-4">
+              {/* Resumen de creación */}
+              <div className={cardCls}>
+                {sectionTitle(<FileText className="w-5 h-5 text-[#F97316]" />, "Resumen del Requerimiento")}
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Memorándum</p>
-                    <p className="text-sm font-medium text-gray-900">{project.memorandumNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Unidad Requirente</p>
-                    <p className="text-sm font-medium text-gray-900">{project.requestingUnit}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Contacto</p>
-                    <p className="text-sm font-medium text-gray-900">{project.contactName}</p>
-                    <p className="text-xs text-gray-500">{project.contactEmail}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Tipo de Desarrollo</p>
-                    <p className="text-sm font-medium text-gray-900">FTE — Factibilidad Técnica</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Disciplina Líder</p>
-                    <p className="text-sm font-medium text-gray-900">{project.disciplinaLider || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Sector</p>
-                    <p className="text-sm font-medium text-gray-900">{project.sector || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Fecha Creación</p>
-                    <p className="text-sm font-medium text-gray-900">{fmtDate(project.createdAt)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">Fecha Est. Entrega</p>
-                    <p className="text-sm font-medium text-gray-900">{fmtDate(project.dueDate)}</p>
-                  </div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Memorándum</p><p className="text-sm font-medium text-gray-900">{project.memorandumNumber}</p></div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Unidad Requirente</p><p className="text-sm font-medium text-gray-900">{project.requestingUnit}</p></div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Contacto</p><p className="text-sm font-medium text-gray-900">{project.contactName}</p><p className="text-xs text-gray-500">{project.contactEmail}</p></div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Tipo de Desarrollo</p><p className="text-sm font-medium text-gray-900">FTE — Factibilidad Técnica</p></div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Disciplina Líder</p><p className="text-sm font-medium text-gray-900">{project.disciplinaLider || "—"}</p></div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Sector</p><p className="text-sm font-medium text-gray-900">{project.sector || "—"}</p></div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Fecha Creación</p><p className="text-sm font-medium text-gray-900">{fmtDate(project.createdAt)}</p></div>
+                  <div><p className="text-xs text-gray-500 font-semibold">Fecha Est. Entrega</p><p className="text-sm font-medium text-gray-900">{fmtDate(project.dueDate)}</p></div>
                   {project.jefeProyectoId !== undefined && project.jefeProyectoId >= 0 && PROFESSIONALS[project.jefeProyectoId] && (
-                    <div className="col-span-2">
-                      <p className="text-xs text-gray-500 font-semibold">Jefe de Proyecto</p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {PROFESSIONALS[project.jefeProyectoId].name} — {PROFESSIONALS[project.jefeProyectoId].role}
-                      </p>
-                    </div>
+                    <div className="col-span-2"><p className="text-xs text-gray-500 font-semibold">Jefe de Proyecto</p><p className="text-sm font-medium text-gray-900">{PROFESSIONALS[project.jefeProyectoId].name} — {PROFESSIONALS[project.jefeProyectoId].role}</p></div>
                   )}
                 </div>
-
-                {/* Descripción */}
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-xs text-gray-500 font-semibold mb-1">Descripción</p>
                   <p className="text-sm text-gray-700">{project.description || "Sin descripción"}</p>
                 </div>
               </div>
 
-              {/* Equipo del Proyecto (FTE) */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-5 h-5 text-[#F97316]" />
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Equipo del Proyecto
-                  </h2>
-                </div>
-
+              {/* Equipo (FTE) */}
+              <div className={cardCls}>
+                {sectionTitle(<Users className="w-5 h-5 text-[#F97316]" />, "Equipo del Proyecto")}
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  {/* Jefe de Proyecto */}
                   <div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">
-                      Jefe de Proyecto
-                    </label>
-                    <select
-                      value={jefeProyectoId === -1 ? "" : jefeProyectoId}
-                      onChange={(e) =>
-                        setJefeProyectoId(
-                          e.target.value ? parseInt(e.target.value) : -1
-                        )
-                      }
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                    >
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">Jefe de Proyecto</label>
+                    <select value={jefeProyectoId === -1 ? "" : jefeProyectoId} onChange={(e) => setJefeProyectoId(e.target.value ? parseInt(e.target.value) : -1)} className={inputCls}>
                       <option value="">Seleccionar...</option>
-                      {PROFESSIONALS.map((prof, idx) => (
-                        <option key={idx} value={idx}>
-                          {prof.name} — {prof.role}
-                        </option>
-                      ))}
+                      {PROFESSIONALS.map((prof, idx) => (<option key={idx} value={idx}>{prof.name} — {prof.role}</option>))}
                     </select>
                   </div>
-
-                  {/* Inspector Técnico */}
                   <div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">
-                      Inspector Técnico
-                    </label>
-                    <select
-                      value={inspectorId === -1 ? "" : inspectorId}
-                      onChange={(e) =>
-                        setInspectorId(
-                          e.target.value ? parseInt(e.target.value) : -1
-                        )
-                      }
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                    >
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">Inspector Técnico</label>
+                    <select value={inspectorId === -1 ? "" : inspectorId} onChange={(e) => setInspectorId(e.target.value ? parseInt(e.target.value) : -1)} className={inputCls}>
                       <option value="">Seleccionar...</option>
-                      {INSPECTORS.map((inspector, idx) => (
-                        <option key={idx} value={idx}>
-                          {inspector}
-                        </option>
-                      ))}
+                      {INSPECTORS.map((inspector, idx) => (<option key={idx} value={idx}>{inspector}</option>))}
                     </select>
                   </div>
                 </div>
-
-                {/* Especialistas checkboxes */}
                 <div className="border-t border-gray-200 pt-4">
-                  <p className="text-xs text-gray-600 font-semibold mb-3">
-                    Especialistas
-                  </p>
+                  <p className="text-xs text-gray-600 font-semibold mb-3">Especialistas</p>
                   <div className="space-y-2">
                     {SPECIALISTS.map((specialist) => (
-                      <label
-                        key={specialist.name}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={especialidades.includes(specialist.name)}
-                          onChange={() => handleToggleEspecialidad(specialist.name)}
-                          className="rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
-                            {specialist.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {specialist.discipline}
-                          </p>
-                        </div>
+                      <label key={specialist.name} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                        <input type="checkbox" checked={especialidades.includes(specialist.name)} onChange={() => handleToggleEspecialidad(specialist.name)} className="rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]" />
+                        <div className="flex-1"><p className="text-sm font-medium text-gray-900">{specialist.name}</p><p className="text-xs text-gray-500">{specialist.discipline}</p></div>
                       </label>
                     ))}
                   </div>
@@ -770,577 +660,295 @@ export default function ProjectDetail({
               </div>
 
               {/* Informe de Factibilidad */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Upload className="w-5 h-5 text-[#F97316]" />
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Informe de Factibilidad
-                  </h2>
-                </div>
-
+              <div className={cardCls}>
+                {sectionTitle(<Upload className="w-5 h-5 text-[#F97316]" />, "Informe de Factibilidad")}
                 <button className="w-full border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-6 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
                   <Upload className="w-6 h-6" />
                   <span className="text-sm font-medium">Adjuntar Informe de Factibilidad</span>
                   <span className="text-xs text-gray-400">PDF, DOC o imagen</span>
                 </button>
               </div>
-
-              {/* DELETE button */}
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full px-4 py-3 rounded-lg border border-red-500 text-red-600 font-bold hover:bg-red-50 transition flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-5 h-5" />
-                Eliminar Proyecto
-              </button>
-            </>
+            </div>
           ) : (
-          <>
-          {/* 1. Antecedentes Generales */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Antecedentes Generales
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {/* Fecha Recepción Memorándum */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Recepción Memorándum
-                </label>
-                <input
-                  type="date"
-                  value={fechaRecepcionMemo}
-                  onChange={(e) => setFechaRecepcionMemo(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
+            /* ── REGULAR PROJECT — Tabs ── */
+            <div className="flex flex-col h-full">
+              {/* Tab bar */}
+              <div className="flex-shrink-0 flex items-center gap-1 px-6 pt-4 pb-0 bg-gray-50">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all border-b-2 ${
+                        isActive
+                          ? "bg-white text-[#F97316] border-[#F97316] shadow-sm"
+                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 border-transparent"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Fecha Est. Entrega */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Est. Entrega
-                </label>
-                <input
-                  type="date"
-                  value={fechaEstEntrega}
-                  onChange={(e) => setFechaEstEntrega(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
+              {/* Tab content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
-              {/* Fecha de envío a DOCL */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha de envío a DOCL
-                </label>
-                <input
-                  type="date"
-                  value={fechaLicitacion}
-                  onChange={(e) => setFechaLicitacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
-
-              {/* Fecha Publicación */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Publicación
-                </label>
-                <input
-                  type="date"
-                  value={fechaPublicacion}
-                  onChange={(e) => setFechaPublicacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
-
-              {/* Monto Asignado */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Monto Asignado CLP
-                </label>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600 mr-2">$</span>
-                  <input
-                    type="text"
-                    value={montoAsignado}
-                    onChange={(e) => setMontoAsignado(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              {/* Tipo Financiamiento */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Tipo Financiamiento
-                </label>
-                <select
-                  value={tipoFinanciamiento}
-                  onChange={(e) => setTipoFinanciamiento(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                >
-                  <option value="Capital">Capital</option>
-                  <option value="Corriente">Corriente</option>
-                  <option value="Corriente USACH">Corriente USACH</option>
-                  <option value="DCI">DCI</option>
-                  <option value="VRIIC">VRIIC</option>
-                </select>
-              </div>
-
-              {/* Tipo de Licitación */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Tipo de Licitación
-                </label>
-                <select
-                  value={tipoLicitacion}
-                  onChange={(e) => setTipoLicitacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                >
-                  <option value="">Seleccionar...</option>
-                  {BIDDING_TYPES.map((bt) => (
-                    <option key={bt.value} value={bt.value}>
-                      {bt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* ID Licitación */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  ID Licitación
-                </label>
-                <input
-                  type="text"
-                  value={idLicitacion}
-                  onChange={(e) => setIdLicitacion(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
-
-              {/* Código Proyecto DCI (conditional) */}
-              {showDCI && (
-                <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">
-                    Código Proyecto DCI
-                  </label>
-                  <input
-                    type="text"
-                    value={codigoProyectoDCI}
-                    onChange={(e) => setCodigoProyectoDCI(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                  />
-                </div>
-              )}
-
-              {/* Fecha Venc. Recursos (conditional) */}
-              {showDCI && (
-                <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">
-                    Fecha Venc. Recursos
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaVencimientoRecursos}
-                    onChange={(e) => setFechaVencimientoRecursos(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 2. Descripción del Proyecto */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Descripción del Proyecto
-              </h2>
-            </div>
-
-            <div>
-              <label className="block text-xs text-gray-600 font-semibold mb-1">
-                Descripción ({descripcion.length}/200)
-              </label>
-              <textarea
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value.slice(0, 200))}
-                maxLength={200}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none resize-none h-20"
-                placeholder="Ingrese la descripción del proyecto..."
-              />
-            </div>
-          </div>
-
-          {/* 3. Equipo del Proyecto */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Equipo del Proyecto
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {/* Jefe de Proyecto */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Jefe de Proyecto
-                </label>
-                <select
-                  value={jefeProyectoId === -1 ? "" : jefeProyectoId}
-                  onChange={(e) =>
-                    setJefeProyectoId(
-                      e.target.value ? parseInt(e.target.value) : -1
-                    )
-                  }
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                >
-                  <option value="">Seleccionar...</option>
-                  {PROFESSIONALS.map((prof, idx) => (
-                    <option key={idx} value={idx}>
-                      {prof.name} — {prof.role}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Inspector Técnico */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Inspector Técnico
-                </label>
-                <select
-                  value={inspectorId === -1 ? "" : inspectorId}
-                  onChange={(e) =>
-                    setInspectorId(
-                      e.target.value ? parseInt(e.target.value) : -1
-                    )
-                  }
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                >
-                  <option value="">Seleccionar...</option>
-                  {INSPECTORS.map((inspector, idx) => (
-                    <option key={idx} value={idx}>
-                      {inspector}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Especialistas checkboxes */}
-            <div className="border-t border-gray-200 pt-4">
-              <p className="text-xs text-gray-600 font-semibold mb-3">
-                Especialistas
-              </p>
-              <div className="space-y-2">
-                {SPECIALISTS.map((specialist) => (
-                  <label
-                    key={specialist.name}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={especialidades.includes(specialist.name)}
-                      onChange={() => handleToggleEspecialidad(specialist.name)}
-                      className="rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {specialist.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {specialist.discipline}
-                      </p>
+                {/* ── TAB: Antecedentes ── */}
+                {activeTab === "general" && (
+                  <>
+                    <div className={cardCls}>
+                      {sectionTitle(<Calendar className="w-5 h-5 text-[#F97316]" />, "Antecedentes Generales")}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Recepción Memorándum</label>
+                          <input type="date" value={fechaRecepcionMemo} onChange={(e) => setFechaRecepcionMemo(e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Est. Entrega</label>
+                          <input type="date" value={fechaEstEntrega} onChange={(e) => setFechaEstEntrega(e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha de envío a DOCL</label>
+                          <input type="date" value={fechaLicitacion} onChange={(e) => setFechaLicitacion(e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Publicación</label>
+                          <input type="date" value={fechaPublicacion} onChange={(e) => setFechaPublicacion(e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Monto Asignado CLP</label>
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-600 mr-2">$</span>
+                            <input type="text" value={montoAsignado} onChange={(e) => setMontoAsignado(e.target.value)} className={"flex-1 " + inputCls} placeholder="0" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Tipo Financiamiento</label>
+                          <select value={tipoFinanciamiento} onChange={(e) => setTipoFinanciamiento(e.target.value)} className={inputCls}>
+                            <option value="Capital">Capital</option>
+                            <option value="Corriente">Corriente</option>
+                            <option value="Corriente USACH">Corriente USACH</option>
+                            <option value="DCI">DCI</option>
+                            <option value="VRIIC">VRIIC</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Tipo de Licitación</label>
+                          <select value={tipoLicitacion} onChange={(e) => setTipoLicitacion(e.target.value)} className={inputCls}>
+                            <option value="">Seleccionar...</option>
+                            {BIDDING_TYPES.map((bt) => (<option key={bt.value} value={bt.value}>{bt.label}</option>))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">ID Licitación</label>
+                          <input type="text" value={idLicitacion} onChange={(e) => setIdLicitacion(e.target.value)} className={inputCls} />
+                        </div>
+                        {showDCI && (
+                          <div>
+                            <label className="block text-xs text-gray-600 font-semibold mb-1">Código Proyecto DCI</label>
+                            <input type="text" value={codigoProyectoDCI} onChange={(e) => setCodigoProyectoDCI(e.target.value)} className={inputCls} />
+                          </div>
+                        )}
+                        {showDCI && (
+                          <div>
+                            <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Venc. Recursos</label>
+                            <input type="date" value={fechaVencimientoRecursos} onChange={(e) => setFechaVencimientoRecursos(e.target.value)} className={inputCls} />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* 4. Documentación de Diseño */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Documentación de Diseño
-              </h2>
-            </div>
+                    {/* Description */}
+                    <div className={cardCls}>
+                      {sectionTitle(<FileText className="w-5 h-5 text-[#F97316]" />, "Descripción del Proyecto")}
+                      <div>
+                        <label className="block text-xs text-gray-600 font-semibold mb-1">Descripción ({descripcion.length}/200)</label>
+                        <textarea
+                          value={descripcion}
+                          onChange={(e) => setDescripcion(e.target.value.slice(0, 200))}
+                          maxLength={200}
+                          className={inputCls + " resize-none h-20"}
+                          placeholder="Ingrese la descripción del proyecto..."
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Ficha de Proyecto",
-                "Planos",
-                "EETT",
-                "Itemizado",
-              ].map((doc) => (
-                <button
-                  key={doc}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
-                >
-                  <Upload className="w-5 h-5" />
-                  <span className="text-sm font-medium">{doc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 5. Antecedentes de Compra */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Antecedentes de Compra
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Formulario compra / BT",
-                "CDP",
-                "OC / CTTO",
-                "Oferta",
-                "Acta de visita",
-                "Cuadro ADJ / Informe",
-              ].map((doc) => (
-                <button
-                  key={doc}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
-                >
-                  <Upload className="w-5 h-5" />
-                  <span className="text-sm font-medium">{doc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 6. Antecedentes de Ejecución */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Antecedentes de Ejecución
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* Fecha Inicio Obra */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Inicio Obra
-                </label>
-                <input
-                  type="date"
-                  value={fechaInicioObra}
-                  onChange={(e) => setFechaInicioObra(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
-
-              {/* Plazo Ejecución */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Plazo Ejecución (días corridos)
-                </label>
-                <input
-                  type="number"
-                  value={plazoEjecucion}
-                  onChange={(e) => setPlazoEjecucion(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                  placeholder="0"
-                />
-              </div>
-
-              {/* Fecha Est. Término */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Est. Término
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  value={fechaEstTermino ? fmtDate(fechaEstTermino) : "—"}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600"
-                />
-              </div>
-
-              {/* Fecha Venc. Garantía */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Venc. Garantía
-                </label>
-                <input
-                  type="date"
-                  value={fechaVencGarantia}
-                  onChange={(e) => setFechaVencGarantia(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
-
-              {/* Fecha Rec. Provisoria */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Rec. Provisoria
-                </label>
-                <input
-                  type="date"
-                  value={fechaRecProviso}
-                  onChange={(e) => setFechaRecProviso(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
-
-              {/* Fecha Rec. Definitiva */}
-              <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-1">
-                  Fecha Rec. Definitiva
-                </label>
-                <input
-                  type="date"
-                  value={fechaRecDefinitiva}
-                  onChange={(e) => setFechaRecDefinitiva(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 7. EDPs */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-[#F97316]" />
-                <h2 className="text-lg font-bold text-gray-900">EDPs</h2>
-              </div>
-              <span className="text-xs text-gray-600 font-semibold">
-                Total: {edpCount}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {Array.from({ length: edpCount }).map((_, idx) => (
-                <button
-                  key={`edp-${idx}`}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
-                >
-                  <Upload className="w-5 h-5" />
-                  <span className="text-sm font-medium">EDP {idx + 1}</span>
-                </button>
-              ))}
-            </div>
-
-            {retCount > 0 && (
-              <>
-                <div className="border-t border-gray-200 pt-4 mb-4">
-                  <p className="text-xs text-gray-600 font-semibold mb-3">
-                    Retenciones
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    {Array.from({ length: retCount }).map((_, idx) => (
-                      <button
-                        key={`ret-${idx}`}
-                        className="border-2 border-dashed border-gray-300 hover:border-gray-500 rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-gray-700"
-                      >
-                        <Upload className="w-5 h-5" />
-                        <span className="text-sm font-medium">
-                          Retención {idx + 1}
-                        </span>
-                      </button>
-                    ))}
+                {/* ── TAB: Equipo ── */}
+                {activeTab === "equipo" && (
+                  <div className={cardCls}>
+                    {sectionTitle(<Users className="w-5 h-5 text-[#F97316]" />, "Equipo del Proyecto")}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-xs text-gray-600 font-semibold mb-1">Jefe de Proyecto</label>
+                        <select value={jefeProyectoId === -1 ? "" : jefeProyectoId} onChange={(e) => setJefeProyectoId(e.target.value ? parseInt(e.target.value) : -1)} className={inputCls}>
+                          <option value="">Seleccionar...</option>
+                          {PROFESSIONALS.map((prof, idx) => (<option key={idx} value={idx}>{prof.name} — {prof.role}</option>))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 font-semibold mb-1">Inspector Técnico</label>
+                        <select value={inspectorId === -1 ? "" : inspectorId} onChange={(e) => setInspectorId(e.target.value ? parseInt(e.target.value) : -1)} className={inputCls}>
+                          <option value="">Seleccionar...</option>
+                          {INSPECTORS.map((inspector, idx) => (<option key={idx} value={idx}>{inspector}</option>))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-200 pt-4">
+                      <p className="text-xs text-gray-600 font-semibold mb-3">Especialistas</p>
+                      <div className="space-y-2">
+                        {SPECIALISTS.map((specialist) => (
+                          <label key={specialist.name} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                            <input type="checkbox" checked={especialidades.includes(specialist.name)} onChange={() => handleToggleEspecialidad(specialist.name)} className="rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]" />
+                            <div className="flex-1"><p className="text-sm font-medium text-gray-900">{specialist.name}</p><p className="text-xs text-gray-500">{specialist.discipline}</p></div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                )}
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setEdpCount((prev) => prev + 1)}
-                className="flex-1 px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition"
-              >
-                + Agregar EDP
-              </button>
-              <button
-                onClick={() => setRetCount((prev) => prev + 1)}
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-500 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition"
-              >
-                + Agregar Retención
-              </button>
-            </div>
-          </div>
+                {/* ── TAB: Diseño ── */}
+                {activeTab === "diseno" && (
+                  <div className={cardCls}>
+                    {sectionTitle(<FolderOpen className="w-5 h-5 text-[#F97316]" />, "Documentación de Diseño")}
+                    <div className="grid grid-cols-2 gap-4">
+                      {["Ficha de Proyecto", "Planos", "EETT", "Itemizado"].map((doc) => (
+                        <button key={doc} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
+                          <Upload className="w-5 h-5" />
+                          <span className="text-sm font-medium">{doc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-          {/* 8. NDCs */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-[#F97316]" />
-                <h2 className="text-lg font-bold text-gray-900">NDCs</h2>
+                {/* ── TAB: Compras ── */}
+                {activeTab === "compras" && (
+                  <div className={cardCls}>
+                    {sectionTitle(<Package className="w-5 h-5 text-[#F97316]" />, "Antecedentes de Compra")}
+                    <div className="grid grid-cols-2 gap-4">
+                      {["Formulario compra / BT", "CDP", "OC / CTTO", "Oferta", "Acta de visita", "Cuadro ADJ / Informe"].map((doc) => (
+                        <button key={doc} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
+                          <Upload className="w-5 h-5" />
+                          <span className="text-sm font-medium">{doc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── TAB: Ejecución ── */}
+                {activeTab === "ejecucion" && (
+                  <>
+                    {/* Antecedentes de Ejecución */}
+                    <div className={cardCls}>
+                      {sectionTitle(<Calendar className="w-5 h-5 text-[#F97316]" />, "Antecedentes de Ejecución")}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Inicio Obra</label>
+                          <input type="date" value={fechaInicioObra} onChange={(e) => setFechaInicioObra(e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Plazo Ejecución (días corridos)</label>
+                          <input type="number" value={plazoEjecucion} onChange={(e) => setPlazoEjecucion(parseInt(e.target.value) || 0)} className={inputCls} placeholder="0" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Est. Término</label>
+                          <input type="text" disabled value={fechaEstTermino ? fmtDate(fechaEstTermino) : "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Venc. Garantía</label>
+                          <input type="date" value={fechaVencGarantia} onChange={(e) => setFechaVencGarantia(e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Rec. Provisoria</label>
+                          <input type="date" value={fechaRecProviso} onChange={(e) => setFechaRecProviso(e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Rec. Definitiva</label>
+                          <input type="date" value={fechaRecDefinitiva} onChange={(e) => setFechaRecDefinitiva(e.target.value)} className={inputCls} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* EDPs */}
+                    <div className={cardCls}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-5 h-5 text-[#F97316]" />
+                          <h2 className="text-base font-bold text-gray-900">EDPs</h2>
+                        </div>
+                        <span className="text-xs text-gray-600 font-semibold">Total: {edpCount}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        {Array.from({ length: edpCount }).map((_, idx) => (
+                          <button key={`edp-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
+                            <Upload className="w-5 h-5" />
+                            <span className="text-sm font-medium">EDP {idx + 1}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {retCount > 0 && (
+                        <div className="border-t border-gray-200 pt-4 mb-4">
+                          <p className="text-xs text-gray-600 font-semibold mb-3">Retenciones</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            {Array.from({ length: retCount }).map((_, idx) => (
+                              <button key={`ret-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-gray-500 rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-gray-700">
+                                <Upload className="w-5 h-5" />
+                                <span className="text-sm font-medium">Retención {idx + 1}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button onClick={() => setEdpCount((prev) => prev + 1)} className="flex-1 px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition">+ Agregar EDP</button>
+                        <button onClick={() => setRetCount((prev) => prev + 1)} className="flex-1 px-3 py-2 rounded-lg border border-gray-500 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">+ Agregar Retención</button>
+                      </div>
+                    </div>
+
+                    {/* NDCs */}
+                    <div className={cardCls}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-5 h-5 text-[#F97316]" />
+                          <h2 className="text-base font-bold text-gray-900">NDCs</h2>
+                        </div>
+                        <span className="text-xs text-gray-600 font-semibold">Total: {ndcCount}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        {Array.from({ length: ndcCount }).map((_, idx) => (
+                          <button key={`ndc-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
+                            <Upload className="w-5 h-5" />
+                            <span className="text-sm font-medium">NDC {idx + 1}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <button onClick={() => setNdcCount((prev) => prev + 1)} className="w-full px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition">+ Agregar NDC</button>
+                    </div>
+
+                    {/* MCD */}
+                    <div className={cardCls}>
+                      {sectionTitle(<ClipboardList className="w-5 h-5 text-[#F97316]" />, "Modificación de Contrato (MCD)")}
+                      <div className="grid grid-cols-3 gap-4">
+                        {["Libro de Obra", "CDP MCD", "Modificación"].map((doc) => (
+                          <button key={doc} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
+                            <Upload className="w-5 h-5" />
+                            <span className="text-sm font-medium">{doc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <span className="text-xs text-gray-600 font-semibold">
-                Total: {ndcCount}
-              </span>
             </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {Array.from({ length: ndcCount }).map((_, idx) => (
-                <button
-                  key={`ndc-${idx}`}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
-                >
-                  <Upload className="w-5 h-5" />
-                  <span className="text-sm font-medium">NDC {idx + 1}</span>
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setNdcCount((prev) => prev + 1)}
-              className="w-full px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition"
-            >
-              + Agregar NDC
-            </button>
-          </div>
-
-          {/* 9. Modificación de Contrato (MCD) */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <ClipboardList className="w-5 h-5 text-[#F97316]" />
-              <h2 className="text-lg font-bold text-gray-900">
-                Modificación de Contrato (MCD)
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              {["Libro de Obra", "CDP MCD", "Modificación"].map((doc) => (
-                <button
-                  key={doc}
-                  className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]"
-                >
-                  <Upload className="w-5 h-5" />
-                  <span className="text-sm font-medium">{doc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* DELETE button */}
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="w-full px-4 py-3 rounded-lg border border-red-500 text-red-600 font-bold hover:bg-red-50 transition flex items-center justify-center gap-2"
-          >
-            <Trash2 className="w-5 h-5" />
-            Eliminar Proyecto
-          </button>
-          </>
           )}
         </div>
       </div>
@@ -1349,32 +957,18 @@ export default function ProjectDetail({
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-sm w-full overflow-hidden">
-            {/* Red header */}
             <div className="bg-red-500 px-6 py-4 flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-white flex-shrink-0" />
-              <h3 className="text-lg font-bold text-white">
-                Eliminar Proyecto
-              </h3>
+              <h3 className="text-lg font-bold text-white">Eliminar Proyecto</h3>
             </div>
-
-            {/* Content */}
             <div className="p-6 space-y-4">
               <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  Proyecto a eliminar:
-                </p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {project.title}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Memorándum: {project.memorandumNumber}
-                </p>
+                <p className="text-sm text-gray-600 mb-1">Proyecto a eliminar:</p>
+                <p className="text-sm font-semibold text-gray-900">{project.title}</p>
+                <p className="text-xs text-gray-500">Memorándum: {project.memorandumNumber}</p>
               </div>
-
               <div>
-                <label className="block text-xs text-gray-600 font-semibold mb-2">
-                  Justificación (mínimo 10 caracteres)
-                </label>
+                <label className="block text-xs text-gray-600 font-semibold mb-2">Justificación (mínimo 10 caracteres)</label>
                 <textarea
                   value={deleteReason}
                   onChange={(e) => setDeleteReason(e.target.value)}
@@ -1382,13 +976,9 @@ export default function ProjectDetail({
                   placeholder="Ingrese la razón por la que desea eliminar este proyecto..."
                 />
               </div>
-
               <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setDeleteReason("");
-                  }}
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteReason(""); }}
                   className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition"
                 >
                   Cancelar
@@ -1396,11 +986,7 @@ export default function ProjectDetail({
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={!canDelete}
-                  className={`flex-1 px-3 py-2 rounded-lg text-white text-sm font-semibold transition ${
-                    canDelete
-                      ? "bg-red-500 hover:bg-red-600"
-                      : "bg-gray-300 cursor-not-allowed"
-                  }`}
+                  className={`flex-1 px-3 py-2 rounded-lg text-white text-sm font-semibold transition ${canDelete ? "bg-red-500 hover:bg-red-600" : "bg-gray-300 cursor-not-allowed"}`}
                 >
                   Confirmar Eliminación
                 </button>
