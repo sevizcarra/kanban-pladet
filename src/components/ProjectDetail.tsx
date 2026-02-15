@@ -60,16 +60,16 @@ const TABS_REGULAR = [
   { id: "diseno", label: "Diseño", icon: FolderOpen },
   { id: "compras", label: "Compras", icon: Package },
   { id: "ejecucion", label: "Ejecución", icon: Hammer },
-  { id: "notas", label: "Notas", icon: MessageSquare },
+  { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ] as const;
 
 const TABS_FTE = [
   { id: "general", label: "Resumen", icon: FileText },
   { id: "equipo", label: "Equipo", icon: Users },
-  { id: "notas", label: "Notas", icon: MessageSquare },
+  { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ] as const;
 
-type TabId = "general" | "equipo" | "diseno" | "compras" | "ejecucion" | "notas";
+type TabId = "general" | "equipo" | "diseno" | "compras" | "ejecucion" | "comentarios";
 
 export default function ProjectDetail({
   project,
@@ -89,6 +89,7 @@ export default function ProjectDetail({
   const [idLicitacion, setIdLicitacion] = useState(project.idLicitacion || "");
   const [codigoProyectoDCI, setCodigoProyectoDCI] = useState(project.codigoProyectoDCI || "");
   const [fechaVencimientoRecursos, setFechaVencimientoRecursos] = useState(project.fechaVencimientoRecursos || "");
+  const [memorandumNumber, setMemorandumNumber] = useState(project.memorandumNumber || "");
   const [jefeProyectoId, setJefeProyectoId] = useState(project.jefeProyectoId || -1);
   const [inspectorId, setInspectorId] = useState(project.inspectorId || -1);
   const [especialidades, setEspecialidades] = useState(project.especialidades || []);
@@ -144,11 +145,11 @@ export default function ProjectDetail({
   const canDelete = useMemo(() => deleteReason.trim().length >= 10, [deleteReason]);
 
   const generatedCode = useMemo(() => {
-    const parts = (project.memorandumNumber || "").split("-");
+    const parts = (memorandumNumber || "").split("-");
     const memo = parts.length >= 3 ? parts[2] : "0";
     const yearShort = parts.length >= 2 ? (parts[1] || "").slice(-2) : "00";
     return [memo, yearShort, tipoLicitacion || normalizeTipoLicitacion(project.tipoLicitacion || ""), project.tipoDesarrollo, project.disciplinaLider].filter(Boolean).join("-");
-  }, [project.memorandumNumber, tipoLicitacion, project.tipoLicitacion, project.tipoDesarrollo, project.disciplinaLider]);
+  }, [memorandumNumber, tipoLicitacion, project.tipoLicitacion, project.tipoDesarrollo, project.disciplinaLider]);
 
   const projectIsFTE = isFTE(project.tipoDesarrollo);
   const projectStatuses = getStatusesForProject(project.tipoDesarrollo);
@@ -161,6 +162,7 @@ export default function ProjectDetail({
   const handleSave = () => {
     const updated: Project = {
       ...project,
+      memorandumNumber: memorandumNumber || "", requestingUnit: infoUnit || "", contactName: infoContactName || "", contactEmail: infoContactEmail || "",
       fechaRecepcionMemo: fechaRecepcionMemo || "", dueDate: fechaEstEntrega || "",
       description: descripcion, fechaLicitacion: fechaLicitacion || "",
       fechaPublicacion: fechaPublicacion || "", budget: montoAsignado,
@@ -326,8 +328,8 @@ export default function ProjectDetail({
           const isActive = activeTab === tab.id;
           return (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabId)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all border border-b-0 ${
-                isActive ? "bg-white text-[#F97316] border-gray-200 shadow-sm -mb-px z-10" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 border-transparent"
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border border-b-0 ${
+                isActive ? "bg-white text-[#F97316] border-gray-200 shadow-sm -mb-px z-10" : "text-gray-700 hover:text-gray-900 hover:bg-gray-200 border-transparent"
               }`}>
               <Icon className="w-4 h-4" />
               {tab.label}
@@ -350,60 +352,28 @@ export default function ProjectDetail({
             <>
               {/* Project info card */}
               <div className={cardCls}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-[#F97316]" />
-                    <h2 className="text-base font-bold text-gray-900">Información del Proyecto</h2>
-                  </div>
-                  {!editingInfo && (
-                    <button onClick={() => setEditingInfo(true)} className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#F97316] transition">
-                      <Pencil className="w-3 h-3" /> Editar
-                    </button>
-                  )}
+                <div className="flex items-center gap-2 mb-4">
+                  <ClipboardList className="w-5 h-5 text-[#F97316]" />
+                  <h2 className="text-base font-bold text-gray-900">Información del Proyecto</h2>
                 </div>
-
-                {editingInfo ? (
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-600 font-semibold mb-1">Unidad Requirente</label>
-                      <input type="text" value={infoUnit} onChange={(e) => setInfoUnit(e.target.value)} className={inputCls} />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 font-semibold mb-1">Nombre Contacto</label>
-                      <input type="text" value={infoContactName} onChange={(e) => setInfoContactName(e.target.value)} placeholder="Nombre" className={inputCls} />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 font-semibold mb-1">Email Contacto</label>
-                      <input type="email" value={infoContactEmail === "—" ? "" : infoContactEmail} onChange={(e) => setInfoContactEmail(e.target.value)} placeholder="correo@ejemplo.cl" className={inputCls} />
-                    </div>
-                    <div className="col-span-3 flex gap-2 justify-end">
-                      <button onClick={() => { setInfoUnit(project.requestingUnit || "—"); setInfoContactName(project.contactName || "—"); setInfoContactEmail(project.contactEmail || "—"); setEditingInfo(false); }}
-                        className="px-4 py-1.5 text-xs font-semibold border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
-                      <button onClick={() => { onUpdate({ ...project, requestingUnit: infoUnit, contactName: infoContactName, contactEmail: infoContactEmail || "—" }); setEditingInfo(false); }}
-                        className="px-4 py-1.5 text-xs font-semibold bg-[#F97316] text-white rounded-lg hover:bg-[#ea580c] transition">Guardar</button>
-                    </div>
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">Código PLADET</label>
+                    <input type="text" disabled value={generatedCode || "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600 font-mono" />
                   </div>
-                ) : (
-                  <div className="grid grid-cols-4 gap-6">
-                    <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-semibold">Código PLADET</p>
-                      <p className="text-sm font-medium text-gray-900 font-mono">{generatedCode || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-semibold">Unidad Requirente</p>
-                      <p className="text-sm font-medium text-gray-900">{project.requestingUnit}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-semibold">Contacto</p>
-                      <p className="text-sm font-medium text-gray-900">{project.contactName}</p>
-                      <p className="text-xs text-gray-500">{project.contactEmail}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 uppercase font-semibold">Memorándum</p>
-                      <p className="text-sm font-medium text-gray-900">{project.memorandumNumber}</p>
-                    </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">Unidad Requirente</label>
+                    <input type="text" value={infoUnit} onChange={(e) => setInfoUnit(e.target.value)} className={inputCls} />
                   </div>
-                )}
+                  <div>
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">Nombre Contacto</label>
+                    <input type="text" value={infoContactName} onChange={(e) => setInfoContactName(e.target.value)} placeholder="Nombre" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">Email Contacto</label>
+                    <input type="email" value={infoContactEmail === "—" ? "" : infoContactEmail} onChange={(e) => setInfoContactEmail(e.target.value)} placeholder="correo@ejemplo.cl" className={inputCls} />
+                  </div>
+                </div>
               </div>
 
               {projectIsFTE ? (
@@ -434,6 +404,10 @@ export default function ProjectDetail({
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
+                        <label className="block text-xs text-gray-600 font-semibold mb-1">N° Memorándum</label>
+                        <input type="text" value={memorandumNumber} onChange={(e) => setMemorandumNumber(e.target.value)} className={inputCls} placeholder="MEM-2026-XXXX" />
+                      </div>
+                      <div>
                         <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Recepción Memorándum</label>
                         <input type="date" value={fechaRecepcionMemo} onChange={(e) => setFechaRecepcionMemo(e.target.value)} className={inputCls} />
                       </div>
@@ -450,7 +424,7 @@ export default function ProjectDetail({
                         <input type="date" value={fechaPublicacion} onChange={(e) => setFechaPublicacion(e.target.value)} className={inputCls} />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Monto Asignado CLP</label>
+                        <label className="block text-xs text-gray-600 font-semibold mb-1">Monto Asignado CDP</label>
                         <div className="flex items-center">
                           <span className="text-sm text-gray-600 mr-2">$</span>
                           <input type="text" value={montoAsignado} onChange={(e) => setMontoAsignado(e.target.value)} className={"flex-1 " + inputCls} placeholder="0" />
@@ -498,6 +472,10 @@ export default function ProjectDetail({
                     <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value.slice(0, 200))} maxLength={200}
                       className={inputCls + " resize-none h-20"} placeholder="Ingrese la descripción del proyecto..." />
                   </div>
+
+                  {/* Location */}
+                  <LocationPicker lat={ubicacionLat} lng={ubicacionLng} nombre={ubicacionNombre}
+                    onLocationChange={(lat, lng, nombre) => { setUbicacionLat(lat); setUbicacionLng(lng); setUbicacionNombre(nombre); }} />
                 </>
               )}
             </>
@@ -663,17 +641,9 @@ export default function ProjectDetail({
             </>
           )}
 
-          {/* ── TAB: Notas (Comments + Location) ── */}
-          {activeTab === "notas" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <CommentsSection projectId={project.id} userEmail={userEmail} />
-              </div>
-              <div>
-                <LocationPicker lat={ubicacionLat} lng={ubicacionLng} nombre={ubicacionNombre}
-                  onLocationChange={(lat, lng, nombre) => { setUbicacionLat(lat); setUbicacionLng(lng); setUbicacionNombre(nombre); }} />
-              </div>
-            </div>
+          {/* ── TAB: Comentarios ── */}
+          {activeTab === "comentarios" && (
+            <CommentsSection projectId={project.id} userEmail={userEmail} />
           )}
         </div>
       </div>
