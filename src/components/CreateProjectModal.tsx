@@ -8,6 +8,7 @@ import {
   REQUESTING_UNITS,
   SECTORS,
   BIDDING_TYPES,
+  PROJECT_CATEGORIES,
 } from "@/lib/constants";
 import { Project } from "@/types/project";
 
@@ -30,6 +31,7 @@ export default function CreateProjectModal({
     unidadRequirente: "",
     sector: "",
     tipoLicitacion: "",
+    categoriaProyecto: "",
     nombre: "",
     prioridad: "media" as "alta" | "media" | "baja",
     fechaEntrega: "",
@@ -86,6 +88,7 @@ export default function CreateProjectModal({
       tipoDesarrollo: form.tipoDesarrollo,
       disciplinaLider: form.disciplinaLider,
       sector: form.sector,
+      categoriaProyecto: form.categoriaProyecto,
       tipoLicitacion: form.tipoLicitacion,
     };
 
@@ -232,6 +235,24 @@ export default function CreateProjectModal({
                   {SECTORS.map((sector) => (
                     <option key={sector.value} value={sector.value}>
                       {sector.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Categoría del Proyecto
+                </label>
+                <select
+                  name="categoriaProyecto"
+                  value={form.categoriaProyecto}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                >
+                  <option value="">Seleccionar...</option>
+                  {PROJECT_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
                     </option>
                   ))}
                 </select>

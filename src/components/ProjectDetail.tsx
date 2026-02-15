@@ -29,6 +29,7 @@ import {
   INSPECTORS,
   SPECIALISTS,
   BIDDING_TYPES,
+  PROJECT_CATEGORIES,
   normalizeTipoLicitacion,
   fmt,
   fmtDate,
@@ -98,6 +99,7 @@ export default function ProjectDetail({
     const parts = (project.memorandumNumber || "").split("-");
     return parts.length >= 2 ? parts[1] : new Date().getFullYear().toString();
   });
+  const [categoriaProyecto, setCategoriaProyecto] = useState(project.categoriaProyecto || "");
   const [jefeProyectoId, setJefeProyectoId] = useState(project.jefeProyectoId || -1);
   const [inspectorId, setInspectorId] = useState(project.inspectorId || -1);
   const [especialidades, setEspecialidades] = useState(project.especialidades || []);
@@ -170,7 +172,7 @@ export default function ProjectDetail({
   const handleSave = () => {
     const updated: Project = {
       ...project,
-      memorandumNumber: memorandumNumber || "", requestingUnit: infoUnit || "", contactName: infoContactName || "", contactEmail: infoContactEmail || "",
+      memorandumNumber: memorandumNumber || "", requestingUnit: infoUnit || "", contactName: infoContactName || "", contactEmail: infoContactEmail || "", categoriaProyecto,
       fechaRecepcionMemo: fechaRecepcionMemo || "", dueDate: fechaEstEntrega || "",
       description: descripcion, fechaLicitacion: fechaLicitacion || "",
       fechaPublicacion: fechaPublicacion || "", budget: montoAsignado,
@@ -411,6 +413,13 @@ export default function ProjectDetail({
                       <h2 className="text-base font-bold text-gray-900">Antecedentes Generales</h2>
                     </div>
                     <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Categoría del Proyecto</label>
+                        <select value={categoriaProyecto} onChange={(e) => setCategoriaProyecto(e.target.value)} className={inputCls}>
+                          <option value="">Seleccionar...</option>
+                          {PROJECT_CATEGORIES.map((cat) => (<option key={cat.value} value={cat.value}>{cat.label}</option>))}
+                        </select>
+                      </div>
                       <div>
                         <label className="block text-xs text-gray-800 font-semibold mb-1">Memorándum</label>
                         <input type="text" value={memoNumber} onChange={(e) => setMemoNumber(e.target.value)} className={inputCls} placeholder="Ej: 1234" />

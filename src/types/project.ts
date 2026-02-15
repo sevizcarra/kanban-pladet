@@ -15,6 +15,7 @@ export interface Project {
   tipoDesarrollo: string;
   disciplinaLider: string;
   sector: string;
+  categoriaProyecto?: string;
   fechaRecepcionMemo?: string;
   // Antecedentes Generales
   fechaLicitacion?: string;
