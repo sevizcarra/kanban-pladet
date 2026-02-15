@@ -89,7 +89,15 @@ export default function ProjectDetail({
   const [idLicitacion, setIdLicitacion] = useState(project.idLicitacion || "");
   const [codigoProyectoDCI, setCodigoProyectoDCI] = useState(project.codigoProyectoDCI || "");
   const [fechaVencimientoRecursos, setFechaVencimientoRecursos] = useState(project.fechaVencimientoRecursos || "");
-  const [memorandumNumber, setMemorandumNumber] = useState(project.memorandumNumber || "");
+  // Split memorandumNumber (format: MEM-YYYY-NNNN) into separate fields
+  const [memoNumber, setMemoNumber] = useState(() => {
+    const parts = (project.memorandumNumber || "").split("-");
+    return parts.length >= 3 ? parts[2] : "";
+  });
+  const [memoYear, setMemoYear] = useState(() => {
+    const parts = (project.memorandumNumber || "").split("-");
+    return parts.length >= 2 ? parts[1] : new Date().getFullYear().toString();
+  });
   const [jefeProyectoId, setJefeProyectoId] = useState(project.jefeProyectoId || -1);
   const [inspectorId, setInspectorId] = useState(project.inspectorId || -1);
   const [especialidades, setEspecialidades] = useState(project.especialidades || []);
@@ -144,12 +152,12 @@ export default function ProjectDetail({
   const showDCI = useMemo(() => tipoFinanciamiento === "DCI" || tipoFinanciamiento === "VRIIC", [tipoFinanciamiento]);
   const canDelete = useMemo(() => deleteReason.trim().length >= 10, [deleteReason]);
 
+  const memorandumNumber = useMemo(() => `MEM-${memoYear}-${memoNumber || "000"}`, [memoYear, memoNumber]);
+
   const generatedCode = useMemo(() => {
-    const parts = (memorandumNumber || "").split("-");
-    const memo = parts.length >= 3 ? parts[2] : "0";
-    const yearShort = parts.length >= 2 ? (parts[1] || "").slice(-2) : "00";
-    return [memo, yearShort, tipoLicitacion || normalizeTipoLicitacion(project.tipoLicitacion || ""), project.tipoDesarrollo, project.disciplinaLider].filter(Boolean).join("-");
-  }, [memorandumNumber, tipoLicitacion, project.tipoLicitacion, project.tipoDesarrollo, project.disciplinaLider]);
+    const yearShort = memoYear ? memoYear.slice(-2) : "00";
+    return [memoNumber || "0", yearShort, tipoLicitacion || normalizeTipoLicitacion(project.tipoLicitacion || ""), project.tipoDesarrollo, project.disciplinaLider].filter(Boolean).join("-");
+  }, [memoNumber, memoYear, tipoLicitacion, project.tipoLicitacion, project.tipoDesarrollo, project.disciplinaLider]);
 
   const projectIsFTE = isFTE(project.tipoDesarrollo);
   const projectStatuses = getStatusesForProject(project.tipoDesarrollo);
@@ -404,11 +412,15 @@ export default function ProjectDetail({
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs text-gray-800 font-semibold mb-1">N° Memorándum</label>
-                        <input type="text" value={memorandumNumber} onChange={(e) => setMemorandumNumber(e.target.value)} className={inputCls} placeholder="MEM-2026-XXXX" />
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Memorándum</label>
+                        <input type="text" value={memoNumber} onChange={(e) => setMemoNumber(e.target.value)} className={inputCls} placeholder="Ej: 1234" />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Recepción Memorándum</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Año</label>
+                        <input type="text" value={memoYear} onChange={(e) => setMemoYear(e.target.value)} className={inputCls} placeholder="2026" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Recepción/Creación Memorándum</label>
                         <input type="date" value={fechaRecepcionMemo} onChange={(e) => setFechaRecepcionMemo(e.target.value)} className={inputCls} />
                       </div>
                       <div>
