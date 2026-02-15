@@ -47,7 +47,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                   <div key={p.id}
                     className={`rounded-xl cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group relative ${
                       isFlagged
-                        ? "bg-red-50 border-2 border-red-400 ring-1 ring-red-300/50"
+                        ? "flagged-blink border-2 border-red-700 text-white"
                         : isOverdue
                           ? "bg-white border-2 border-red-300"
                           : isDueSoon
@@ -58,8 +58,8 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                     {/* Flagged pulse animation */}
                     {isFlagged && (
                       <div className="absolute -top-1.5 -left-1.5 flex h-3 w-3">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                        <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex h-3 w-3 rounded-full bg-white" />
                       </div>
                     )}
 
@@ -78,20 +78,20 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
 
                     <div className="p-3.5" onClick={() => onProjectClick(p)}>
                       {/* Top color accent bar */}
-                      <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${isFlagged ? '#ef4444' : isOverdue ? '#ef4444' : s.color}, ${isFlagged ? '#ef444480' : isOverdue ? '#ef444480' : s.color + '80'})` }} />
+                      <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${isFlagged ? '#ffffff' : isOverdue ? '#ef4444' : s.color}, ${isFlagged ? '#ffffff80' : isOverdue ? '#ef444480' : s.color + '80'})` }} />
 
                       <div className="flex items-start justify-between gap-1 mb-2">
-                        <p className={`text-xs font-bold leading-snug transition-colors flex-1 ${isFlagged ? 'text-red-800' : 'text-gray-900 group-hover:text-[#F97316]'}`}>{p.title}</p>
+                        <p className={`text-xs font-bold leading-snug transition-colors flex-1 ${isFlagged ? 'text-white' : 'text-gray-900 group-hover:text-[#F97316]'}`}>{p.title}</p>
                         {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
                         {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                       </div>
 
                       <div className="flex justify-between items-center mb-1">
                         <Badge color={prio.color} bg={prio.bg}>{prio.label}</Badge>
-                        <span className="text-[10px] text-gray-500 font-medium bg-gray-50 px-1.5 py-0.5 rounded">{p.requestingUnit}</span>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isFlagged ? 'text-white bg-white/20' : 'text-gray-500 bg-gray-50'}`}>{p.requestingUnit}</span>
                       </div>
 
-                      <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100">
+                      <div className={`flex items-center justify-between mt-2.5 pt-2 border-t ${isFlagged ? 'border-white/30' : 'border-gray-100'}`}>
                         {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] ? (
                           <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             <div
@@ -100,7 +100,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                             >
                               {getInitials(PROFESSIONALS[p.jefeProyectoId].name)}
                             </div>
-                            <span className="text-[10px] text-gray-600 truncate">{PROFESSIONALS[p.jefeProyectoId].name}</span>
+                            <span className={`text-[10px] truncate ${isFlagged ? 'text-white/90' : 'text-gray-600'}`}>{PROFESSIONALS[p.jefeProyectoId].name}</span>
                           </div>
                         ) : <div />}
                         {(p.commentCount || 0) > 0 && (
@@ -122,7 +122,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                         title={isFlagged ? "Quitar alerta" : "Marcar con alerta"}
                         className={`absolute bottom-2 right-2 p-1.5 rounded-lg transition-all duration-200 z-10 ${
                           isFlagged
-                            ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                            ? 'bg-white/20 text-white hover:bg-white/30'
                             : 'bg-transparent text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-red-500'
                         }`}
                       >
