@@ -81,15 +81,15 @@ export const REQUESTING_UNITS = [
 
 export const PROJECT_CATEGORIES = [
   { value: "banos", label: "Baños" },
-  { value: "paisajismo", label: "Paisajismo y Espacio Público" },
+  { value: "climatizacion", label: "Climatización" },
+  { value: "fachada", label: "Fachada" },
+  { value: "electrico", label: "Instalaciones Eléctricas y Datos" },
   { value: "laboratorio", label: "Laboratorio" },
   { value: "oficinas", label: "Oficinas" },
-  { value: "techumbre", label: "Techumbre/Cubierta" },
-  { value: "fachada", label: "Fachada" },
-  { value: "electrico", label: "Instalaciones Eléctricas" },
-  { value: "climatizacion", label: "Climatización" },
+  { value: "paisajismo", label: "Paisajismo y Espacio Público" },
   { value: "patrimonio", label: "Patrimonio" },
   { value: "salas", label: "Salas de Clase" },
+  { value: "techumbre", label: "Techumbre/Cubierta" },
 ];
 
 export const BIDDING_TYPES = [
