@@ -216,7 +216,7 @@ export default function ProjectDetail({
   const handleSubEtapaChange = (key: keyof typeof subEtapas) => { setSubEtapas((prev) => ({ ...prev, [key]: !prev[key] })); };
 
   /* ── Shared UI ── */
-  const inputCls = "w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-[#F97316] outline-none";
+  const inputCls = "w-full px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-900 focus:border-[#F97316] outline-none placeholder:text-gray-400";
   const cardCls = "bg-white rounded-xl border border-gray-200 p-5";
 
   /* ── Sub-etapas for current status ── */
@@ -272,12 +272,12 @@ export default function ProjectDetail({
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
                     isCompleted ? "bg-green-500 border-green-500 text-white" :
                     isCurrent ? "bg-[#F97316] border-[#F97316] text-white ring-4 ring-[#F97316]/20" :
-                    "bg-white border-gray-300 text-gray-400 group-hover:border-gray-400"
+                    "bg-white border-gray-400 text-gray-500 group-hover:border-gray-500"
                   }`}>
                     {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
                   </div>
                   <span className={`text-[10px] leading-tight text-center max-w-[80px] ${
-                    isCurrent ? "font-bold text-[#F97316]" : isCompleted ? "font-medium text-green-700" : "text-gray-400"
+                    isCurrent ? "font-bold text-[#F97316]" : isCompleted ? "font-medium text-green-700" : "font-medium text-gray-500"
                   }`}>
                     {status.label}
                   </span>
@@ -294,7 +294,7 @@ export default function ProjectDetail({
         {/* Sub-etapas row (if current status has them) */}
         {hasSubEtapas && (
           <div className="flex items-center gap-4 mt-2.5 pl-2 border-t border-gray-100 pt-2">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">Sub-etapas:</span>
+            <span className="text-[10px] uppercase font-bold text-gray-600 tracking-wide">Sub-etapas:</span>
             {currentStatusId === "en_diseno" && (
               <>
                 <label className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-amber-50 px-2 py-1 rounded transition text-gray-700">
@@ -329,7 +329,7 @@ export default function ProjectDetail({
           return (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabId)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border border-b-0 ${
-                isActive ? "bg-white text-[#F97316] border-gray-200 shadow-sm -mb-px z-10" : "text-gray-700 hover:text-gray-900 hover:bg-gray-200 border-transparent"
+                isActive ? "bg-white text-[#F97316] border-gray-200 shadow-sm -mb-px z-10" : "text-gray-900 hover:text-black hover:bg-gray-200 border-transparent"
               }`}>
               <Icon className="w-4 h-4" />
               {tab.label}
@@ -358,19 +358,19 @@ export default function ProjectDetail({
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">Código PLADET</label>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Código PLADET</label>
                     <input type="text" disabled value={generatedCode || "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600 font-mono" />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">Unidad Requirente</label>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Unidad Requirente</label>
                     <input type="text" value={infoUnit} onChange={(e) => setInfoUnit(e.target.value)} className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">Nombre Contacto</label>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Nombre Contacto</label>
                     <input type="text" value={infoContactName} onChange={(e) => setInfoContactName(e.target.value)} placeholder="Nombre" className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">Email Contacto</label>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Email Contacto</label>
                     <input type="email" value={infoContactEmail === "—" ? "" : infoContactEmail} onChange={(e) => setInfoContactEmail(e.target.value)} placeholder="correo@ejemplo.cl" className={inputCls} />
                   </div>
                 </div>
@@ -404,58 +404,58 @@ export default function ProjectDetail({
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">N° Memorándum</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">N° Memorándum</label>
                         <input type="text" value={memorandumNumber} onChange={(e) => setMemorandumNumber(e.target.value)} className={inputCls} placeholder="MEM-2026-XXXX" />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Recepción Memorándum</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Recepción Memorándum</label>
                         <input type="date" value={fechaRecepcionMemo} onChange={(e) => setFechaRecepcionMemo(e.target.value)} className={inputCls} />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Est. Entrega</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Est. Entrega</label>
                         <input type="date" value={fechaEstEntrega} onChange={(e) => setFechaEstEntrega(e.target.value)} className={inputCls} />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha de envío a DOCL</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha de envío a DOCL</label>
                         <input type="date" value={fechaLicitacion} onChange={(e) => setFechaLicitacion(e.target.value)} className={inputCls} />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Publicación</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Publicación</label>
                         <input type="date" value={fechaPublicacion} onChange={(e) => setFechaPublicacion(e.target.value)} className={inputCls} />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Monto Asignado CDP</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Monto Asignado CDP</label>
                         <div className="flex items-center">
                           <span className="text-sm text-gray-600 mr-2">$</span>
                           <input type="text" value={montoAsignado} onChange={(e) => setMontoAsignado(e.target.value)} className={"flex-1 " + inputCls} placeholder="0" />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Tipo Financiamiento</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Tipo Financiamiento</label>
                         <select value={tipoFinanciamiento} onChange={(e) => setTipoFinanciamiento(e.target.value)} className={inputCls}>
                           <option value="Capital">Capital</option><option value="Corriente">Corriente</option><option value="Corriente USACH">Corriente USACH</option><option value="DCI">DCI</option><option value="VRIIC">VRIIC</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">Tipo de Licitación</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Tipo de Licitación</label>
                         <select value={tipoLicitacion} onChange={(e) => setTipoLicitacion(e.target.value)} className={inputCls}>
                           <option value="">Seleccionar...</option>
                           {BIDDING_TYPES.map((bt) => (<option key={bt.value} value={bt.value}>{bt.label}</option>))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-600 font-semibold mb-1">ID Licitación</label>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">ID Licitación</label>
                         <input type="text" value={idLicitacion} onChange={(e) => setIdLicitacion(e.target.value)} className={inputCls} />
                       </div>
                       {showDCI && (
                         <div>
-                          <label className="block text-xs text-gray-600 font-semibold mb-1">Código Proyecto DCI</label>
+                          <label className="block text-xs text-gray-800 font-semibold mb-1">Código Proyecto DCI</label>
                           <input type="text" value={codigoProyectoDCI} onChange={(e) => setCodigoProyectoDCI(e.target.value)} className={inputCls} />
                         </div>
                       )}
                       {showDCI && (
                         <div>
-                          <label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Venc. Recursos</label>
+                          <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Venc. Recursos</label>
                           <input type="date" value={fechaVencimientoRecursos} onChange={(e) => setFechaVencimientoRecursos(e.target.value)} className={inputCls} />
                         </div>
                       )}
@@ -468,7 +468,7 @@ export default function ProjectDetail({
                       <FileText className="w-5 h-5 text-[#F97316]" />
                       <h2 className="text-base font-bold text-gray-900">Descripción del Proyecto</h2>
                     </div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">Descripción ({descripcion.length}/200)</label>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Descripción ({descripcion.length}/200)</label>
                     <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value.slice(0, 200))} maxLength={200}
                       className={inputCls + " resize-none h-20"} placeholder="Ingrese la descripción del proyecto..." />
                   </div>
@@ -490,14 +490,14 @@ export default function ProjectDetail({
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">Jefe de Proyecto</label>
+                  <label className="block text-xs text-gray-800 font-semibold mb-1">Jefe de Proyecto</label>
                   <select value={jefeProyectoId === -1 ? "" : jefeProyectoId} onChange={(e) => setJefeProyectoId(e.target.value ? parseInt(e.target.value) : -1)} className={inputCls}>
                     <option value="">Seleccionar...</option>
                     {PROFESSIONALS.map((prof, idx) => (<option key={idx} value={idx}>{prof.name} — {prof.role}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">Inspector Técnico</label>
+                  <label className="block text-xs text-gray-800 font-semibold mb-1">Inspector Técnico</label>
                   <select value={inspectorId === -1 ? "" : inspectorId} onChange={(e) => setInspectorId(e.target.value ? parseInt(e.target.value) : -1)} className={inputCls}>
                     <option value="">Seleccionar...</option>
                     {INSPECTORS.map((inspector, idx) => (<option key={idx} value={idx}>{inspector}</option>))}
@@ -505,7 +505,7 @@ export default function ProjectDetail({
                 </div>
               </div>
               <div className="border-t border-gray-200 pt-4">
-                <p className="text-xs text-gray-600 font-semibold mb-3">Especialistas</p>
+                <p className="text-xs text-gray-800 font-semibold mb-3">Especialistas</p>
                 <div className="grid grid-cols-2 gap-2">
                   {SPECIALISTS.map((s) => (
                     <label key={s.name} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
@@ -519,7 +519,7 @@ export default function ProjectDetail({
               {/* FTE: Informe de Factibilidad */}
               {projectIsFTE && (
                 <div className="border-t border-gray-200 pt-4 mt-4">
-                  <p className="text-xs text-gray-600 font-semibold mb-3">Informe de Factibilidad</p>
+                  <p className="text-xs text-gray-800 font-semibold mb-3">Informe de Factibilidad</p>
                   <button className="w-full border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-6 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
                     <Upload className="w-6 h-6" /><span className="text-sm font-medium">Adjuntar Informe</span><span className="text-xs text-gray-400">PDF, DOC o imagen</span>
                   </button>
@@ -571,12 +571,12 @@ export default function ProjectDetail({
                   <h2 className="text-base font-bold text-gray-900">Antecedentes de Ejecución</h2>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <div><label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Inicio Obra</label><input type="date" value={fechaInicioObra} onChange={(e) => setFechaInicioObra(e.target.value)} className={inputCls} /></div>
-                  <div><label className="block text-xs text-gray-600 font-semibold mb-1">Plazo Ejecución (días corridos)</label><input type="number" value={plazoEjecucion} onChange={(e) => setPlazoEjecucion(parseInt(e.target.value) || 0)} className={inputCls} placeholder="0" /></div>
-                  <div><label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Est. Término</label><input type="text" disabled value={fechaEstTermino ? fmtDate(fechaEstTermino) : "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600" /></div>
-                  <div><label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Venc. Garantía</label><input type="date" value={fechaVencGarantia} onChange={(e) => setFechaVencGarantia(e.target.value)} className={inputCls} /></div>
-                  <div><label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Rec. Provisoria</label><input type="date" value={fechaRecProviso} onChange={(e) => setFechaRecProviso(e.target.value)} className={inputCls} /></div>
-                  <div><label className="block text-xs text-gray-600 font-semibold mb-1">Fecha Rec. Definitiva</label><input type="date" value={fechaRecDefinitiva} onChange={(e) => setFechaRecDefinitiva(e.target.value)} className={inputCls} /></div>
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Inicio Obra</label><input type="date" value={fechaInicioObra} onChange={(e) => setFechaInicioObra(e.target.value)} className={inputCls} /></div>
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Plazo Ejecución (días corridos)</label><input type="number" value={plazoEjecucion} onChange={(e) => setPlazoEjecucion(parseInt(e.target.value) || 0)} className={inputCls} placeholder="0" /></div>
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Est. Término</label><input type="text" disabled value={fechaEstTermino ? fmtDate(fechaEstTermino) : "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600" /></div>
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Venc. Garantía</label><input type="date" value={fechaVencGarantia} onChange={(e) => setFechaVencGarantia(e.target.value)} className={inputCls} /></div>
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Provisoria</label><input type="date" value={fechaRecProviso} onChange={(e) => setFechaRecProviso(e.target.value)} className={inputCls} /></div>
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Definitiva</label><input type="date" value={fechaRecDefinitiva} onChange={(e) => setFechaRecDefinitiva(e.target.value)} className={inputCls} /></div>
                 </div>
               </div>
 
@@ -584,7 +584,7 @@ export default function ProjectDetail({
               <div className={cardCls}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">EDPs</h2></div>
-                  <span className="text-xs text-gray-600 font-semibold">Total: {edpCount}</span>
+                  <span className="text-xs text-gray-800 font-semibold">Total: {edpCount}</span>
                 </div>
                 <div className="grid grid-cols-4 gap-3 mb-4">
                   {Array.from({ length: edpCount }).map((_, idx) => (
@@ -615,7 +615,7 @@ export default function ProjectDetail({
               <div className={cardCls}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">NDCs</h2></div>
-                  <span className="text-xs text-gray-600 font-semibold">Total: {ndcCount}</span>
+                  <span className="text-xs text-gray-800 font-semibold">Total: {ndcCount}</span>
                 </div>
                 <div className="grid grid-cols-4 gap-3 mb-4">
                   {Array.from({ length: ndcCount }).map((_, idx) => (
