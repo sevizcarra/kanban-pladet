@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   AlertCircle,
   Siren,
+  Snowflake,
 } from "lucide-react";
 import {
   STATUSES,
@@ -38,6 +39,7 @@ interface Props {
   projects: Project[];
   onProjectClick: (p: Project) => void;
   onToggleFlag?: (p: Project) => void;
+  onToggleFreeze?: (p: Project) => void;
 }
 
 const STATUS_ORDER = Object.fromEntries(
@@ -49,7 +51,7 @@ const PRIORITY_ORDER: Record<string, number> = {
   baja: 2,
 };
 
-export default function TableView({ projects, onProjectClick, onToggleFlag }: Props) {
+export default function TableView({ projects, onProjectClick, onToggleFlag, onToggleFreeze }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("status");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
@@ -181,7 +183,7 @@ export default function TableView({ projects, onProjectClick, onToggleFlag }: Pr
                   key={p.id}
                   onClick={() => onProjectClick(p)}
                   className={`cursor-pointer transition-colors group ${
-                    isFlagged ? "bg-red-50 hover:bg-red-100/80" : isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-orange-50/40"
+                    p.frozen ? "bg-blue-50 hover:bg-blue-100/80" : isFlagged ? "bg-red-50 hover:bg-red-100/80" : isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-orange-50/40"
                   }`}
                 >
                   {/* Proyecto */}
@@ -203,6 +205,24 @@ export default function TableView({ projects, onProjectClick, onToggleFlag }: Pr
                           className="p-1 rounded text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-red-500 transition flex-shrink-0"
                         >
                           <Siren className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {p.frozen && onToggleFreeze && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleFreeze(p); }}
+                          title="Descongelar proyecto"
+                          className="p-1 rounded bg-blue-100 text-blue-600 hover:bg-blue-200 transition flex-shrink-0"
+                        >
+                          <Snowflake className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {!p.frozen && onToggleFreeze && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleFreeze(p); }}
+                          title="Congelar proyecto"
+                          className="p-1 rounded text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-500 transition flex-shrink-0"
+                        >
+                          <Snowflake className="w-3.5 h-3.5" />
                         </button>
                       )}
                       {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}

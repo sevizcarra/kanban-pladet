@@ -21,6 +21,7 @@ import {
   Package,
   Hammer,
   FolderOpen,
+  Snowflake,
 } from "lucide-react";
 import {
   STATUSES,
@@ -51,6 +52,7 @@ interface ProjectDetailProps {
   onBack: () => void;
   onUpdate: (p: Project) => void;
   onDelete: (id: string, reason: string) => void;
+  onToggleFreeze?: (project: Project, justification: string) => void;
   userEmail: string;
 }
 
@@ -77,6 +79,7 @@ export default function ProjectDetail({
   onBack,
   onUpdate,
   onDelete,
+  onToggleFreeze,
   userEmail,
 }: ProjectDetailProps) {
   // Local editable state
@@ -142,6 +145,8 @@ export default function ProjectDetail({
   const [emailDialog, setEmailDialog] = useState<{
     open: boolean; pendingStatusId: string; previousStatusLabel: string; newStatusLabel: string;
   }>({ open: false, pendingStatusId: "", previousStatusLabel: "", newStatusLabel: "" });
+  const [showFreezeModal, setShowFreezeModal] = useState(false);
+  const [freezeJustification, setFreezeJustification] = useState("");
 
   // Computed values
   const fechaEstTermino = useMemo(() => {
@@ -257,6 +262,19 @@ export default function ProjectDetail({
             </div>
           )}
         </div>
+        {/* Freeze toggle button */}
+        {onToggleFreeze && (
+          <button onClick={() => setShowFreezeModal(true)}
+            className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all flex-shrink-0 ${
+              project.frozen
+                ? "bg-blue-400 text-white hover:bg-blue-500"
+                : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+            }`}
+            title={project.frozen ? "Descongelar proyecto" : "Congelar proyecto"}>
+            <Snowflake className="w-4 h-4" />
+            {project.frozen ? "Congelado" : "Congelar"}
+          </button>
+        )}
         <button onClick={handleSave}
           className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all flex-shrink-0 ${saved ? "bg-green-500 text-white" : "bg-[#F97316] hover:bg-[#F97316]/90 text-white"}`}>
           {saved ? <><CheckCircle className="w-4 h-4" /> Guardado</> : <><Save className="w-4 h-4" /> Guardar</>}
@@ -700,6 +718,60 @@ export default function ProjectDetail({
         contactName={project.contactName || "—"} contactEmail={project.contactEmail || "—"}
         projectName={project.title} projectCode={project.codigoProyectoUsa || "—"}
         type="status_change" previousStatus={emailDialog.previousStatusLabel} newStatus={emailDialog.newStatusLabel} />
+
+      {/* Freeze justification modal */}
+      {showFreezeModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full overflow-hidden">
+            <div className={`px-6 py-4 flex items-center gap-3 ${project.frozen ? 'bg-green-500' : 'bg-blue-400'}`}>
+              <Snowflake className="w-6 h-6 text-white flex-shrink-0" />
+              <h3 className="text-lg font-bold text-white">{project.frozen ? "Descongelar Proyecto" : "Congelar Proyecto"}</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Proyecto:</p>
+                <p className="text-sm font-semibold text-gray-900">{project.title}</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 font-semibold mb-2">
+                  Justificación (mínimo 10 caracteres)
+                </label>
+                <textarea
+                  value={freezeJustification}
+                  onChange={(e) => setFreezeJustification(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-blue-400 outline-none resize-none h-24"
+                  placeholder={project.frozen ? "¿Por qué se descongela este proyecto?" : "¿Por qué se congela este proyecto?"}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowFreezeModal(false); setFreezeJustification(""); }}
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (onToggleFreeze && freezeJustification.trim().length >= 10) {
+                      onToggleFreeze(project, freezeJustification.trim());
+                      setShowFreezeModal(false);
+                      setFreezeJustification("");
+                    }
+                  }}
+                  disabled={freezeJustification.trim().length < 10}
+                  className={`flex-1 px-3 py-2 rounded-lg text-white text-sm font-semibold transition ${
+                    freezeJustification.trim().length >= 10
+                      ? project.frozen ? "bg-green-500 hover:bg-green-600" : "bg-blue-400 hover:bg-blue-500"
+                      : "bg-gray-300 cursor-not-allowed"
+                  }`}
+                >
+                  {project.frozen ? "Descongelar" : "Congelar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  addComment,
 } from '@/lib/firestore';
 import { onAuthChange, logout, isAdmin, getUserProfile, ensureAdminProfile } from '@/lib/auth';
 import { Project } from '@/types/project';
@@ -39,6 +40,7 @@ import {
   Columns3,
   List,
   Lightbulb,
+  Snowflake,
 } from 'lucide-react';
 import { STATUSES, PRIORITIES } from '@/lib/constants';
 
@@ -64,6 +66,11 @@ export default function Home() {
     open: boolean;
     projectData: Omit<Project, 'id'> | null;
   }>({ open: false, projectData: null });
+  const [freezeDialog, setFreezeDialog] = useState<{
+    open: boolean;
+    project: Project | null;
+  }>({ open: false, project: null });
+  const [freezeJustification, setFreezeJustification] = useState('');
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -211,6 +218,40 @@ export default function Home() {
     []
   );
 
+  // Freeze: from KanbanBoard card — open modal
+  const handleRequestFreeze = useCallback((project: Project) => {
+    setFreezeDialog({ open: true, project });
+    setFreezeJustification('');
+  }, []);
+
+  // Freeze: confirm with justification (from modal or ProjectDetail)
+  const handleFreezeConfirm = useCallback(
+    async (project: Project, justification: string) => {
+      try {
+        const wasFrozen = !!project.frozen;
+        const updated = { ...project, frozen: !wasFrozen };
+        await updateProject(project.id, updated);
+        // Add justification as a system comment
+        const action = wasFrozen ? 'DESCONGELADO' : 'CONGELADO';
+        await addComment(project.id, {
+          authorEmail: authUser?.email || 'sistema',
+          content: `❄️ Proyecto ${action}: ${justification}`,
+          mentions: [],
+          createdAt: new Date().toISOString(),
+        });
+        // Update commentCount
+        await updateProject(project.id, { ...updated, commentCount: (project.commentCount || 0) + 1 });
+        // If we're viewing this project, update the selection
+        if (selectedProject?.id === project.id) {
+          setSelectedProject({ ...updated, commentCount: (project.commentCount || 0) + 1 });
+        }
+      } catch (error) {
+        console.error('Error toggling freeze:', error);
+      }
+    },
+    [authUser, selectedProject]
+  );
+
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
       const statusMatch =
@@ -271,6 +312,7 @@ export default function Home() {
           project={matchingProject}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+          onToggleFreeze={handleFreezeConfirm}
           onBack={() => setSelectedProject(null)}
           userEmail={authUser.email || ""}
         />
@@ -442,6 +484,7 @@ export default function Home() {
                   projects={filteredProjects}
                   onProjectClick={setSelectedProject}
                   onToggleFlag={handleToggleFlag}
+                  onToggleFreeze={handleRequestFreeze}
                 />
               )}
 
@@ -450,6 +493,7 @@ export default function Home() {
                   projects={filteredProjects}
                   onProjectClick={setSelectedProject}
                   onToggleFlag={handleToggleFlag}
+                  onToggleFreeze={handleRequestFreeze}
                 />
               )}
 
@@ -515,6 +559,63 @@ export default function Home() {
         projectCode={creationEmailDialog.projectData?.codigoProyectoUsa || '—'}
         type="creation"
       />
+
+      {/* Freeze justification modal (from Kanban cards) */}
+      {freezeDialog.open && freezeDialog.project && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full overflow-hidden">
+            <div className={`px-6 py-4 flex items-center gap-3 ${freezeDialog.project.frozen ? 'bg-green-500' : 'bg-blue-400'}`}>
+              <Snowflake className="w-6 h-6 text-white flex-shrink-0" />
+              <h3 className="text-lg font-bold text-white">
+                {freezeDialog.project.frozen ? 'Descongelar Proyecto' : 'Congelar Proyecto'}
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Proyecto:</p>
+                <p className="text-sm font-semibold text-gray-900">{freezeDialog.project.title}</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 font-semibold mb-2">
+                  Justificación (mínimo 10 caracteres)
+                </label>
+                <textarea
+                  value={freezeJustification}
+                  onChange={(e) => setFreezeJustification(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-blue-400 outline-none resize-none h-24"
+                  placeholder={freezeDialog.project.frozen ? '¿Por qué se descongela este proyecto?' : '¿Por qué se congela este proyecto?'}
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setFreezeDialog({ open: false, project: null }); setFreezeJustification(''); }}
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (freezeDialog.project && freezeJustification.trim().length >= 10) {
+                      handleFreezeConfirm(freezeDialog.project, freezeJustification.trim());
+                      setFreezeDialog({ open: false, project: null });
+                      setFreezeJustification('');
+                    }
+                  }}
+                  disabled={freezeJustification.trim().length < 10}
+                  className={`flex-1 px-3 py-2 rounded-lg text-white text-sm font-semibold transition ${
+                    freezeJustification.trim().length >= 10
+                      ? freezeDialog.project.frozen ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-400 hover:bg-blue-500'
+                      : 'bg-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  {freezeDialog.project.frozen ? 'Descongelar' : 'Congelar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

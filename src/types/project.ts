@@ -64,6 +64,7 @@ export interface Project {
   createdAt?: string;
   commentCount?: number;
   flagged?: boolean; // Baliza de alerta visual
+  frozen?: boolean;  // Proyecto congelado
 }
 
 export interface Comment {

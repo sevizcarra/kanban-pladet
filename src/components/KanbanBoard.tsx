@@ -3,15 +3,16 @@ import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress, daysLeft, getAntecede
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
-import { User, MessageCircle, AlertTriangle, AlertCircle, Siren } from "lucide-react";
+import { User, MessageCircle, AlertTriangle, AlertCircle, Siren, Snowflake } from "lucide-react";
 
 interface Props {
   projects: Project[];
   onProjectClick: (p: Project) => void;
   onToggleFlag?: (p: Project) => void;
+  onToggleFreeze?: (p: Project) => void;
 }
 
-export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: Props) {
+export default function KanbanBoard({ projects, onProjectClick, onToggleFlag, onToggleFreeze }: Props) {
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
@@ -43,20 +44,31 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                 const isDueSoon = dl !== null && dl >= 0 && dl <= 7;
                 const antecedentes = getAntecedentesIncompletos(p);
                 const isFlagged = !!p.flagged;
+                const isFrozen = !!p.frozen;
                 return (
                   <div key={p.id}
                     className={`rounded-xl cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group relative ${
-                      isFlagged
-                        ? "flagged-blink border-2 border-red-700 text-white"
-                        : isOverdue
-                          ? "bg-white border-2 border-red-300"
-                          : isDueSoon
-                            ? "bg-white border-2 border-amber-300"
-                            : "bg-white border border-gray-100 hover:border-gray-200"
+                      isFrozen
+                        ? "frozen-card border-2 border-blue-400 text-white"
+                        : isFlagged
+                          ? "flagged-blink border-2 border-red-700 text-white"
+                          : isOverdue
+                            ? "bg-white border-2 border-red-300"
+                            : isDueSoon
+                              ? "bg-white border-2 border-amber-300"
+                              : "bg-white border border-gray-100 hover:border-gray-200"
                     }`}
                   >
+                    {/* Frozen snowflake indicator */}
+                    {isFrozen && (
+                      <div className="absolute -top-1.5 -left-1.5 flex h-3 w-3">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex h-3 w-3 rounded-full bg-white" />
+                      </div>
+                    )}
+
                     {/* Flagged pulse animation */}
-                    {isFlagged && (
+                    {isFlagged && !isFrozen && (
                       <div className="absolute -top-1.5 -left-1.5 flex h-3 w-3">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
                         <span className="relative inline-flex h-3 w-3 rounded-full bg-white" />
@@ -78,20 +90,20 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
 
                     <div className="p-3.5" onClick={() => onProjectClick(p)}>
                       {/* Top color accent bar */}
-                      <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${isFlagged ? '#ffffff' : isOverdue ? '#ef4444' : s.color}, ${isFlagged ? '#ffffff80' : isOverdue ? '#ef444480' : s.color + '80'})` }} />
+                      <div className="h-1 rounded-full mb-3 -mx-1" style={{ background: `linear-gradient(to right, ${isFrozen || isFlagged ? '#ffffff' : isOverdue ? '#ef4444' : s.color}, ${isFrozen || isFlagged ? '#ffffff80' : isOverdue ? '#ef444480' : s.color + '80'})` }} />
 
                       <div className="flex items-start justify-between gap-1 mb-2">
-                        <p className={`text-xs font-bold leading-snug transition-colors flex-1 ${isFlagged ? 'text-white' : 'text-gray-900 group-hover:text-[#F97316]'}`}>{p.title}</p>
+                        <p className={`text-xs font-bold leading-snug transition-colors flex-1 ${isFrozen || isFlagged ? 'text-white' : 'text-gray-900 group-hover:text-[#F97316]'}`}>{p.title}</p>
                         {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
                         {isDueSoon && !isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
                       </div>
 
                       <div className="flex justify-between items-center mb-1">
                         <Badge color={prio.color} bg={prio.bg}>{prio.label}</Badge>
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isFlagged ? 'text-white bg-white/20' : 'text-gray-500 bg-gray-50'}`}>{p.requestingUnit}</span>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isFrozen || isFlagged ? 'text-white bg-white/20' : 'text-gray-500 bg-gray-50'}`}>{p.requestingUnit}</span>
                       </div>
 
-                      <div className={`flex items-center justify-between mt-2.5 pt-2 border-t ${isFlagged ? 'border-white/30' : 'border-gray-100'}`}>
+                      <div className={`flex items-center justify-between mt-2.5 pt-2 border-t ${isFrozen || isFlagged ? 'border-white/30' : 'border-gray-100'}`}>
                         {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] ? (
                           <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             <div
@@ -100,7 +112,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                             >
                               {getInitials(PROFESSIONALS[p.jefeProyectoId].name)}
                             </div>
-                            <span className={`text-[10px] truncate ${isFlagged ? 'text-white/90' : 'text-gray-600'}`}>{PROFESSIONALS[p.jefeProyectoId].name}</span>
+                            <span className={`text-[10px] truncate ${isFrozen || isFlagged ? 'text-white/90' : 'text-gray-600'}`}>{PROFESSIONALS[p.jefeProyectoId].name}</span>
                           </div>
                         ) : <div />}
                         {(p.commentCount || 0) > 0 && (
@@ -112,23 +124,45 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag }: 
                       </div>
                     </div>
 
-                    {/* Flag toggle button */}
-                    {onToggleFlag && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleFlag(p);
-                        }}
-                        title={isFlagged ? "Quitar alerta" : "Marcar con alerta"}
-                        className={`absolute bottom-2 right-2 p-1.5 rounded-lg transition-all duration-200 z-10 ${
-                          isFlagged
-                            ? 'bg-white/20 text-white hover:bg-white/30'
-                            : 'bg-transparent text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-red-500'
-                        }`}
-                      >
-                        <Siren className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    {/* Action buttons */}
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 z-10">
+                      {/* Freeze toggle */}
+                      {onToggleFreeze && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFreeze(p);
+                          }}
+                          title={isFrozen ? "Descongelar proyecto" : "Congelar proyecto"}
+                          className={`p-1.5 rounded-lg transition-all duration-200 ${
+                            isFrozen
+                              ? 'bg-white/20 text-white hover:bg-white/30'
+                              : 'bg-transparent text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-500'
+                          }`}
+                        >
+                          <Snowflake className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {/* Flag toggle */}
+                      {onToggleFlag && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFlag(p);
+                          }}
+                          title={isFlagged ? "Quitar alerta" : "Marcar con alerta"}
+                          className={`p-1.5 rounded-lg transition-all duration-200 ${
+                            isFlagged
+                              ? 'bg-white/20 text-white hover:bg-white/30'
+                              : isFrozen
+                                ? 'bg-white/20 text-white/70 opacity-0 group-hover:opacity-100 hover:bg-white/30 hover:text-white'
+                                : 'bg-transparent text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-red-500'
+                          }`}
+                        >
+                          <Siren className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
