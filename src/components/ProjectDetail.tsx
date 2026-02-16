@@ -455,6 +455,10 @@ export default function ProjectDetail({
                         <p className="text-sm font-medium text-gray-900 py-2">{project.sector || "—"}</p>
                       </div>
                       <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Entrega de Trabajos</label>
+                        <input type="date" value={fechaEstEntrega} onChange={(e) => setFechaEstEntrega(e.target.value)} className={inputCls} />
+                      </div>
+                      <div>
                         <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Creación</label>
                         <p className="text-sm font-medium text-gray-900 py-2">{fmtDate(project.createdAt)}</p>
                       </div>
