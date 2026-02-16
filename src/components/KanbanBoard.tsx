@@ -4,7 +4,7 @@ import { STATUSES, PRIORITIES, PROFESSIONALS, CUADRILLAS, getProgress, daysLeft,
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
-import { User, MessageCircle, AlertTriangle, AlertCircle, Siren, Snowflake, GripVertical } from "lucide-react";
+import { User, MessageCircle, AlertTriangle, AlertCircle, Siren, Snowflake, GripVertical, Copy } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -30,6 +30,7 @@ interface Props {
   onProjectClick: (p: Project) => void;
   onToggleFlag?: (p: Project) => void;
   onToggleFreeze?: (p: Project) => void;
+  onDuplicate?: (p: Project) => void;
   onReorder?: (statusId: string, orderedIds: string[]) => void;
 }
 
@@ -37,12 +38,13 @@ const getInitials = (name: string) =>
   name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
 /* ── Sortable Card wrapper ── */
-function SortableCard({ p, statusColor, onProjectClick, onToggleFlag, onToggleFreeze }: {
+function SortableCard({ p, statusColor, onProjectClick, onToggleFlag, onToggleFreeze, onDuplicate }: {
   p: Project;
   statusColor: string;
   onProjectClick: (p: Project) => void;
   onToggleFlag?: (p: Project) => void;
   onToggleFreeze?: (p: Project) => void;
+  onDuplicate?: (p: Project) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
   const style = {
@@ -60,6 +62,7 @@ function SortableCard({ p, statusColor, onProjectClick, onToggleFlag, onToggleFr
         onProjectClick={onProjectClick}
         onToggleFlag={onToggleFlag}
         onToggleFreeze={onToggleFreeze}
+        onDuplicate={onDuplicate}
         dragListeners={listeners}
       />
     </div>
@@ -67,12 +70,13 @@ function SortableCard({ p, statusColor, onProjectClick, onToggleFlag, onToggleFr
 }
 
 /* ── Card content (shared between sortable and overlay) ── */
-function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFreeze, dragListeners, isOverlay }: {
+function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFreeze, onDuplicate, dragListeners, isOverlay }: {
   p: Project;
   statusColor: string;
   onProjectClick: (p: Project) => void;
   onToggleFlag?: (p: Project) => void;
   onToggleFreeze?: (p: Project) => void;
+  onDuplicate?: (p: Project) => void;
   dragListeners?: Record<string, unknown>;
   isOverlay?: boolean;
 }) {
@@ -191,48 +195,62 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Action buttons */}
-      <div className="absolute bottom-2 right-2 flex items-center gap-1 z-10">
-        {/* Freeze toggle */}
-        {onToggleFreeze && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleFreeze(p); }}
-            title={isFrozen ? "Descongelar proyecto" : "Congelar proyecto"}
-            className={`p-1.5 rounded-lg transition-all duration-200 ${
-              isFrozen
-                ? 'bg-white/20 text-white hover:bg-white/30'
-                : 'bg-transparent text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-blue-50 hover:text-blue-500'
-            }`}
-          >
-            <Snowflake className="w-3.5 h-3.5" />
-          </button>
-        )}
-        {/* Flag toggle */}
-        {onToggleFlag && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleFlag(p); }}
-            title={isFlagged ? "Quitar alerta" : "Marcar con alerta"}
-            className={`p-1.5 rounded-lg transition-all duration-200 ${
-              isFlagged
-                ? 'bg-white/20 text-white hover:bg-white/30'
-                : isFrozen
-                  ? 'bg-white/20 text-white/70 opacity-0 group-hover:opacity-100 hover:bg-white/30 hover:text-white'
-                  : 'bg-transparent text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-gray-100 hover:text-red-500'
-            }`}
-          >
-            <Siren className="w-3.5 h-3.5" />
-          </button>
-        )}
+          {/* Action buttons row — below jefe de proyecto */}
+          <div className={`flex items-center gap-1 mt-2 pt-1.5 border-t ${isFrozen || isFlagged ? 'border-white/20' : 'border-gray-100'}`}>
+            {/* Duplicate */}
+            {onDuplicate && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDuplicate(p); }}
+                title="Duplicar proyecto"
+                className={`p-1.5 rounded-lg transition-all duration-200 ${
+                  isFrozen || isFlagged
+                    ? 'text-white/60 hover:bg-white/20 hover:text-white'
+                    : 'text-gray-300 hover:bg-gray-100 hover:text-gray-600'
+                }`}
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {/* Freeze toggle */}
+            {onToggleFreeze && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFreeze(p); }}
+                title={isFrozen ? "Descongelar proyecto" : "Congelar proyecto"}
+                className={`p-1.5 rounded-lg transition-all duration-200 ${
+                  isFrozen
+                    ? 'bg-white/20 text-white hover:bg-white/30'
+                    : 'text-gray-300 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <Snowflake className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {/* Flag toggle */}
+            {onToggleFlag && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFlag(p); }}
+                title={isFlagged ? "Quitar alerta" : "Marcar con alerta"}
+                className={`p-1.5 rounded-lg transition-all duration-200 ${
+                  isFlagged
+                    ? 'bg-white/20 text-white hover:bg-white/30'
+                    : isFrozen
+                      ? 'text-white/60 hover:bg-white/20 hover:text-white'
+                      : 'text-gray-300 hover:bg-gray-100 hover:text-red-500'
+                }`}
+              >
+                <Siren className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 /* ── Main KanbanBoard ── */
-export default function KanbanBoard({ projects, statuses: statusesProp, onProjectClick, onToggleFlag, onToggleFreeze, onReorder }: Props) {
+export default function KanbanBoard({ projects, statuses: statusesProp, onProjectClick, onToggleFlag, onToggleFreeze, onDuplicate, onReorder }: Props) {
   const activeStatuses = statusesProp || STATUSES;
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -329,6 +347,7 @@ export default function KanbanBoard({ projects, statuses: statusesProp, onProjec
                       onProjectClick={onProjectClick}
                       onToggleFlag={onToggleFlag}
                       onToggleFreeze={onToggleFreeze}
+                      onDuplicate={onDuplicate}
                     />
                   ))}
                   {cols.length === 0 && (

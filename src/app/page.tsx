@@ -261,6 +261,35 @@ export default function Home() {
     [authUser, selectedProject]
   );
 
+  // Duplicate a project
+  const handleDuplicate = useCallback(
+    async (project: Project) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...rest } = project;
+        const duplicated: Omit<Project, 'id'> = {
+          ...rest,
+          title: `${project.title} (copia)`,
+          // Reset status to initial based on dashboard type
+          status: project.dashboardType === 'obras' ? 'recepcion_requerimiento' : 'recepcion_requerimiento',
+          createdAt: new Date().toISOString(),
+          commentCount: 0,
+          flagged: false,
+          frozen: false,
+          sortOrder: undefined,
+        };
+        await createProject(duplicated);
+        // If viewing the detail, go back to the board
+        if (selectedProject) {
+          setSelectedProject(null);
+        }
+      } catch (error) {
+        console.error('Error duplicating project:', error);
+      }
+    },
+    [selectedProject]
+  );
+
   // Reorder projects within a column
   const handleReorder = useCallback(
     async (statusId: string, orderedIds: string[]) => {
@@ -341,6 +370,7 @@ export default function Home() {
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onToggleFreeze={handleFreezeConfirm}
+          onDuplicate={handleDuplicate}
           onBack={() => setSelectedProject(null)}
           userEmail={authUser.email || ""}
         />
@@ -543,6 +573,7 @@ export default function Home() {
                   onProjectClick={setSelectedProject}
                   onToggleFlag={handleToggleFlag}
                   onToggleFreeze={handleRequestFreeze}
+                  onDuplicate={handleDuplicate}
                   onReorder={handleReorder}
                 />
               )}
@@ -568,6 +599,7 @@ export default function Home() {
                   onProjectClick={setSelectedProject}
                   onToggleFlag={handleToggleFlag}
                   onToggleFreeze={handleRequestFreeze}
+                  onDuplicate={handleDuplicate}
                   onReorder={handleReorder}
                 />
               )}

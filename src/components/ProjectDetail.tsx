@@ -22,6 +22,7 @@ import {
   Hammer,
   FolderOpen,
   Snowflake,
+  Copy,
 } from "lucide-react";
 import {
   STATUSES,
@@ -55,6 +56,7 @@ interface ProjectDetailProps {
   onUpdate: (p: Project) => void;
   onDelete: (id: string, reason: string) => void;
   onToggleFreeze?: (project: Project, justification: string) => void;
+  onDuplicate?: (project: Project) => void;
   userEmail: string;
 }
 
@@ -89,6 +91,7 @@ export default function ProjectDetail({
   onUpdate,
   onDelete,
   onToggleFreeze,
+  onDuplicate,
   userEmail,
 }: ProjectDetailProps) {
   // Local editable state
@@ -284,6 +287,15 @@ export default function ProjectDetail({
             </div>
           )}
         </div>
+        {/* Duplicate button */}
+        {onDuplicate && (
+          <button onClick={() => onDuplicate(project)}
+            className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all flex-shrink-0 bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800"
+            title="Duplicar proyecto">
+            <Copy className="w-4 h-4" />
+            Duplicar
+          </button>
+        )}
         {/* Freeze toggle button */}
         {onToggleFreeze && (
           <button onClick={() => setShowFreezeModal(true)}
