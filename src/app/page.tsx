@@ -266,17 +266,16 @@ export default function Home() {
     async (project: Project) => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, ...rest } = project;
+        const { id, sortOrder, ...rest } = project;
         const duplicated: Omit<Project, 'id'> = {
           ...rest,
           title: `${project.title} (copia)`,
-          // Reset status to initial based on dashboard type
-          status: project.dashboardType === 'obras' ? 'recepcion_requerimiento' : 'recepcion_requerimiento',
+          // Reset status to initial
+          status: 'recepcion_requerimiento',
           createdAt: new Date().toISOString(),
           commentCount: 0,
           flagged: false,
           frozen: false,
-          sortOrder: undefined,
         };
         await createProject(duplicated);
         // If viewing the detail, go back to the board

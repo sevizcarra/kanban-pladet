@@ -26,10 +26,15 @@ export function subscribeProjects(callback: (projects: Project[]) => void): Unsu
 }
 
 export async function createProject(project: Omit<Project, "id">): Promise<string> {
-  const docRef = await addDoc(collection(db, COLLECTION), {
-    ...project,
-    createdAt: new Date().toISOString(),
-  });
+  // Strip undefined values — Firestore rejects undefined
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(project)) {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+  cleanData.createdAt = new Date().toISOString();
+  const docRef = await addDoc(collection(db, COLLECTION), cleanData);
   return docRef.id;
 }
 
