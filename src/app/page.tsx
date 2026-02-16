@@ -23,6 +23,7 @@ import {
   updateProject,
   deleteProject,
   addComment,
+  batchUpdateSortOrder,
 } from '@/lib/firestore';
 import { onAuthChange, logout, isAdmin, getUserProfile, ensureAdminProfile } from '@/lib/auth';
 import { Project } from '@/types/project';
@@ -250,6 +251,19 @@ export default function Home() {
       }
     },
     [authUser, selectedProject]
+  );
+
+  // Reorder projects within a column
+  const handleReorder = useCallback(
+    async (statusId: string, orderedIds: string[]) => {
+      try {
+        const updates = orderedIds.map((id, index) => ({ id, sortOrder: index }));
+        await batchUpdateSortOrder(updates);
+      } catch (error) {
+        console.error('Error reordering projects:', error);
+      }
+    },
+    []
   );
 
   const filteredProjects = useMemo(() => {
@@ -485,6 +499,7 @@ export default function Home() {
                   onProjectClick={setSelectedProject}
                   onToggleFlag={handleToggleFlag}
                   onToggleFreeze={handleRequestFreeze}
+                  onReorder={handleReorder}
                 />
               )}
 

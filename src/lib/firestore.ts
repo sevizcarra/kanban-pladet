@@ -8,6 +8,7 @@ import {
   query,
   orderBy,
   getDoc,
+  writeBatch,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -47,6 +48,15 @@ export async function updateProject(id: string, data: Partial<Project>): Promise
 export async function deleteProject(id: string): Promise<void> {
   const ref = doc(db, COLLECTION, id);
   await deleteDoc(ref);
+}
+
+// Batch update sortOrder for multiple projects at once
+export async function batchUpdateSortOrder(updates: { id: string; sortOrder: number }[]): Promise<void> {
+  const batch = writeBatch(db);
+  for (const { id, sortOrder } of updates) {
+    batch.update(doc(db, COLLECTION, id), { sortOrder });
+  }
+  await batch.commit();
 }
 
 // ── Comments (subcollection: projects/{id}/comments) ──

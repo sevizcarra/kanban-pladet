@@ -65,6 +65,7 @@ export interface Project {
   commentCount?: number;
   flagged?: boolean; // Baliza de alerta visual
   frozen?: boolean;  // Proyecto congelado
+  sortOrder?: number; // Orden dentro de la columna
 }
 
 export interface Comment {
