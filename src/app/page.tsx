@@ -43,7 +43,7 @@ import {
   Lightbulb,
   Snowflake,
 } from 'lucide-react';
-import { STATUSES, PRIORITIES } from '@/lib/constants';
+import { STATUSES, PRIORITIES, REQUESTING_UNITS } from '@/lib/constants';
 
 type Tab = 'dashboard' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
 
@@ -59,6 +59,7 @@ export default function Home() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [filterUnit, setFilterUnit] = useState('all');
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -272,15 +273,17 @@ export default function Home() {
         filterStatus === 'all' || project.status === filterStatus;
       const priorityMatch =
         filterPriority === 'all' || project.priority === filterPriority;
+      const unitMatch =
+        filterUnit === 'all' || project.requestingUnit === filterUnit;
       const searchMatch =
         search === '' ||
         project.title.toLowerCase().includes(search.toLowerCase()) ||
         (project.memorandumNumber &&
           project.memorandumNumber.toLowerCase().includes(search.toLowerCase()));
 
-      return statusMatch && priorityMatch && searchMatch;
+      return statusMatch && priorityMatch && unitMatch && searchMatch;
     });
-  }, [projects, filterStatus, filterPriority, search]);
+  }, [projects, filterStatus, filterPriority, filterUnit, search]);
 
   const matchingProject = selectedProject
     ? projects.find((p) => p.id === selectedProject.id) || null
@@ -435,6 +438,22 @@ export default function Home() {
                         {Object.entries(PRIORITIES).map(([key, prio]) => (
                           <option key={key} value={key}>
                             {prio.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Unit Filter */}
+                    <div className="bg-gray-50 rounded-lg px-3 border border-gray-200/80">
+                      <select
+                        value={filterUnit}
+                        onChange={(e) => setFilterUnit(e.target.value)}
+                        className="px-0 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
+                      >
+                        <option value="all">Todas las Unidades</option>
+                        {REQUESTING_UNITS.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
                           </option>
                         ))}
                       </select>
