@@ -14,6 +14,7 @@ import GanttView from '@/components/GanttView';
 import ExportButton from '@/components/ExportButton';
 import MapView from '@/components/MapView';
 import CreateProjectModal from '@/components/CreateProjectModal';
+import CreateObrasModal from '@/components/CreateObrasModal';
 import EmailConfirmDialog from '@/components/EmailConfirmDialog';
 import AdminPanel from '@/components/AdminPanel';
 import BacklogView from '@/components/BacklogView';
@@ -42,10 +43,12 @@ import {
   List,
   Lightbulb,
   Snowflake,
+  Hammer,
+  ShoppingCart,
 } from 'lucide-react';
-import { STATUSES, PRIORITIES, REQUESTING_UNITS } from '@/lib/constants';
+import { STATUSES, OBRAS_STATUSES, PRIORITIES, REQUESTING_UNITS } from '@/lib/constants';
 
-type Tab = 'dashboard' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
+type Tab = 'compras' | 'obras' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
 
 export default function Home() {
   // Auth state
@@ -55,7 +58,8 @@ export default function Home() {
 
   // App state
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [activeTab, setActiveTab] = useState<Tab>('compras');
+  const [showCreateObrasModal, setShowCreateObrasModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
@@ -131,7 +135,7 @@ export default function Home() {
     await logout();
     setAuthUser(null);
     setAppUser(null);
-    setActiveTab('dashboard');
+    setActiveTab('compras');
   }, []);
 
   const handleCreate = useCallback(
@@ -269,6 +273,10 @@ export default function Home() {
 
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
+      // Filter by dashboardType when on compras or obras tab
+      if (activeTab === 'compras' && project.dashboardType === 'obras') return false;
+      if (activeTab === 'obras' && project.dashboardType !== 'obras') return false;
+
       const statusMatch =
         filterStatus === 'all' || project.status === filterStatus;
       const priorityMatch =
@@ -283,7 +291,7 @@ export default function Home() {
 
       return statusMatch && priorityMatch && unitMatch && searchMatch;
     });
-  }, [projects, filterStatus, filterPriority, filterUnit, search]);
+  }, [projects, activeTab, filterStatus, filterPriority, filterUnit, search]);
 
   const matchingProject = selectedProject
     ? projects.find((p) => p.id === selectedProject.id) || null
@@ -338,7 +346,8 @@ export default function Home() {
   }
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'compras', label: 'Dashboard Compras', icon: <ShoppingCart size={18} /> },
+    { id: 'obras', label: 'Dashboard Obras', icon: <Hammer size={18} /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
     { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
     { id: 'map', label: 'Mapa', icon: <MapPin size={18} /> },
@@ -386,18 +395,30 @@ export default function Home() {
               })}
             </nav>
 
-            {/* New project button at bottom of sidebar */}
-            <div className="p-2 border-t border-gray-100">
+            {/* New project buttons at bottom of sidebar */}
+            <div className="p-2 border-t border-gray-100 space-y-1.5">
               <button
                 onClick={() => setShowCreateModal(true)}
-                title="Nuevo Proyecto"
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#F97316] to-[#ea580c] text-white shadow-md shadow-orange-500/15 hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.97] transition-all"
+                title="Nuevo Proyecto Compras"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#F97316] to-[#ea580c] text-white shadow-md shadow-orange-500/15 hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.97] transition-all"
               >
                 <span className="flex-shrink-0 w-5 flex justify-center">
-                  <Plus size={18} strokeWidth={2.5} />
+                  <ShoppingCart size={16} strokeWidth={2.5} />
                 </span>
-                <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">
-                  Nuevo Proyecto
+                <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 text-xs">
+                  Nuevo Compras
+                </span>
+              </button>
+              <button
+                onClick={() => setShowCreateObrasModal(true)}
+                title="Nuevo Proyecto Obras"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-md shadow-green-500/15 hover:shadow-lg hover:shadow-green-500/25 active:scale-[0.97] transition-all"
+              >
+                <span className="flex-shrink-0 w-5 flex justify-center">
+                  <Hammer size={16} strokeWidth={2.5} />
+                </span>
+                <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 text-xs">
+                  Nuevo Obras
                 </span>
               </button>
             </div>
@@ -419,7 +440,7 @@ export default function Home() {
                         className="px-1 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
                       >
                         <option value="all">Todos los Estados</option>
-                        {STATUSES.map((status) => (
+                        {(activeTab === 'obras' ? OBRAS_STATUSES : STATUSES).map((status) => (
                           <option key={status.id} value={status.id}>
                             {status.label}
                           </option>
@@ -472,7 +493,7 @@ export default function Home() {
                     </div>
 
                     {/* View toggle */}
-                    {activeTab === 'dashboard' && (
+                    {(activeTab === 'compras' || activeTab === 'obras') && (
                       <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
                         <button
                           onClick={() => setViewMode('kanban')}
@@ -508,11 +529,12 @@ export default function Home() {
 
             {/* Content Area — full width */}
             <div className="px-5 py-6">
-              {activeTab === 'dashboard' && (
-                <DashboardSummary projects={filteredProjects} />
+              {/* Dashboard Compras */}
+              {activeTab === 'compras' && (
+                <DashboardSummary projects={filteredProjects} dashboardType="compras" />
               )}
 
-              {activeTab === 'dashboard' && viewMode === 'kanban' && (
+              {activeTab === 'compras' && viewMode === 'kanban' && (
                 <KanbanBoard
                   projects={filteredProjects}
                   onProjectClick={setSelectedProject}
@@ -522,7 +544,32 @@ export default function Home() {
                 />
               )}
 
-              {activeTab === 'dashboard' && viewMode === 'table' && (
+              {activeTab === 'compras' && viewMode === 'table' && (
+                <TableView
+                  projects={filteredProjects}
+                  onProjectClick={setSelectedProject}
+                  onToggleFlag={handleToggleFlag}
+                  onToggleFreeze={handleRequestFreeze}
+                />
+              )}
+
+              {/* Dashboard Obras */}
+              {activeTab === 'obras' && (
+                <DashboardSummary projects={filteredProjects} dashboardType="obras" />
+              )}
+
+              {activeTab === 'obras' && viewMode === 'kanban' && (
+                <KanbanBoard
+                  projects={filteredProjects}
+                  statuses={OBRAS_STATUSES}
+                  onProjectClick={setSelectedProject}
+                  onToggleFlag={handleToggleFlag}
+                  onToggleFreeze={handleRequestFreeze}
+                  onReorder={handleReorder}
+                />
+              )}
+
+              {activeTab === 'obras' && viewMode === 'table' && (
                 <TableView
                   projects={filteredProjects}
                   onProjectClick={setSelectedProject}
@@ -578,6 +625,14 @@ export default function Home() {
         <CreateProjectModal
           onCreate={handleCreate}
           onClose={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {/* Create Obras Modal */}
+      {showCreateObrasModal && (
+        <CreateObrasModal
+          onCreate={handleCreate}
+          onClose={() => setShowCreateObrasModal(false)}
         />
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, useCallback } from "react";
-import { STATUSES, PRIORITIES, PROFESSIONALS, getProgress, daysLeft, getAntecedentesIncompletos } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, CUADRILLAS, getProgress, daysLeft, getAntecedentesIncompletos } from "@/lib/constants";
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
@@ -26,6 +26,7 @@ import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifi
 
 interface Props {
   projects: Project[];
+  statuses?: typeof STATUSES;
   onProjectClick: (p: Project) => void;
   onToggleFlag?: (p: Project) => void;
   onToggleFreeze?: (p: Project) => void;
@@ -157,6 +158,20 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isFrozen || isFlagged ? 'text-white bg-white/20' : 'text-gray-500 bg-gray-50'}`}>{p.requestingUnit}</span>
           </div>
 
+          {/* Cuadrilla badges (obras projects) */}
+          {p.cuadrillas && p.cuadrillas.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              {p.cuadrillas.map(c => {
+                const cuad = CUADRILLAS.find(q => q.value === c);
+                return cuad ? (
+                  <span key={c} className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: cuad.color + '20', color: isFrozen || isFlagged ? 'white' : cuad.color }}>
+                    {cuad.icon} {cuad.label.replace('Cuadrilla ', '')}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          )}
+
           <div className={`flex items-center justify-between mt-2.5 pt-2 border-t ${isFrozen || isFlagged ? 'border-white/30' : 'border-gray-100'}`}>
             {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] ? (
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -217,7 +232,8 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
 }
 
 /* ── Main KanbanBoard ── */
-export default function KanbanBoard({ projects, onProjectClick, onToggleFlag, onToggleFreeze, onReorder }: Props) {
+export default function KanbanBoard({ projects, statuses: statusesProp, onProjectClick, onToggleFlag, onToggleFreeze, onReorder }: Props) {
+  const activeStatuses = statusesProp || STATUSES;
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -227,7 +243,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag, on
   // Sort projects within each column by sortOrder (fallback to createdAt)
   const sortedByColumn = useMemo(() => {
     const map: Record<string, Project[]> = {};
-    for (const s of STATUSES) {
+    for (const s of activeStatuses) {
       const colProjects = projects
         .filter((p) => p.status === s.id)
         .sort((a, b) => {
@@ -240,7 +256,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag, on
       map[s.id] = colProjects;
     }
     return map;
-  }, [projects]);
+  }, [projects, activeStatuses]);
 
   const activeProject = activeId ? projects.find(p => p.id === activeId) : null;
 
@@ -286,7 +302,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag, on
       modifiers={[restrictToVerticalAxis]}
     >
       <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
-        {STATUSES.map((s) => {
+        {activeStatuses.map((s) => {
           const cols = sortedByColumn[s.id] || [];
           return (
             <div key={s.id} className="min-w-[240px] max-w-[280px] flex-shrink-0">
@@ -335,7 +351,7 @@ export default function KanbanBoard({ projects, onProjectClick, onToggleFlag, on
         {activeProject ? (
           <CardContent
             p={activeProject}
-            statusColor={STATUSES.find(s => s.id === activeProject.status)?.color || "#999"}
+            statusColor={activeStatuses.find(s => s.id === activeProject.status)?.color || "#999"}
             onProjectClick={() => {}}
             isOverlay
           />

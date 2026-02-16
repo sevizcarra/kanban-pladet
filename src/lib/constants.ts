@@ -134,8 +134,24 @@ export const FTE_STATUS_IDS = new Set(FTE_STATUSES.map((s) => s.id));
 
 export const isFTE = (tipoDesarrollo: string | undefined) => tipoDesarrollo === "FTE";
 
-export const getStatusesForProject = (tipoDesarrollo: string | undefined) =>
-  isFTE(tipoDesarrollo) ? FTE_STATUSES : STATUSES;
+// Flujo para Dashboard Obras (ejecución interna)
+export const OBRAS_STATUSES = [
+  { id: "recepcion_requerimiento", label: "Recepción Requerimiento", short: "REC", color: "#0ea5e9" },
+  { id: "asignacion_profesional", label: "En Asignación de Profesional", short: "ASI", color: "#8b5cf6" },
+  { id: "coordinacion_ejecucion", label: "En Coord. de Ejecución", short: "COE", color: "#4B5563" },
+  { id: "en_ejecucion", label: "En Ejecución", short: "EJE", color: "#22c55e" },
+  { id: "terminada", label: "Terminada", short: "TER", color: "#64748b" },
+];
+
+export const CUADRILLAS = [
+  { value: "obras", label: "Cuadrilla de Obras", color: "#22c55e", icon: "🔨" },
+  { value: "electrica", label: "Cuadrilla Eléctrica", color: "#eab308", icon: "⚡" },
+];
+
+export const isObras = (dashboardType: string | undefined) => dashboardType === "obras";
+
+export const getStatusesForProject = (tipoDesarrollo: string | undefined, dashboardType?: string) =>
+  isObras(dashboardType) ? OBRAS_STATUSES : isFTE(tipoDesarrollo) ? FTE_STATUSES : STATUSES;
 
 // Helpers
 export const fmt = (n: number | string) =>
@@ -149,12 +165,12 @@ export const daysLeft = (d: string | null | undefined) => {
   return Math.ceil((new Date(d).getTime() - new Date().getTime()) / 86400000);
 };
 
-export const getStatusObj = (id: string, tipoDesarrollo?: string) => {
-  const list = getStatusesForProject(tipoDesarrollo);
+export const getStatusObj = (id: string, tipoDesarrollo?: string, dashboardType?: string) => {
+  const list = getStatusesForProject(tipoDesarrollo, dashboardType);
   return list.find((s) => s.id === id) || list[0];
 };
-export const getStatusIndex = (id: string, tipoDesarrollo?: string) => {
-  const list = getStatusesForProject(tipoDesarrollo);
+export const getStatusIndex = (id: string, tipoDesarrollo?: string, dashboardType?: string) => {
+  const list = getStatusesForProject(tipoDesarrollo, dashboardType);
   return list.findIndex((s) => s.id === id);
 };
 // Verifica si los Antecedentes Generales de un proyecto están incompletos
@@ -183,15 +199,16 @@ export const getAntecedentesIncompletos = (p: {
 export const getProgress = (
   id: string,
   subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean; compraAceptacionOC?: boolean },
-  tipoDesarrollo?: string
+  tipoDesarrollo?: string,
+  dashboardType?: string
 ) => {
   if (id === "terminada") return 100;
 
-  const list = getStatusesForProject(tipoDesarrollo);
+  const list = getStatusesForProject(tipoDesarrollo, dashboardType);
   const mainIdx = list.findIndex((s) => s.id === id);
 
-  if (isFTE(tipoDesarrollo)) {
-    // FTE: 4 etapas, sin sub-etapas
+  if (isObras(dashboardType) || isFTE(tipoDesarrollo)) {
+    // Obras (5 etapas) o FTE (4 etapas): sin sub-etapas
     return Math.min(100, Math.round(((mainIdx + 1) / list.length) * 100));
   }
 

@@ -66,6 +66,8 @@ export interface Project {
   flagged?: boolean; // Baliza de alerta visual
   frozen?: boolean;  // Proyecto congelado
   sortOrder?: number; // Orden dentro de la columna
+  dashboardType?: "compras" | "obras"; // Tipo de dashboard
+  cuadrillas?: string[]; // Cuadrillas asignadas (obras)
 }
 
 export interface Comment {

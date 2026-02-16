@@ -39,6 +39,8 @@ import {
   getProgress,
   isFTE,
   getStatusesForProject,
+  isObras,
+  CUADRILLAS,
 } from "@/lib/constants";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
@@ -69,6 +71,13 @@ const TABS_REGULAR = [
 const TABS_FTE = [
   { id: "general", label: "Resumen", icon: FileText },
   { id: "equipo", label: "Equipo", icon: Users },
+  { id: "comentarios", label: "Comentarios", icon: MessageSquare },
+] as const;
+
+const TABS_OBRAS = [
+  { id: "general", label: "Antecedentes", icon: Calendar },
+  { id: "equipo", label: "Equipo", icon: Users },
+  { id: "ejecucion", label: "Ejecución", icon: Hammer },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ] as const;
 
@@ -167,11 +176,18 @@ export default function ProjectDetail({
   }, [memoNumber, memoYear, tipoLicitacion, project.tipoLicitacion, project.tipoDesarrollo, project.disciplinaLider]);
 
   const projectIsFTE = isFTE(project.tipoDesarrollo);
-  const projectStatuses = getStatusesForProject(project.tipoDesarrollo);
-  const statusObj = getStatusObj(project.status, project.tipoDesarrollo);
-  const statusIndex = getStatusIndex(project.status, project.tipoDesarrollo);
-  const progress = getProgress(project.status, project.subEtapas, project.tipoDesarrollo);
-  const tabs = projectIsFTE ? TABS_FTE : TABS_REGULAR;
+  const projectIsObras = isObras(project.dashboardType);
+  const projectStatuses = getStatusesForProject(project.tipoDesarrollo, project.dashboardType);
+  const statusObj = getStatusObj(project.status, project.tipoDesarrollo, project.dashboardType);
+  const statusIndex = getStatusIndex(project.status, project.tipoDesarrollo, project.dashboardType);
+  const progress = getProgress(project.status, project.subEtapas, project.tipoDesarrollo, project.dashboardType);
+  const tabs = projectIsObras ? TABS_OBRAS : projectIsFTE ? TABS_FTE : TABS_REGULAR;
+
+  // Cuadrillas state (for obras)
+  const [cuadrillas, setCuadrillas] = useState<string[]>(project.cuadrillas || []);
+  const toggleCuadrilla = (value: string) => {
+    setCuadrillas((prev) => prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]);
+  };
 
   // Handlers
   const handleSave = () => {
@@ -191,6 +207,7 @@ export default function ProjectDetail({
       fechaVencGarantia: fechaVencGarantia || "", fechaRecProviso: fechaRecProviso || "",
       fechaRecDefinitiva: fechaRecDefinitiva || "",
       ubicacionLat, ubicacionLng, ubicacionNombre,
+      cuadrillas,
     };
     onUpdate(updated);
     setSaved(true);
@@ -236,7 +253,7 @@ export default function ProjectDetail({
 
   /* ── Sub-etapas for current status ── */
   const currentStatusId = projectStatuses[statusIndex]?.id;
-  const hasSubEtapas = !projectIsFTE && (currentStatusId === "en_diseno" || currentStatusId === "gestion_compra");
+  const hasSubEtapas = !projectIsFTE && !projectIsObras && (currentStatusId === "en_diseno" || currentStatusId === "gestion_compra");
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -404,7 +421,61 @@ export default function ProjectDetail({
                 </div>
               </div>
 
-              {projectIsFTE ? (
+              {projectIsObras ? (
+                /* Obras: simplified antecedentes */
+                <>
+                  <div className={cardCls}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Calendar className="w-5 h-5 text-[#22c55e]" />
+                      <h2 className="text-base font-bold text-gray-900">Antecedentes Generales</h2>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Categoría del Proyecto</label>
+                        <select value={categoriaProyecto} onChange={(e) => setCategoriaProyecto(e.target.value)} className={inputCls}>
+                          <option value="">Seleccionar...</option>
+                          {PROJECT_CATEGORIES.map((cat) => (<option key={cat.value} value={cat.value}>{cat.label}</option>))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Memorándum</label>
+                        <input type="text" value={memoNumber} onChange={(e) => setMemoNumber(e.target.value)} className={inputCls} placeholder="Ej: 1234" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Año</label>
+                        <input type="text" value={memoYear} onChange={(e) => setMemoYear(e.target.value)} className={inputCls} placeholder="2026" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Recepción Memorándum</label>
+                        <input type="date" value={fechaRecepcionMemo} onChange={(e) => setFechaRecepcionMemo(e.target.value)} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Sector</label>
+                        <p className="text-sm font-medium text-gray-900 py-2">{project.sector || "—"}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Creación</label>
+                        <p className="text-sm font-medium text-gray-900 py-2">{fmtDate(project.createdAt)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className={cardCls}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText className="w-5 h-5 text-[#22c55e]" />
+                      <h2 className="text-base font-bold text-gray-900">Descripción del Proyecto</h2>
+                    </div>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Descripción ({descripcion.length}/200)</label>
+                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value.slice(0, 200))} maxLength={200}
+                      className={inputCls + " resize-none h-20"} placeholder="Ingrese la descripción del proyecto..." />
+                  </div>
+
+                  {/* Location */}
+                  <LocationPicker lat={ubicacionLat} lng={ubicacionLng} nombre={ubicacionNombre}
+                    onLocationChange={(lat, lng, nombre) => { setUbicacionLat(lat); setUbicacionLng(lng); setUbicacionNombre(nombre); }} />
+                </>
+              ) : projectIsFTE ? (
                 /* FTE: additional summary info */
                 <div className={cardCls}>
                   <div className="grid grid-cols-3 gap-4">
@@ -555,6 +626,34 @@ export default function ProjectDetail({
                 </div>
               </div>
 
+              {/* Obras: Cuadrillas */}
+              {projectIsObras && (
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <p className="text-xs text-gray-800 font-semibold mb-3">Cuadrilla(s) Asignada(s)</p>
+                  <div className="flex gap-3">
+                    {CUADRILLAS.map((c) => {
+                      const selected = cuadrillas.includes(c.value);
+                      return (
+                        <button
+                          key={c.value}
+                          type="button"
+                          onClick={() => toggleCuadrilla(c.value)}
+                          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold border-2 transition ${
+                            selected
+                              ? "shadow-sm"
+                              : "border-gray-200 text-gray-400 hover:border-gray-300"
+                          }`}
+                          style={selected ? { color: c.color, backgroundColor: c.color + "10", borderColor: c.color } : undefined}
+                        >
+                          <span className="text-lg">{c.icon}</span>
+                          <span>{c.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* FTE: Informe de Factibilidad */}
               {projectIsFTE && (
                 <div className="border-t border-gray-200 pt-4 mt-4">
@@ -568,7 +667,7 @@ export default function ProjectDetail({
           )}
 
           {/* ── TAB: Diseño ── */}
-          {activeTab === "diseno" && !projectIsFTE && (
+          {activeTab === "diseno" && !projectIsFTE && !projectIsObras && (
             <div className={cardCls}>
               <div className="flex items-center gap-2 mb-4">
                 <FolderOpen className="w-5 h-5 text-[#F97316]" />
@@ -585,7 +684,7 @@ export default function ProjectDetail({
           )}
 
           {/* ── TAB: Compras ── */}
-          {activeTab === "compras" && !projectIsFTE && (
+          {activeTab === "compras" && !projectIsFTE && !projectIsObras && (
             <div className={cardCls}>
               <div className="flex items-center gap-2 mb-4">
                 <Package className="w-5 h-5 text-[#F97316]" />
@@ -602,7 +701,7 @@ export default function ProjectDetail({
           )}
 
           {/* ── TAB: Ejecución ── */}
-          {activeTab === "ejecucion" && !projectIsFTE && (
+          {activeTab === "ejecucion" && (projectIsObras || !projectIsFTE) && (
             <>
               <div className={cardCls}>
                 <div className="flex items-center gap-2 mb-4">

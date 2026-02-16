@@ -7,15 +7,17 @@ import {
   CheckCircle2,
   TrendingUp,
   CalendarClock,
+  Hammer,
 } from "lucide-react";
 import { STATUSES, PRIORITIES, getStatusObj, daysLeft } from "@/lib/constants";
 import type { Project } from "@/types/project";
 
 interface Props {
   projects: Project[];
+  dashboardType?: "compras" | "obras";
 }
 
-export default function DashboardSummary({ projects }: Props) {
+export default function DashboardSummary({ projects, dashboardType }: Props) {
   const total = projects.length;
   const terminados = projects.filter((p) => p.status === "terminada").length;
   const activos = total - terminados;
@@ -34,11 +36,11 @@ export default function DashboardSummary({ projects }: Props) {
     return dl !== null && dl >= 0 && dl <= 7;
   });
 
-  // Stuck: projects not terminated and no due date or in first two statuses for more context
   const inDesign = projects.filter((p) => p.status === "en_diseno").length;
   const inExecution = projects.filter((p) => p.status === "en_ejecucion").length;
+  const inCoordination = projects.filter((p) => p.status === "coordinacion_ejecucion").length;
 
-  const cards = [
+  const baseCards = [
     {
       label: "Total Proyectos",
       value: total,
@@ -63,6 +65,10 @@ export default function DashboardSummary({ projects }: Props) {
       color: "#d97706",
       bg: "bg-amber-50",
     },
+  ];
+
+  const comprasCards = [
+    ...baseCards,
     {
       label: "En Diseño",
       value: inDesign,
@@ -88,6 +94,36 @@ export default function DashboardSummary({ projects }: Props) {
       bg: "bg-slate-50",
     },
   ];
+
+  const obrasCards = [
+    ...baseCards,
+    {
+      label: "En Coordinación",
+      value: inCoordination,
+      sub: "proyectos",
+      icon: Clock,
+      color: "#4B5563",
+      bg: "bg-gray-50",
+    },
+    {
+      label: "En Ejecución",
+      value: inExecution,
+      sub: "proyectos",
+      icon: Hammer,
+      color: "#22c55e",
+      bg: "bg-green-50",
+    },
+    {
+      label: "Terminados",
+      value: terminados,
+      sub: total > 0 ? `${Math.round((terminados / total) * 100)}% del total` : "—",
+      icon: CheckCircle2,
+      color: "#64748b",
+      bg: "bg-slate-50",
+    },
+  ];
+
+  const cards = dashboardType === "obras" ? obrasCards : comprasCards;
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
