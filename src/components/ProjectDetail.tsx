@@ -227,9 +227,14 @@ export default function ProjectDetail({
       newStatusId = projectStatuses[clickedIdx].id;
     }
     if (newStatusId !== project.status) {
-      const prevLabel = projectStatuses.find((s) => s.id === project.status)?.label || project.status;
-      const newLabel = projectStatuses.find((s) => s.id === newStatusId)?.label || newStatusId;
-      setEmailDialog({ open: true, pendingStatusId: newStatusId, previousStatusLabel: prevLabel, newStatusLabel: newLabel });
+      if (projectIsObras) {
+        // Obras: cambiar estado directamente sin notificación
+        onUpdate({ ...project, status: newStatusId });
+      } else {
+        const prevLabel = projectStatuses.find((s) => s.id === project.status)?.label || project.status;
+        const newLabel = projectStatuses.find((s) => s.id === newStatusId)?.label || newStatusId;
+        setEmailDialog({ open: true, pendingStatusId: newStatusId, previousStatusLabel: prevLabel, newStatusLabel: newLabel });
+      }
     }
   };
 
@@ -444,10 +449,6 @@ export default function ProjectDetail({
                       <div>
                         <label className="block text-xs text-gray-800 font-semibold mb-1">Año</label>
                         <input type="text" value={memoYear} onChange={(e) => setMemoYear(e.target.value)} className={inputCls} placeholder="2026" />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Recepción Memorándum</label>
-                        <input type="date" value={fechaRecepcionMemo} onChange={(e) => setFechaRecepcionMemo(e.target.value)} className={inputCls} />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-800 font-semibold mb-1">Sector</label>
@@ -705,77 +706,83 @@ export default function ProjectDetail({
             <>
               <div className={cardCls}>
                 <div className="flex items-center gap-2 mb-4">
-                  <Calendar className="w-5 h-5 text-[#F97316]" />
+                  <Calendar className={`w-5 h-5 ${projectIsObras ? "text-[#22c55e]" : "text-[#F97316]"}`} />
                   <h2 className="text-base font-bold text-gray-900">Antecedentes de Ejecución</h2>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Inicio Obra</label><input type="date" value={fechaInicioObra} onChange={(e) => setFechaInicioObra(e.target.value)} className={inputCls} /></div>
                   <div><label className="block text-xs text-gray-800 font-semibold mb-1">Plazo Ejecución (días corridos)</label><input type="number" value={plazoEjecucion} onChange={(e) => setPlazoEjecucion(parseInt(e.target.value) || 0)} className={inputCls} placeholder="0" /></div>
                   <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Est. Término</label><input type="text" disabled value={fechaEstTermino ? fmtDate(fechaEstTermino) : "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600" /></div>
-                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Venc. Garantía</label><input type="date" value={fechaVencGarantia} onChange={(e) => setFechaVencGarantia(e.target.value)} className={inputCls} /></div>
-                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Provisoria</label><input type="date" value={fechaRecProviso} onChange={(e) => setFechaRecProviso(e.target.value)} className={inputCls} /></div>
-                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Definitiva</label><input type="date" value={fechaRecDefinitiva} onChange={(e) => setFechaRecDefinitiva(e.target.value)} className={inputCls} /></div>
+                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Venc. Garantía</label><input type="date" value={fechaVencGarantia} onChange={(e) => setFechaVencGarantia(e.target.value)} className={inputCls} /></div>}
+                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Provisoria</label><input type="date" value={fechaRecProviso} onChange={(e) => setFechaRecProviso(e.target.value)} className={inputCls} /></div>}
+                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Definitiva</label><input type="date" value={fechaRecDefinitiva} onChange={(e) => setFechaRecDefinitiva(e.target.value)} className={inputCls} /></div>}
                 </div>
               </div>
 
-              {/* EDPs */}
-              <div className={cardCls}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">EDPs</h2></div>
-                  <span className="text-xs text-gray-800 font-semibold">Total: {edpCount}</span>
-                </div>
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  {Array.from({ length: edpCount }).map((_, idx) => (
-                    <button key={`edp-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-[#F97316]">
-                      <Upload className="w-4 h-4" /><span className="text-xs font-medium">EDP {idx + 1}</span>
-                    </button>
-                  ))}
-                </div>
-                {retCount > 0 && (
-                  <div className="border-t border-gray-200 pt-3 mb-3">
-                    <p className="text-xs text-gray-600 font-semibold mb-2">Retenciones</p>
-                    <div className="grid grid-cols-4 gap-3">
-                      {Array.from({ length: retCount }).map((_, idx) => (
-                        <button key={`ret-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-gray-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1 text-gray-600">
-                          <Upload className="w-4 h-4" /><span className="text-xs font-medium">Retención {idx + 1}</span>
-                        </button>
-                      ))}
-                    </div>
+              {/* EDPs — solo compras */}
+              {!projectIsObras && (
+                <div className={cardCls}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">EDPs</h2></div>
+                    <span className="text-xs text-gray-800 font-semibold">Total: {edpCount}</span>
                   </div>
-                )}
-                <div className="flex gap-2">
-                  <button onClick={() => setEdpCount((p) => p + 1)} className="flex-1 px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition">+ EDP</button>
-                  <button onClick={() => setRetCount((p) => p + 1)} className="flex-1 px-3 py-2 rounded-lg border border-gray-400 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">+ Retención</button>
+                  <div className="grid grid-cols-4 gap-3 mb-4">
+                    {Array.from({ length: edpCount }).map((_, idx) => (
+                      <button key={`edp-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-[#F97316]">
+                        <Upload className="w-4 h-4" /><span className="text-xs font-medium">EDP {idx + 1}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {retCount > 0 && (
+                    <div className="border-t border-gray-200 pt-3 mb-3">
+                      <p className="text-xs text-gray-600 font-semibold mb-2">Retenciones</p>
+                      <div className="grid grid-cols-4 gap-3">
+                        {Array.from({ length: retCount }).map((_, idx) => (
+                          <button key={`ret-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-gray-500 rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1 text-gray-600">
+                            <Upload className="w-4 h-4" /><span className="text-xs font-medium">Retención {idx + 1}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button onClick={() => setEdpCount((p) => p + 1)} className="flex-1 px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition">+ EDP</button>
+                    <button onClick={() => setRetCount((p) => p + 1)} className="flex-1 px-3 py-2 rounded-lg border border-gray-400 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">+ Retención</button>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* NDCs */}
-              <div className={cardCls}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">NDCs</h2></div>
-                  <span className="text-xs text-gray-800 font-semibold">Total: {ndcCount}</span>
+              {/* NDCs — solo compras */}
+              {!projectIsObras && (
+                <div className={cardCls}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">NDCs</h2></div>
+                    <span className="text-xs text-gray-800 font-semibold">Total: {ndcCount}</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3 mb-4">
+                    {Array.from({ length: ndcCount }).map((_, idx) => (
+                      <button key={`ndc-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-[#F97316]">
+                        <Upload className="w-4 h-4" /><span className="text-xs font-medium">NDC {idx + 1}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => setNdcCount((p) => p + 1)} className="w-full px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition">+ NDC</button>
                 </div>
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  {Array.from({ length: ndcCount }).map((_, idx) => (
-                    <button key={`ndc-${idx}`} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-3 text-center transition flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-[#F97316]">
-                      <Upload className="w-4 h-4" /><span className="text-xs font-medium">NDC {idx + 1}</span>
-                    </button>
-                  ))}
-                </div>
-                <button onClick={() => setNdcCount((p) => p + 1)} className="w-full px-3 py-2 rounded-lg border border-[#F97316] text-[#F97316] text-sm font-semibold hover:bg-[#F97316]/5 transition">+ NDC</button>
-              </div>
+              )}
 
-              {/* MCD */}
-              <div className={cardCls}>
-                <div className="flex items-center gap-2 mb-4"><ClipboardList className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">Modificación de Contrato (MCD)</h2></div>
-                <div className="grid grid-cols-3 gap-4">
-                  {["Libro de Obra", "CDP MCD", "Modificación"].map((doc) => (
-                    <button key={doc} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
-                      <Upload className="w-5 h-5" /><span className="text-sm font-medium">{doc}</span>
-                    </button>
-                  ))}
+              {/* MCD — solo compras */}
+              {!projectIsObras && (
+                <div className={cardCls}>
+                  <div className="flex items-center gap-2 mb-4"><ClipboardList className="w-5 h-5 text-[#F97316]" /><h2 className="text-base font-bold text-gray-900">Modificación de Contrato (MCD)</h2></div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {["Libro de Obra", "CDP MCD", "Modificación"].map((doc) => (
+                      <button key={doc} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-4 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
+                        <Upload className="w-5 h-5" /><span className="text-sm font-medium">{doc}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
 

@@ -143,8 +143,11 @@ export default function Home() {
       try {
         await createProject(projectData);
         setShowCreateModal(false);
-        // Always show the email notification dialog — user can add/edit email there
-        setCreationEmailDialog({ open: true, projectData });
+        setShowCreateObrasModal(false);
+        // Obras projects don't need email notifications
+        if (projectData.dashboardType !== 'obras') {
+          setCreationEmailDialog({ open: true, projectData });
+        }
       } catch (error) {
         console.error('Error creating project:', error);
       }

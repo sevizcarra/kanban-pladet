@@ -31,6 +31,7 @@ export const PROFESSIONALS = [
   { name: "Rodolfo Molina Molina", role: "Especialista Eléctrico" },
   { name: "Pablo Lepe Almendares", role: "Especialista Eléctrico" },
   { name: "Aitor Xabier Alexander Oyarzún Merino", role: "Tecnólogo en Construcción" },
+  { name: "Juan Altamirano", role: "Especialista Eléctrico" },
 ];
 
 export const INSPECTORS = [
