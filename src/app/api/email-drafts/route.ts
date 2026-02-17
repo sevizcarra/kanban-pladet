@@ -12,6 +12,8 @@ import {
   getAllDrafts,
   countDrafts,
   updateEmailDraft,
+  dismissMultipleDrafts,
+  dismissAllPendingDrafts,
   createProject,
   addComment,
 } from "@/lib/firestore";
@@ -125,9 +127,28 @@ export async function DELETE(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const draftId = url.searchParams.get("id");
+    const ids = url.searchParams.get("ids"); // comma-separated IDs
+    const all = url.searchParams.get("all");
 
+    // Dismiss ALL pending drafts
+    if (all === "true") {
+      const count = await dismissAllPendingDrafts();
+      return NextResponse.json({ success: true, dismissed: count, message: `${count} borradores descartados` });
+    }
+
+    // Dismiss multiple by IDs
+    if (ids) {
+      const idList = ids.split(",").filter(Boolean);
+      if (idList.length === 0) {
+        return NextResponse.json({ error: "No IDs provided" }, { status: 400 });
+      }
+      const count = await dismissMultipleDrafts(idList);
+      return NextResponse.json({ success: true, dismissed: count, message: `${count} borradores descartados` });
+    }
+
+    // Dismiss single
     if (!draftId) {
-      return NextResponse.json({ error: "id param required" }, { status: 400 });
+      return NextResponse.json({ error: "id, ids, or all param required" }, { status: 400 });
     }
 
     await updateEmailDraft(draftId, {

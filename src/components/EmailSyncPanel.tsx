@@ -20,6 +20,9 @@ import {
   ChevronUp,
   Send,
   Paperclip,
+  Search,
+  Trash2,
+  Filter,
 } from "lucide-react";
 import { PROJECT_CATEGORIES, PRIORITIES } from "@/lib/constants";
 
@@ -74,6 +77,13 @@ export default function EmailSyncPanel() {
   const [editingDraft, setEditingDraft] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [approving, setApproving] = useState<string | null>(null);
+
+  // Filter/search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterAction, setFilterAction] = useState<string>("all");
+  const [filterSender, setFilterSender] = useState<string>("all");
+  const [dismissingFiltered, setDismissingFiltered] = useState(false);
+  const [dismissingAll, setDismissingAll] = useState(false);
 
   // Sync log state
   const [logs, setLogs] = useState<SyncLog[]>([]);
@@ -246,6 +256,42 @@ export default function EmailSyncPanel() {
     }
   };
 
+  const handleDismissFiltered = async () => {
+    const ids = filteredDrafts.map(d => d.id);
+    if (ids.length === 0) return;
+    if (!confirm(`¿Descartar ${ids.length} borradores filtrados?`)) return;
+
+    setDismissingFiltered(true);
+    try {
+      // Send in chunks of 100 IDs to avoid URL length limits
+      for (let i = 0; i < ids.length; i += 100) {
+        const chunk = ids.slice(i, i + 100);
+        await fetch(`/api/email-drafts?ids=${chunk.join(",")}`, { method: "DELETE" });
+      }
+      setDrafts(prev => prev.filter(d => !ids.includes(d.id)));
+    } catch (err) {
+      console.error("Error dismissing filtered:", err);
+    } finally {
+      setDismissingFiltered(false);
+    }
+  };
+
+  const handleDismissAll = async () => {
+    if (!confirm(`¿Descartar TODOS los ${drafts.length} borradores pendientes? Esta acción no se puede deshacer.`)) return;
+
+    setDismissingAll(true);
+    try {
+      const res = await fetch("/api/email-drafts?all=true", { method: "DELETE" });
+      if (res.ok) {
+        setDrafts([]);
+      }
+    } catch (err) {
+      console.error("Error dismissing all:", err);
+    } finally {
+      setDismissingAll(false);
+    }
+  };
+
   const startEditing = (draft: EmailDraft) => {
     setEditingDraft(draft.id);
     setEditForm({
@@ -300,6 +346,28 @@ export default function EmailSyncPanel() {
       default: return <Mail className="w-3.5 h-3.5 text-gray-500" />;
     }
   };
+
+  // ── Filtered drafts ──
+  const uniqueSenders = Array.from(new Set(drafts.map(d => d.fromName || d.from))).sort();
+
+  const filteredDrafts = drafts.filter(d => {
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchSubject = (d.subject || "").toLowerCase().includes(q);
+      const matchFrom = (d.from || "").toLowerCase().includes(q);
+      const matchFromName = (d.fromName || "").toLowerCase().includes(q);
+      if (!matchSubject && !matchFrom && !matchFromName) return false;
+    }
+    // Action filter
+    if (filterAction !== "all" && d.suggestedAction !== filterAction) return false;
+    // Sender filter
+    if (filterSender !== "all") {
+      const senderKey = d.fromName || d.from;
+      if (senderKey !== filterSender) return false;
+    }
+    return true;
+  });
 
   // ── Stats ──
   const pendingCount = drafts.length;
@@ -426,8 +494,104 @@ export default function EmailSyncPanel() {
               <p className="text-xs text-gray-400 mt-1">Sincroniza correos para ver borradores aquí</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {drafts.map((draft) => {
+            <div className="space-y-3">
+              {/* Search + Filters */}
+              <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-3">
+                {/* Search bar */}
+                <div className="relative">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar por asunto o remitente..."
+                    className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <X className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Filter className="w-3.5 h-3.5 text-gray-400" />
+
+                  {/* Action filter chips */}
+                  {[
+                    { key: "all", label: "Todos" },
+                    { key: "create_project", label: "Crear Tarjeta" },
+                    { key: "add_comment", label: "Comentario" },
+                    { key: "update_status", label: "Estado" },
+                    { key: "ignore", label: "Sin Clasificar" },
+                  ].map(f => (
+                    <button
+                      key={f.key}
+                      onClick={() => setFilterAction(f.key)}
+                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition ${
+                        filterAction === f.key
+                          ? "bg-[#F97316] text-white border-[#F97316]"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+
+                  {/* Sender dropdown */}
+                  <select
+                    value={filterSender}
+                    onChange={(e) => setFilterSender(e.target.value)}
+                    className="text-[11px] font-semibold px-2 py-1 rounded-full border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#F97316]/40 max-w-[200px]"
+                  >
+                    <option value="all">Todos los remitentes</option>
+                    {uniqueSenders.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Counter + Mass actions */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    Mostrando <span className="font-bold text-gray-700">{filteredDrafts.length}</span> de{" "}
+                    <span className="font-bold text-gray-700">{drafts.length}</span> borradores
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {filteredDrafts.length > 0 && filteredDrafts.length < drafts.length && (
+                      <button
+                        onClick={handleDismissFiltered}
+                        disabled={dismissingFiltered}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition ${
+                          dismissingFiltered
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            : "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                        }`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        {dismissingFiltered ? "Descartando..." : `Descartar ${filteredDrafts.length} filtrados`}
+                      </button>
+                    )}
+                    <button
+                      onClick={handleDismissAll}
+                      disabled={dismissingAll}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition ${
+                        dismissingAll
+                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          : "bg-red-600 text-white hover:bg-red-700"
+                      }`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      {dismissingAll ? "Descartando..." : "Descartar Todos"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Draft list */}
+              <div className="space-y-2">
+              {filteredDrafts.map((draft) => {
                 const isExpanded = expandedDraft === draft.id;
                 const isEditing = editingDraft === draft.id;
                 const isApproving = approving === draft.id;
@@ -628,6 +792,7 @@ export default function EmailSyncPanel() {
                   </div>
                 );
               })}
+              </div>
             </div>
           )}
         </div>

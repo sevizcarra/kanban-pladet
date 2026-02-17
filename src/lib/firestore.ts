@@ -235,6 +235,33 @@ export async function updateEmailDraft(id: string, data: Partial<EmailDraft>): P
   await updateDoc(ref, cleanData);
 }
 
+export async function dismissMultipleDrafts(ids: string[]): Promise<number> {
+  const now = new Date().toISOString();
+  let dismissed = 0;
+  // Firestore writeBatch limited to 500 ops
+  for (let i = 0; i < ids.length; i += 500) {
+    const chunk = ids.slice(i, i + 500);
+    const batch = writeBatch(db);
+    for (const id of chunk) {
+      batch.update(doc(db, DRAFTS_COLLECTION, id), { status: "dismissed", reviewedAt: now });
+    }
+    await batch.commit();
+    dismissed += chunk.length;
+  }
+  return dismissed;
+}
+
+export async function dismissAllPendingDrafts(): Promise<number> {
+  const q = query(
+    collection(db, DRAFTS_COLLECTION),
+    where("status", "==", "pending")
+  );
+  const snapshot = await getDocs(q);
+  const ids = snapshot.docs.map(d => d.id);
+  if (ids.length === 0) return 0;
+  return dismissMultipleDrafts(ids);
+}
+
 export async function checkDuplicateDraft(subject: string, from: string, emailDate: string): Promise<boolean> {
   const q = query(
     collection(db, DRAFTS_COLLECTION),
