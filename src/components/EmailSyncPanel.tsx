@@ -23,6 +23,8 @@ import {
   Search,
   Trash2,
   Filter,
+  Layers,
+  List,
 } from "lucide-react";
 import { PROJECT_CATEGORIES, PRIORITIES } from "@/lib/constants";
 
@@ -84,6 +86,8 @@ export default function EmailSyncPanel() {
   const [filterSender, setFilterSender] = useState<string>("all");
   const [dismissingFiltered, setDismissingFiltered] = useState(false);
   const [dismissingAll, setDismissingAll] = useState(false);
+  const [viewMode, setViewMode] = useState<"grouped" | "individual">("grouped");
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   // Sync log state
   const [logs, setLogs] = useState<SyncLog[]>([]);
@@ -347,6 +351,26 @@ export default function EmailSyncPanel() {
     }
   };
 
+  // ── Grouping helpers ──
+  const normalizeSubject = (subject: string): string => {
+    return (subject || "")
+      .replace(/^(re|fwd|rv|env):\s*/gi, "")
+      .replace(/^(re|fwd|rv|env)\[\d+\]:\s*/gi, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  };
+
+  const getGroupKey = (draft: EmailDraft): string => {
+    // If matched to existing project, group by project ref
+    if (draft.suggestedProjectRef && draft.suggestedProjectRef.trim() !== "") {
+      return `proj:${draft.suggestedProjectRef}`;
+    }
+    // Otherwise group by normalized subject
+    const norm = normalizeSubject(draft.subject);
+    return norm ? `subj:${norm}` : `single:${draft.id}`;
+  };
+
   // ── Filtered drafts ──
   const uniqueSenders = Array.from(new Set(drafts.map(d => d.fromName || d.from))).sort();
 
@@ -368,6 +392,177 @@ export default function EmailSyncPanel() {
     }
     return true;
   });
+
+  // ── Grouped drafts ──
+  interface DraftGroup {
+    key: string;
+    label: string;
+    projectRef: string;
+    drafts: EmailDraft[];
+    senders: string[];
+    dateRange: { oldest: string; newest: string };
+    actionTypes: string[];
+    mainAction: string;
+  }
+
+  const groupedDrafts: DraftGroup[] = (() => {
+    const map = new Map<string, EmailDraft[]>();
+    for (const d of filteredDrafts) {
+      const key = getGroupKey(d);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(d);
+    }
+
+    const groups: DraftGroup[] = [];
+    for (const [key, items] of map) {
+      // Sort by date descending (newest first)
+      items.sort((a, b) => new Date(b.emailDate).getTime() - new Date(a.emailDate).getTime());
+
+      const senders = Array.from(new Set(items.map(d => d.fromName || d.from)));
+      const dates = items.map(d => d.emailDate).sort();
+      const actionTypes = Array.from(new Set(items.map(d => d.suggestedAction)));
+
+      // Determine main action (most frequent non-ignore)
+      const actionCounts: Record<string, number> = {};
+      items.forEach(d => { actionCounts[d.suggestedAction] = (actionCounts[d.suggestedAction] || 0) + 1; });
+      const mainAction = Object.entries(actionCounts)
+        .filter(([a]) => a !== "ignore")
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || items[0].suggestedAction;
+
+      // Label: use project ref title or the first subject
+      let label = items[0].subject || "(sin asunto)";
+      if (key.startsWith("proj:")) {
+        label = items[0].suggestedTitle || items[0].subject || key.replace("proj:", "");
+      }
+
+      groups.push({
+        key,
+        label,
+        projectRef: key.startsWith("proj:") ? key.replace("proj:", "") : "",
+        drafts: items,
+        senders,
+        dateRange: { oldest: dates[0], newest: dates[dates.length - 1] },
+        actionTypes,
+        mainAction,
+      });
+    }
+
+    // Sort groups: largest first, then by newest email
+    groups.sort((a, b) => {
+      if (b.drafts.length !== a.drafts.length) return b.drafts.length - a.drafts.length;
+      return new Date(b.dateRange.newest).getTime() - new Date(a.dateRange.newest).getTime();
+    });
+
+    return groups;
+  })();
+
+  // ── Draft detail renderer (shared by grouped + individual views) ──
+  const renderDraftDetail = (draft: EmailDraft) => {
+    const isEditing = editingDraft === draft.id;
+    return (
+      <>
+        {/* Email body preview */}
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <p className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Contenido del correo</p>
+          <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed max-h-[200px] overflow-y-auto">
+            {draft.body?.slice(0, 1000) || "(sin contenido)"}
+          </p>
+          {draft.attachments?.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {draft.attachments.map((att, i) => (
+                <span key={i} className="flex items-center gap-1 text-[10px] bg-gray-100 rounded px-2 py-1 text-gray-600">
+                  <Paperclip className="w-3 h-3" />
+                  {att.filename}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Editable fields */}
+        {isEditing && (
+          <div className="space-y-3">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Datos de la tarjeta (editables)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Título</label>
+                <input
+                  type="text"
+                  value={editForm.title || ""}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">N° Memorándum</label>
+                <input
+                  type="text"
+                  value={editForm.memorandumNumber || ""}
+                  onChange={(e) => setEditForm({ ...editForm, memorandumNumber: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
+                  placeholder="MEM-2026-001"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Unidad Solicitante</label>
+                <input
+                  type="text"
+                  value={editForm.requestingUnit || ""}
+                  onChange={(e) => setEditForm({ ...editForm, requestingUnit: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Dashboard</label>
+                <select
+                  value={editForm.dashboardType || "compras"}
+                  onChange={(e) => setEditForm({ ...editForm, dashboardType: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  <option value="compras">Compras</option>
+                  <option value="obras">Obras</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Prioridad</label>
+                <select
+                  value={editForm.priority || "media"}
+                  onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  {Object.entries(PRIORITIES).map(([key, val]) => (
+                    <option key={key} value={key}>{val.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Categoría</label>
+                <select
+                  value={editForm.categoriaProyecto || ""}
+                  onChange={(e) => setEditForm({ ...editForm, categoriaProyecto: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  <option value="">Sin categoría</option>
+                  {PROJECT_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Sector</label>
+                <input
+                  type="text"
+                  value={editForm.sector || ""}
+                  onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
 
   // ── Stats ──
   const pendingCount = drafts.length;
@@ -552,12 +747,38 @@ export default function EmailSyncPanel() {
                   </select>
                 </div>
 
-                {/* Counter + Mass actions */}
+                {/* Counter + View toggle + Mass actions */}
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
-                    Mostrando <span className="font-bold text-gray-700">{filteredDrafts.length}</span> de{" "}
-                    <span className="font-bold text-gray-700">{drafts.length}</span> borradores
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-xs text-gray-500">
+                      Mostrando <span className="font-bold text-gray-700">{filteredDrafts.length}</span> de{" "}
+                      <span className="font-bold text-gray-700">{drafts.length}</span> borradores
+                      {viewMode === "grouped" && (
+                        <span className="text-gray-400"> · {groupedDrafts.length} grupos</span>
+                      )}
+                    </p>
+                    {/* View toggle */}
+                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+                      <button
+                        onClick={() => setViewMode("grouped")}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition ${
+                          viewMode === "grouped" ? "bg-white text-[#F97316] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        <Layers className="w-3 h-3" />
+                        Agrupado
+                      </button>
+                      <button
+                        onClick={() => setViewMode("individual")}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition ${
+                          viewMode === "individual" ? "bg-white text-[#F97316] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        <List className="w-3 h-3" />
+                        Individual
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     {filteredDrafts.length > 0 && filteredDrafts.length < drafts.length && (
                       <button
@@ -589,7 +810,233 @@ export default function EmailSyncPanel() {
                 </div>
               </div>
 
-              {/* Draft list */}
+              {/* ── GROUPED VIEW ── */}
+              {viewMode === "grouped" && (
+                <div className="space-y-2">
+                  {groupedDrafts.map((group) => {
+                    const isGroupExpanded = expandedGroup === group.key;
+                    const count = group.drafts.length;
+                    const isSingleEmail = count === 1;
+
+                    return (
+                      <div key={group.key} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        {/* Group header */}
+                        <div
+                          className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition"
+                          onClick={() => {
+                            if (isSingleEmail) {
+                              // For single emails, toggle individual expand
+                              const d = group.drafts[0];
+                              setExpandedDraft(expandedDraft === d.id ? null : d.id);
+                              if (expandedDraft !== d.id) startEditing(d);
+                            } else {
+                              setExpandedGroup(isGroupExpanded ? null : group.key);
+                            }
+                          }}
+                        >
+                          {/* Icon with count badge */}
+                          <div className="relative flex-shrink-0">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                              group.projectRef ? "bg-blue-50" : "bg-orange-50"
+                            }`}>
+                              {group.projectRef ? (
+                                <Layers className="w-4 h-4 text-blue-500" />
+                              ) : isSingleEmail ? (
+                                <Mail className="w-4 h-4 text-[#F97316]" />
+                              ) : (
+                                <Layers className="w-4 h-4 text-[#F97316]" />
+                              )}
+                            </div>
+                            {!isSingleEmail && (
+                              <span className="absolute -top-1 -right-1 bg-[#F97316] text-white text-[9px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded-full flex items-center justify-center leading-none">
+                                {count}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Group info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-gray-900 truncate max-w-[350px]">
+                                {group.label}
+                              </span>
+                              {getActionBadge(group.mainAction)}
+                              {group.projectRef && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                  Proyecto existente
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {isSingleEmail ? (
+                                <>De: <span className="font-medium">{group.senders[0]}</span> · {formatTime(group.dateRange.newest)}</>
+                              ) : (
+                                <>
+                                  <span className="font-medium">{group.senders.length} remitente{group.senders.length > 1 ? "s" : ""}</span>
+                                  {" · "}
+                                  {count} correo{count > 1 ? "s" : ""}
+                                  {" · "}
+                                  {formatTime(group.dateRange.oldest)} → {formatTime(group.dateRange.newest)}
+                                </>
+                              )}
+                            </p>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            {!isSingleEmail && (
+                              <button
+                                onClick={() => {
+                                  const ids = group.drafts.map(d => d.id);
+                                  if (!confirm(`¿Descartar los ${ids.length} correos de este grupo?`)) return;
+                                  (async () => {
+                                    for (let i = 0; i < ids.length; i += 100) {
+                                      const chunk = ids.slice(i, i + 100);
+                                      await fetch(`/api/email-drafts?ids=${chunk.join(",")}`, { method: "DELETE" });
+                                    }
+                                    setDrafts(prev => prev.filter(d => !ids.includes(d.id)));
+                                    setExpandedGroup(null);
+                                  })();
+                                }}
+                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition"
+                                title="Descartar grupo"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Descartar
+                              </button>
+                            )}
+                            {isSingleEmail && (
+                              <>
+                                <button
+                                  onClick={() => handleDismissDraft(group.drafts[0].id)}
+                                  className="p-1.5 rounded-lg hover:bg-red-50 transition"
+                                  title="Descartar"
+                                >
+                                  <X className="w-4 h-4 text-red-500" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const d = group.drafts[0];
+                                    if (expandedDraft !== d.id) {
+                                      setExpandedDraft(d.id);
+                                      startEditing(d);
+                                    } else {
+                                      handleApproveDraft(d);
+                                    }
+                                  }}
+                                  disabled={approving === group.drafts[0].id}
+                                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                    approving === group.drafts[0].id
+                                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                      : "bg-green-600 text-white hover:bg-green-700"
+                                  }`}
+                                >
+                                  {approving === group.drafts[0].id ? (
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Check className="w-3.5 h-3.5" />
+                                  )}
+                                  {expandedDraft === group.drafts[0].id ? "Crear Tarjeta" : "Aprobar"}
+                                </button>
+                              </>
+                            )}
+                            <span className="text-gray-400 ml-1">
+                              {(isSingleEmail ? expandedDraft === group.drafts[0].id : isGroupExpanded) ? (
+                                <ChevronUp className="w-4 h-4" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4" />
+                              )}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Single email expanded (same as individual view) */}
+                        {isSingleEmail && expandedDraft === group.drafts[0].id && (
+                          <div className="border-t border-gray-100 px-4 py-4 space-y-4 bg-gray-50">
+                            {renderDraftDetail(group.drafts[0])}
+                          </div>
+                        )}
+
+                        {/* Group expanded: list of emails */}
+                        {!isSingleEmail && isGroupExpanded && (
+                          <div className="border-t border-gray-100 bg-gray-50">
+                            {/* Senders summary */}
+                            <div className="px-4 py-2 border-b border-gray-100">
+                              <p className="text-[11px] text-gray-500">
+                                <span className="font-semibold">Remitentes:</span> {group.senders.join(", ")}
+                              </p>
+                            </div>
+
+                            {/* Individual emails in group */}
+                            <div className="divide-y divide-gray-100">
+                              {group.drafts.map((draft) => {
+                                const isExpanded = expandedDraft === draft.id;
+                                const isApproving2 = approving === draft.id;
+
+                                return (
+                                  <div key={draft.id}>
+                                    <div className="px-4 py-2.5 flex items-center gap-3 hover:bg-gray-100/50 transition">
+                                      <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs font-medium text-gray-800 truncate max-w-[280px]">
+                                            {draft.subject || "(sin asunto)"}
+                                          </span>
+                                          {getActionBadge(draft.suggestedAction)}
+                                          {draft.attachments?.length > 0 && <Paperclip className="w-3 h-3 text-gray-400" />}
+                                        </div>
+                                        <p className="text-[11px] text-gray-500">
+                                          {draft.fromName || draft.from} · {formatTime(draft.emailDate)}
+                                        </p>
+                                      </div>
+                                      <div className="flex items-center gap-1 flex-shrink-0">
+                                        <button
+                                          onClick={() => {
+                                            setExpandedDraft(isExpanded ? null : draft.id);
+                                            if (!isExpanded) startEditing(draft);
+                                          }}
+                                          className="p-1 rounded hover:bg-gray-200 transition"
+                                        >
+                                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+                                        </button>
+                                        <button onClick={() => handleDismissDraft(draft.id)} className="p-1 rounded hover:bg-red-50 transition">
+                                          <X className="w-3.5 h-3.5 text-red-400" />
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            if (!isExpanded) { setExpandedDraft(draft.id); startEditing(draft); }
+                                            else handleApproveDraft(draft);
+                                          }}
+                                          disabled={isApproving2}
+                                          className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold transition ${
+                                            isApproving2 ? "bg-gray-200 text-gray-500" : "bg-green-600 text-white hover:bg-green-700"
+                                          }`}
+                                        >
+                                          {isApproving2 ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                          {isExpanded ? "Crear" : "Aprobar"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                    {/* Expanded email detail inside group */}
+                                    {isExpanded && (
+                                      <div className="px-4 pb-3 pt-1 ml-6">
+                                        {renderDraftDetail(draft)}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── INDIVIDUAL VIEW ── */}
+              {viewMode === "individual" && (
               <div className="space-y-2">
               {filteredDrafts.map((draft) => {
                 const isExpanded = expandedDraft === draft.id;
@@ -675,124 +1122,14 @@ export default function EmailSyncPanel() {
                     {/* Expanded detail + edit form */}
                     {isExpanded && (
                       <div className="border-t border-gray-100 px-4 py-4 space-y-4 bg-gray-50">
-                        {/* Email body preview */}
-                        <div className="bg-white rounded-lg border border-gray-200 p-3">
-                          <p className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Contenido del correo</p>
-                          <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed max-h-[200px] overflow-y-auto">
-                            {draft.body?.slice(0, 1000) || "(sin contenido)"}
-                          </p>
-                          {draft.attachments?.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {draft.attachments.map((att, i) => (
-                                <span key={i} className="flex items-center gap-1 text-[10px] bg-gray-100 rounded px-2 py-1 text-gray-600">
-                                  <Paperclip className="w-3 h-3" />
-                                  {att.filename}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Editable fields */}
-                        {isEditing && (
-                          <div className="space-y-3">
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Datos de la tarjeta (editables)</p>
-                            <div className="grid grid-cols-2 gap-3">
-                              {/* Title */}
-                              <div className="col-span-2">
-                                <label className="text-xs font-semibold text-gray-600 block mb-1">Título</label>
-                                <input
-                                  type="text"
-                                  value={editForm.title || ""}
-                                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
-                                />
-                              </div>
-
-                              {/* Memo number */}
-                              <div>
-                                <label className="text-xs font-semibold text-gray-600 block mb-1">N° Memorándum</label>
-                                <input
-                                  type="text"
-                                  value={editForm.memorandumNumber || ""}
-                                  onChange={(e) => setEditForm({ ...editForm, memorandumNumber: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
-                                  placeholder="MEM-2026-001"
-                                />
-                              </div>
-
-                              {/* Requesting unit */}
-                              <div>
-                                <label className="text-xs font-semibold text-gray-600 block mb-1">Unidad Solicitante</label>
-                                <input
-                                  type="text"
-                                  value={editForm.requestingUnit || ""}
-                                  onChange={(e) => setEditForm({ ...editForm, requestingUnit: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
-                                />
-                              </div>
-
-                              {/* Dashboard type */}
-                              <div>
-                                <label className="text-xs font-semibold text-gray-600 block mb-1">Dashboard</label>
-                                <select
-                                  value={editForm.dashboardType || "compras"}
-                                  onChange={(e) => setEditForm({ ...editForm, dashboardType: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
-                                >
-                                  <option value="compras">Compras</option>
-                                  <option value="obras">Obras</option>
-                                </select>
-                              </div>
-
-                              {/* Priority */}
-                              <div>
-                                <label className="text-xs font-semibold text-gray-600 block mb-1">Prioridad</label>
-                                <select
-                                  value={editForm.priority || "media"}
-                                  onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
-                                >
-                                  {Object.entries(PRIORITIES).map(([key, val]) => (
-                                    <option key={key} value={key}>{val.label}</option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              {/* Category */}
-                              <div>
-                                <label className="text-xs font-semibold text-gray-600 block mb-1">Categoría</label>
-                                <select
-                                  value={editForm.categoriaProyecto || ""}
-                                  onChange={(e) => setEditForm({ ...editForm, categoriaProyecto: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
-                                >
-                                  <option value="">Sin categoría</option>
-                                  {PROJECT_CATEGORIES.map((cat) => (
-                                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              {/* Sector */}
-                              <div>
-                                <label className="text-xs font-semibold text-gray-600 block mb-1">Sector</label>
-                                <input
-                                  type="text"
-                                  value={editForm.sector || ""}
-                                  onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                        {renderDraftDetail(draft)}
                       </div>
                     )}
                   </div>
                 );
               })}
               </div>
+              )}
             </div>
           )}
         </div>
