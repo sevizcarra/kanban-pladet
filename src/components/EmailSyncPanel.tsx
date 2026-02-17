@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Mail, RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, FileText, MessageSquare, Plus, Eye } from "lucide-react";
+import { Mail, RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, FileText, MessageSquare, Plus, Eye, History } from "lucide-react";
 
 interface SyncAction {
   type: string;
@@ -23,6 +23,17 @@ export default function EmailSyncPanel() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Historical processing state
+  const [historicalRunning, setHistoricalRunning] = useState(false);
+  const [historicalProgress, setHistoricalProgress] = useState<{
+    offset: number;
+    total: number;
+    created: number;
+    commented: number;
+    skipped: number;
+    error?: string;
+  } | null>(null);
 
   const fetchLogs = useCallback(async () => {
     try {
@@ -56,6 +67,61 @@ export default function EmailSyncPanel() {
       console.error("Error triggering sync:", err);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleHistoricalSync = async () => {
+    if (!confirm("Esto procesará TODOS los correos del buzón y creará tarjetas para cada memorándum encontrado. ¿Continuar?")) return;
+
+    setHistoricalRunning(true);
+    setHistoricalProgress({ offset: 0, total: 0, created: 0, commented: 0, skipped: 0 });
+
+    let offset = 0;
+    let totalCreated = 0;
+    let totalCommented = 0;
+    let totalSkipped = 0;
+
+    try {
+      while (true) {
+        const res = await fetch("/api/email-sync-historical-trigger", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ offset }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          setHistoricalProgress(prev => prev ? { ...prev, error: err.error || "Error desconocido" } : null);
+          break;
+        }
+
+        const data = await res.json();
+        totalCreated += data.created || 0;
+        totalCommented += data.commented || 0;
+        totalSkipped += data.skipped || 0;
+
+        setHistoricalProgress({
+          offset: data.nextOffset || data.total || offset,
+          total: data.total || 0,
+          created: totalCreated,
+          commented: totalCommented,
+          skipped: totalSkipped,
+        });
+
+        if (data.done) break;
+
+        offset = data.nextOffset;
+
+        // Small delay between batches to avoid rate limits
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      await fetchLogs();
+    } catch (err) {
+      console.error("Historical sync error:", err);
+      setHistoricalProgress(prev => prev ? { ...prev, error: "Error de conexión" } : null);
+    } finally {
+      setHistoricalRunning(false);
     }
   };
 
@@ -103,19 +169,66 @@ export default function EmailSyncPanel() {
             pladet@usach.cl — Lectura automática diaria + sincronización manual
           </p>
         </div>
-        <button
-          onClick={handleManualSync}
-          disabled={syncing}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            syncing
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-[#F97316] text-white hover:bg-[#F97316]/90"
-          }`}
-        >
-          <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-          {syncing ? "Sincronizando..." : "Sincronizar Ahora"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleHistoricalSync}
+            disabled={historicalRunning || syncing}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              historicalRunning || syncing
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-purple-600 text-white hover:bg-purple-700"
+            }`}
+          >
+            <History className={`w-4 h-4 ${historicalRunning ? "animate-spin" : ""}`} />
+            {historicalRunning ? "Procesando..." : "Procesar Histórico"}
+          </button>
+          <button
+            onClick={handleManualSync}
+            disabled={syncing || historicalRunning}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              syncing || historicalRunning
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-[#F97316] text-white hover:bg-[#F97316]/90"
+            }`}
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Sincronizando..." : "Sincronizar Ahora"}
+          </button>
+        </div>
       </div>
+
+      {/* Historical processing progress */}
+      {historicalProgress && (
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-purple-900">
+              {historicalRunning ? "Procesando correos históricos..." : historicalProgress.error ? "Error en procesamiento" : "Procesamiento completado"}
+            </p>
+            {!historicalRunning && (
+              <button onClick={() => setHistoricalProgress(null)} className="text-xs text-purple-600 hover:underline">
+                Cerrar
+              </button>
+            )}
+          </div>
+          {historicalProgress.total > 0 && (
+            <div className="w-full bg-purple-200 rounded-full h-2.5">
+              <div
+                className="bg-purple-600 h-2.5 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, (historicalProgress.offset / historicalProgress.total) * 100)}%` }}
+              />
+            </div>
+          )}
+          <div className="flex gap-4 text-xs text-purple-800">
+            <span>Procesados: {historicalProgress.offset} / {historicalProgress.total}</span>
+            <span className="text-green-700 font-bold">Creados: {historicalProgress.created}</span>
+            <span className="text-blue-700">Comentarios: {historicalProgress.commented}</span>
+            <span className="text-gray-600">Ignorados: {historicalProgress.skipped}</span>
+          </div>
+          {historicalProgress.error && (
+            <p className="text-xs text-red-600 font-semibold">{historicalProgress.error}</p>
+          )}
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-4 gap-3">

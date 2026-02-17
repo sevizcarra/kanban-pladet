@@ -132,3 +132,100 @@ export async function fetchUnreadEmails(limit = 20): Promise<ParsedEmail[]> {
 
   return emails;
 }
+
+/**
+ * Fetch ALL emails (read and unread) from the inbox.
+ * Used for historical processing. Does NOT mark as seen.
+ * @param offset - skip this many emails from the newest
+ * @param batchSize - how many to fetch in this batch
+ */
+export async function fetchAllEmails(offset = 0, batchSize = 50): Promise<{ emails: ParsedEmail[]; total: number }> {
+  if (!IMAP_CONFIG.auth.pass) {
+    throw new Error("PLADET_APP_PASSWORD not configured");
+  }
+
+  const client = new ImapFlow(IMAP_CONFIG);
+  const emails: ParsedEmail[] = [];
+  let totalCount = 0;
+
+  try {
+    await client.connect();
+    const lock = await client.getMailboxLock("INBOX");
+
+    try {
+      // Search ALL messages
+      const searchResult = await client.search({ all: true }, { uid: true });
+      const allUids = Array.isArray(searchResult) ? searchResult : [];
+      totalCount = allUids.length;
+
+      if (allUids.length === 0) {
+        return { emails: [], total: 0 };
+      }
+
+      // Sort descending (newest first) and apply offset + limit
+      const sorted = [...allUids].sort((a, b) => Number(b) - Number(a));
+      const batch = sorted.slice(offset, offset + batchSize);
+
+      for (const uid of batch) {
+        try {
+          const message = await client.fetchOne(String(uid), {
+            source: true,
+            uid: true,
+          });
+
+          if (!message || !("source" in message) || !message.source) continue;
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const parsed: ParsedMail = await simpleParser((message as any).source);
+
+          const email: ParsedEmail = {
+            uid: message.uid,
+            messageId: parsed.messageId || "",
+            from: parsed.from?.value?.[0]?.address || "",
+            fromName: parsed.from?.value?.[0]?.name || "",
+            to: (parsed.to && !Array.isArray(parsed.to)
+              ? parsed.to.value
+              : Array.isArray(parsed.to)
+              ? parsed.to.flatMap((t) => t.value)
+              : []
+            ).map((v) => v.address || ""),
+            cc: (parsed.cc && !Array.isArray(parsed.cc)
+              ? parsed.cc.value
+              : Array.isArray(parsed.cc)
+              ? parsed.cc.flatMap((c) => c.value)
+              : []
+            ).map((v) => v.address || ""),
+            subject: parsed.subject || "(sin asunto)",
+            body: parsed.text || "",
+            htmlBody: parsed.html || "",
+            date: parsed.date || new Date(),
+            attachments: (parsed.attachments || []).map((a) => ({
+              filename: a.filename || "sin_nombre",
+              contentType: a.contentType || "application/octet-stream",
+              size: a.size || 0,
+            })),
+            inReplyTo: parsed.inReplyTo as string | undefined,
+            references: parsed.references
+              ? Array.isArray(parsed.references)
+                ? parsed.references
+                : [parsed.references]
+              : undefined,
+          };
+
+          emails.push(email);
+        } catch (err) {
+          console.error(`Error processing email UID ${uid}:`, err);
+        }
+      }
+    } finally {
+      lock.release();
+    }
+
+    await client.logout();
+  } catch (err) {
+    console.error("IMAP connection error:", err);
+    throw err;
+  }
+
+  return { emails, total: totalCount };
+}
