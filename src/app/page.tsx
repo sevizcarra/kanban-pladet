@@ -18,6 +18,7 @@ import CreateObrasModal from '@/components/CreateObrasModal';
 import EmailConfirmDialog from '@/components/EmailConfirmDialog';
 import AdminPanel from '@/components/AdminPanel';
 import BacklogView from '@/components/BacklogView';
+import EmailSyncPanel from '@/components/EmailSyncPanel';
 import {
   subscribeProjects,
   createProject,
@@ -45,10 +46,11 @@ import {
   Snowflake,
   Hammer,
   ShoppingCart,
+  Mail,
 } from 'lucide-react';
 import { STATUSES, OBRAS_STATUSES, PRIORITIES, REQUESTING_UNITS } from '@/lib/constants';
 
-type Tab = 'compras' | 'obras' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
+type Tab = 'compras' | 'obras' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'emailsync' | 'users';
 
 export default function Home() {
   // Auth state
@@ -385,6 +387,7 @@ export default function Home() {
     { id: 'map', label: 'Mapa', icon: <MapPin size={18} /> },
     { id: 'timeline', label: 'Línea de Tiempo', icon: <Clock size={18} /> },
     ...(userIsAdmin ? [{ id: 'backlog' as Tab, label: 'Backlog', icon: <Lightbulb size={18} />, adminOnly: true }] : []),
+    ...(userIsAdmin ? [{ id: 'emailsync' as Tab, label: 'Correo Auto', icon: <Mail size={18} />, adminOnly: true }] : []),
     ...(userIsAdmin ? [{ id: 'users' as Tab, label: 'Usuarios', icon: <Users size={18} />, adminOnly: true }] : []),
   ];
 
@@ -459,7 +462,7 @@ export default function Home() {
           {/* Main content area */}
           <main className="flex-1 overflow-auto">
             {/* Filter Bar — hide on admin panel and backlog */}
-            {activeTab !== 'users' && activeTab !== 'backlog' && (
+            {activeTab !== 'users' && activeTab !== 'backlog' && activeTab !== 'emailsync' && (
               <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
                 <div className="px-5 py-2.5">
                   <div className="flex flex-wrap gap-2.5 items-center">
@@ -644,6 +647,10 @@ export default function Home() {
                     await handleCreate(data);
                   }}
                 />
+              )}
+
+              {activeTab === 'emailsync' && userIsAdmin && (
+                <EmailSyncPanel />
               )}
 
               {activeTab === 'users' && userIsAdmin && (
