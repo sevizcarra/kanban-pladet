@@ -2,16 +2,14 @@
  * POST /api/email-sync
  *
  * Cron endpoint: reads unread emails from pladet@usach.cl,
- * classifies them, and:
- *   - For matched projects: AUTO-APPLIES updates (status changes, comments)
- *   - For new projects: saves as DRAFTS for admin review
+ * classifies them, and saves them as DRAFTS for admin review.
  *
  * Protected by CRON_SECRET to prevent unauthorized access.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { fetchUnreadEmails } from "@/lib/email-reader";
-import { classifyEmail, detectStatusAdvance } from "@/lib/email-processor";
+import { classifyEmail } from "@/lib/email-processor";
 import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
 import type { ParsedEmail } from "@/lib/email-reader";
 import type { EmailDraft } from "@/lib/firestore";
@@ -24,12 +22,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  createEmailDraft,
-  checkDuplicateDraft,
-  updateProject,
-  addComment,
-} from "@/lib/firestore";
+import { createEmailDraft, checkDuplicateDraft } from "@/lib/firestore";
 
 const SYNC_LOG_COLLECTION = "email-sync-log";
 
@@ -99,14 +92,13 @@ async function handleSync(req: NextRequest) {
       return NextResponse.json({ message: "No new emails", emailsRead: 0 });
     }
 
-    // 2. Get existing projects (with current status for auto-advance)
+    // 2. Get existing projects for classification
     const existingProjects = await getExistingProjects();
 
     let draftsCreated = 0;
-    let autoApplied = 0;
     let skipped = 0;
 
-    // 3. Process each email
+    // 3. Process each email → save as draft
     for (const email of emails) {
       try {
         const emailDateStr = email.date ? email.date.toISOString() : new Date().toISOString();
@@ -121,28 +113,10 @@ async function handleSync(req: NextRequest) {
           continue;
         }
 
-        // Classify email
+        // Classify email (for suggestions only)
         const action = classifyEmail(email, existingProjects);
 
-        // ── AUTO-APPLY for matched projects ──
-        if (action.type === "update_status" || action.type === "add_comment" || action.type === "attach_document") {
-          const applied = await autoApplyAction(email, action, existingProjects);
-          if (applied) {
-            // Save draft as "auto_applied" for audit trail
-            const draft = buildDraftFromAction(email, action, emailDateStr);
-            draft.status = "approved" as const;
-            await createEmailDraft(draft);
-            autoApplied++;
-            actions.push({
-              type: "auto_apply",
-              detail: `Auto-aplicado: ${action.type} — "${email.subject.slice(0, 50)}"`,
-              success: true,
-            });
-            continue;
-          }
-        }
-
-        // ── DRAFT for new projects or unmatched emails ──
+        // Save as draft for admin review
         const draft = buildDraftFromAction(email, action, emailDateStr);
         await createEmailDraft(draft);
         draftsCreated++;
@@ -172,10 +146,9 @@ async function handleSync(req: NextRequest) {
     await saveSyncLog(logEntry);
 
     return NextResponse.json({
-      message: "Sync completed",
+      message: "Sync completed — drafts created",
       emailsRead: emails.length,
       draftsCreated,
-      autoApplied,
       skipped,
       duration: logEntry.duration,
     });
@@ -191,86 +164,6 @@ async function handleSync(req: NextRequest) {
 
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
-}
-
-// ── Auto-apply action to an existing project ──
-
-async function autoApplyAction(
-  email: ParsedEmail,
-  action: EmailAction,
-  existingProjects: ProjectMatchData[]
-): Promise<boolean> {
-  try {
-    if (action.type === "update_status") {
-      const project = existingProjects.find(p => p.id === action.projectRef);
-      if (!project) return false;
-
-      // Use detectStatusAdvance to ensure we only move forward
-      const fullText = `${email.subject} ${email.body}`;
-      const newStatus = detectStatusAdvance(fullText, project.status || "recepcion_requerimiento");
-
-      if (newStatus) {
-        // Update project status
-        await updateProject(action.projectRef, { status: newStatus });
-
-        // Add comment documenting the change
-        await addComment(action.projectRef, {
-          authorEmail: "pladet@usach.cl",
-          content: `🤖 **Avance automático** → ${getStatusLabel(newStatus)}\n\nDetectado en correo de ${email.fromName || email.from}:\n"${email.subject}"\n\nMotivo: ${action.reason}`,
-          mentions: [],
-          createdAt: new Date().toISOString(),
-        });
-        return true;
-      }
-
-      // No status advance but still an update_status action — add as comment instead
-      await addComment(action.projectRef, {
-        authorEmail: "pladet@usach.cl",
-        content: `📧 **${email.fromName || email.from}** — ${email.subject}\n\n${(email.body || "").slice(0, 500)}`,
-        mentions: [],
-        createdAt: new Date().toISOString(),
-      });
-      return true;
-    }
-
-    if (action.type === "add_comment") {
-      await addComment(action.projectRef, {
-        authorEmail: "pladet@usach.cl",
-        content: `📧 **${email.fromName || email.from}** — ${email.subject}\n\n${(email.body || "").slice(0, 500)}`,
-        mentions: [],
-        createdAt: new Date().toISOString(),
-      });
-      return true;
-    }
-
-    if (action.type === "attach_document") {
-      await addComment(action.projectRef, {
-        authorEmail: "pladet@usach.cl",
-        content: `📎 **Documento detectado** — ${action.docType}: ${action.filename}\n\nDe: ${email.fromName || email.from}\nAsunto: ${email.subject}`,
-        mentions: [],
-        createdAt: new Date().toISOString(),
-      });
-      return true;
-    }
-
-    return false;
-  } catch (err) {
-    console.error("Error auto-applying action:", err);
-    return false;
-  }
-}
-
-function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    recepcion_requerimiento: "Recepción Requerimiento",
-    asignacion_profesional: "En Asignación de Profesional",
-    en_diseno: "En Diseño",
-    gestion_compra: "En Gestión de Compra",
-    coordinacion_ejecucion: "En Coord. de Ejecución",
-    en_ejecucion: "En Ejecución",
-    terminada: "Terminada",
-  };
-  return labels[status] || status;
 }
 
 // ── Build draft from classification ──

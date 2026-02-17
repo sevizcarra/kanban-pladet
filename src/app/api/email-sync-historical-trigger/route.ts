@@ -3,23 +3,18 @@
  *
  * Proxy for historical email processing.
  * Same logic as email-sync-historical but called directly from UI.
- * Auto-applies matched projects, drafts for new ones.
+ * All emails saved as drafts for admin review.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAllEmails } from "@/lib/email-reader";
-import { classifyEmail, detectStatusAdvance } from "@/lib/email-processor";
+import { classifyEmail } from "@/lib/email-processor";
 import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
 import type { ParsedEmail } from "@/lib/email-reader";
 import type { EmailDraft } from "@/lib/firestore";
 import { collection, getDocs, query, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  createEmailDraft,
-  checkDuplicateDraft,
-  updateProject,
-  addComment,
-} from "@/lib/firestore";
+import { createEmailDraft, checkDuplicateDraft } from "@/lib/firestore";
 
 const BATCH_SIZE = 30;
 
@@ -47,7 +42,6 @@ export async function POST(req: NextRequest) {
         total,
         processed: 0,
         created: 0,
-        autoApplied: 0,
         skipped: 0,
         message: "No hay más correos por procesar",
       });
@@ -56,7 +50,6 @@ export async function POST(req: NextRequest) {
     const existingProjects = await getExistingProjects();
 
     let created = 0;
-    let autoApplied = 0;
     let skipped = 0;
 
     for (const email of emails) {
@@ -70,19 +63,6 @@ export async function POST(req: NextRequest) {
         }
 
         const action = classifyEmail(email, existingProjects);
-
-        // ── AUTO-APPLY for matched projects ──
-        if (action.type === "update_status" || action.type === "add_comment" || action.type === "attach_document") {
-          const applied = await autoApplyAction(email, action, existingProjects);
-          if (applied) {
-            const draft = buildDraftFromAction(email, action, emailDateStr);
-            draft.status = "approved" as const;
-            await createEmailDraft(draft);
-            autoApplied++;
-            continue;
-          }
-        }
-
         const draft = buildDraftFromAction(email, action, emailDateStr);
         await createEmailDraft(draft);
         created++;
@@ -98,7 +78,7 @@ export async function POST(req: NextRequest) {
       actions: [
         {
           type: "info",
-          detail: `Histórico lote ${Math.floor(offset / BATCH_SIZE) + 1} — ${created} borradores, ${autoApplied} auto-aplicados, ${skipped} ignorados`,
+          detail: `Histórico (borradores): lote ${Math.floor(offset / BATCH_SIZE) + 1} — ${created} creados, ${skipped} ignorados`,
           success: true,
         },
       ],
@@ -115,7 +95,6 @@ export async function POST(req: NextRequest) {
       total,
       processed: emails.length,
       created,
-      autoApplied,
       commented: 0,
       skipped,
     });
@@ -124,81 +103,6 @@ export async function POST(req: NextRequest) {
     console.error("Historical sync error:", errorMsg);
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
-}
-
-// ── Auto-apply action to existing project ──
-
-async function autoApplyAction(
-  email: ParsedEmail,
-  action: EmailAction,
-  existingProjects: ProjectMatchData[]
-): Promise<boolean> {
-  try {
-    if (action.type === "update_status") {
-      const project = existingProjects.find(p => p.id === action.projectRef);
-      if (!project) return false;
-
-      const fullText = `${email.subject} ${email.body}`;
-      const newStatus = detectStatusAdvance(fullText, project.status || "recepcion_requerimiento");
-
-      if (newStatus) {
-        await updateProject(action.projectRef, { status: newStatus });
-        await addComment(action.projectRef, {
-          authorEmail: "pladet@usach.cl",
-          content: `🤖 **Avance automático** → ${getStatusLabel(newStatus)}\n\nDetectado en correo de ${email.fromName || email.from}:\n"${email.subject}"\n\nMotivo: ${action.reason}`,
-          mentions: [],
-          createdAt: new Date().toISOString(),
-        });
-        return true;
-      }
-
-      await addComment(action.projectRef, {
-        authorEmail: "pladet@usach.cl",
-        content: `📧 **${email.fromName || email.from}** — ${email.subject}\n\n${(email.body || "").slice(0, 500)}`,
-        mentions: [],
-        createdAt: new Date().toISOString(),
-      });
-      return true;
-    }
-
-    if (action.type === "add_comment") {
-      await addComment(action.projectRef, {
-        authorEmail: "pladet@usach.cl",
-        content: `📧 **${email.fromName || email.from}** — ${email.subject}\n\n${(email.body || "").slice(0, 500)}`,
-        mentions: [],
-        createdAt: new Date().toISOString(),
-      });
-      return true;
-    }
-
-    if (action.type === "attach_document") {
-      await addComment(action.projectRef, {
-        authorEmail: "pladet@usach.cl",
-        content: `📎 **Documento detectado** — ${action.docType}: ${action.filename}\n\nDe: ${email.fromName || email.from}\nAsunto: ${email.subject}`,
-        mentions: [],
-        createdAt: new Date().toISOString(),
-      });
-      return true;
-    }
-
-    return false;
-  } catch (err) {
-    console.error("Error auto-applying action:", err);
-    return false;
-  }
-}
-
-function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    recepcion_requerimiento: "Recepción Requerimiento",
-    asignacion_profesional: "En Asignación de Profesional",
-    en_diseno: "En Diseño",
-    gestion_compra: "En Gestión de Compra",
-    coordinacion_ejecucion: "En Coord. de Ejecución",
-    en_ejecucion: "En Ejecución",
-    terminada: "Terminada",
-  };
-  return labels[status] || status;
 }
 
 // ── Build draft from classification ──
