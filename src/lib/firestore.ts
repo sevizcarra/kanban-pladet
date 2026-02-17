@@ -188,22 +188,40 @@ export async function createEmailDraft(draft: Omit<EmailDraft, "id">): Promise<s
 }
 
 export async function getPendingDrafts(): Promise<EmailDraft[]> {
+  // Simple query with only where (no orderBy) to avoid needing composite index
   const q = query(
     collection(db, DRAFTS_COLLECTION),
-    where("status", "==", "pending"),
-    orderBy("emailDate", "desc")
+    where("status", "==", "pending")
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as EmailDraft));
+  const drafts = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as EmailDraft));
+  // Sort in memory by emailDate descending
+  drafts.sort((a, b) => {
+    const dateA = a.emailDate ? new Date(a.emailDate).getTime() : 0;
+    const dateB = b.emailDate ? new Date(b.emailDate).getTime() : 0;
+    return dateB - dateA;
+  });
+  return drafts;
 }
 
 export async function getAllDrafts(limitCount = 100): Promise<EmailDraft[]> {
-  const q = query(
-    collection(db, DRAFTS_COLLECTION),
-    orderBy("createdAt", "desc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.slice(0, limitCount).map((d) => ({ id: d.id, ...d.data() } as EmailDraft));
+  // Simple query without orderBy to avoid index requirements
+  const snapshot = await getDocs(collection(db, DRAFTS_COLLECTION));
+  const drafts = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as EmailDraft));
+  // Sort in memory by createdAt descending
+  drafts.sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
+  return drafts.slice(0, limitCount);
+}
+
+export async function countDrafts(): Promise<{ total: number; pending: number }> {
+  const snapshot = await getDocs(collection(db, DRAFTS_COLLECTION));
+  const total = snapshot.size;
+  const pending = snapshot.docs.filter(d => d.data().status === "pending").length;
+  return { total, pending };
 }
 
 export async function updateEmailDraft(id: string, data: Partial<EmailDraft>): Promise<void> {

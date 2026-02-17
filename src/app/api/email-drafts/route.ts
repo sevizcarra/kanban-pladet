@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getPendingDrafts,
   getAllDrafts,
+  countDrafts,
   updateEmailDraft,
   createProject,
   addComment,
@@ -19,12 +20,31 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const showAll = url.searchParams.get("all") === "true";
+    const debug = url.searchParams.get("debug") === "true";
+
+    if (debug) {
+      // Debug endpoint to check what's in Firestore
+      const counts = await countDrafts();
+      const allDrafts = await getAllDrafts(5);
+      return NextResponse.json({
+        counts,
+        sampleDrafts: allDrafts.map(d => ({
+          id: d.id,
+          subject: d.subject?.slice(0, 60),
+          status: d.status,
+          from: d.from,
+          emailDate: d.emailDate,
+        })),
+      });
+    }
 
     const drafts = showAll ? await getAllDrafts() : await getPendingDrafts();
     return NextResponse.json(drafts);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const stack = err instanceof Error ? err.stack : "";
+    console.error("GET /api/email-drafts error:", msg, stack);
+    return NextResponse.json({ error: msg, stack }, { status: 500 });
   }
 }
 
