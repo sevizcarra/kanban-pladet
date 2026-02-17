@@ -1,0 +1,123 @@
+/**
+ * /api/email-drafts
+ *
+ * GET  — returns pending drafts (or all if ?all=true)
+ * POST — approve a draft (creates project or adds comment)
+ * DELETE — dismiss a draft
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import {
+  getPendingDrafts,
+  getAllDrafts,
+  updateEmailDraft,
+  createProject,
+  addComment,
+} from "@/lib/firestore";
+
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const showAll = url.searchParams.get("all") === "true";
+
+    const drafts = showAll ? await getAllDrafts() : await getPendingDrafts();
+    return NextResponse.json(drafts);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const {
+      draftId,
+      // Editable fields the admin may have modified
+      title,
+      memorandumNumber,
+      requestingUnit,
+      priority,
+      dashboardType,
+      categoriaProyecto,
+      sector,
+      description,
+      contactName,
+      contactEmail,
+    } = body;
+
+    if (!draftId) {
+      return NextResponse.json({ error: "draftId required" }, { status: 400 });
+    }
+
+    // Create the project in Firestore
+    const projectData = {
+      title: title || "Sin título",
+      description: description || "",
+      status: "recepcion_requerimiento",
+      priority: priority || "media",
+      memorandumNumber: memorandumNumber || "",
+      requestingUnit: requestingUnit || "",
+      contactName: contactName || "",
+      contactEmail: contactEmail || "",
+      budget: "0",
+      dueDate: null,
+      tipoFinanciamiento: null,
+      codigoProyectoUsa: "",
+      tipoDesarrollo: "",
+      disciplinaLider: "",
+      sector: sector || "",
+      categoriaProyecto: categoriaProyecto || "",
+      dashboardType: dashboardType || "compras",
+      createdAt: new Date().toISOString(),
+      commentCount: 1,
+    };
+
+    const newProjectId = await createProject(projectData);
+
+    // Add the original email as the first comment
+    await addComment(newProjectId, {
+      authorEmail: "pladet@usach.cl",
+      content: `📧 **Creado desde correo aprobado**\n\nDe: ${contactName || contactEmail}\nAsunto: ${title}\n\n${(description || "").slice(0, 500)}`,
+      mentions: [],
+      createdAt: new Date().toISOString(),
+    });
+
+    // Mark draft as approved
+    await updateEmailDraft(draftId, {
+      status: "approved",
+      approvedProjectId: newProjectId,
+      reviewedAt: new Date().toISOString(),
+    });
+
+    return NextResponse.json({
+      success: true,
+      projectId: newProjectId,
+      message: "Borrador aprobado y proyecto creado",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const draftId = url.searchParams.get("id");
+
+    if (!draftId) {
+      return NextResponse.json({ error: "id param required" }, { status: 400 });
+    }
+
+    await updateEmailDraft(draftId, {
+      status: "dismissed",
+      reviewedAt: new Date().toISOString(),
+    });
+
+    return NextResponse.json({ success: true, message: "Borrador descartado" });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}

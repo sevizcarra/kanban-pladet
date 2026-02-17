@@ -2,18 +2,21 @@
  * POST /api/email-sync-historical
  *
  * Processes ALL emails (read and unread) in batches.
+ * Each email becomes a DRAFT for admin review.
  * Called repeatedly by the frontend with increasing offset.
- * Each call processes one batch and returns progress.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAllEmails } from "@/lib/email-reader";
 import { classifyEmail } from "@/lib/email-processor";
+import type { EmailAction } from "@/lib/email-processor";
+import type { ParsedEmail } from "@/lib/email-reader";
+import type { EmailDraft } from "@/lib/firestore";
 import { collection, getDocs, query, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { createProject, addComment } from "@/lib/firestore";
+import { createEmailDraft, checkDuplicateDraft } from "@/lib/firestore";
 
-const BATCH_SIZE = 30; // keep small to avoid Vercel timeout (60s)
+const BATCH_SIZE = 30;
 
 export async function POST(req: NextRequest) {
   // Auth: verify CRON_SECRET
@@ -54,109 +57,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Get existing memo numbers to avoid duplicates
+    // 2. Get existing memo numbers for classification hints
     const existingMemos = await getExistingMemoNumbers();
 
     let created = 0;
     let skipped = 0;
-    let commented = 0;
 
-    // 3. Process each email in this batch
+    // 3. Process each email → save as draft
     for (const email of emails) {
       try {
+        const emailDateStr = email.date ? email.date.toISOString() : new Date().toISOString();
+
+        // Check for duplicate draft
+        const isDuplicate = await checkDuplicateDraft(email.subject, email.from, emailDateStr);
+        if (isDuplicate) {
+          skipped++;
+          continue;
+        }
+
+        // Classify email (for suggestions only)
         const action = classifyEmail(email, existingMemos);
 
-        switch (action.type) {
-          case "create_project": {
-            // Check if this memo already exists (could have been created in a previous batch)
-            if (existingMemos.includes(action.data.memorandumNumber)) {
-              skipped++;
-              break;
-            }
-
-            const projectData = {
-              title: action.data.title,
-              description: action.data.description,
-              status: "recepcion_requerimiento",
-              priority: action.data.priority,
-              memorandumNumber: action.data.memorandumNumber,
-              requestingUnit: action.data.requestingUnit,
-              contactName: action.data.contactName,
-              contactEmail: action.data.contactEmail,
-              budget: "0",
-              dueDate: null,
-              tipoFinanciamiento: null,
-              codigoProyectoUsa: "",
-              tipoDesarrollo: "",
-              disciplinaLider: "",
-              sector: action.data.sector,
-              categoriaProyecto: action.data.categoriaProyecto,
-              dashboardType: action.data.dashboardType,
-              createdAt: email.date ? email.date.toISOString() : new Date().toISOString(),
-              commentCount: 1,
-            };
-
-            const newId = await createProject(projectData);
-
-            await addComment(newId, {
-              authorEmail: "pladet@usach.cl",
-              content: `📧 **Creado desde correo histórico**\n\nDe: ${email.fromName || email.from}\nFecha: ${email.date?.toLocaleDateString("es-CL") || "?"}\nAsunto: ${email.subject}\n\n${email.body.slice(0, 500)}`,
-              mentions: [],
-              createdAt: email.date ? email.date.toISOString() : new Date().toISOString(),
-            });
-
-            // Add to existing list to avoid duplicates within the same run
-            existingMemos.push(action.data.memorandumNumber);
-            created++;
-            break;
-          }
-
-          case "add_comment": {
-            const projectId = await findProjectIdByMemo(action.projectRef);
-            if (projectId) {
-              await addComment(projectId, {
-                authorEmail: action.fromEmail,
-                content: action.comment,
-                mentions: [],
-                createdAt: email.date ? email.date.toISOString() : new Date().toISOString(),
-              });
-              commented++;
-            }
-            break;
-          }
-
-          case "update_status": {
-            const pid = await findProjectIdByMemo(action.projectRef);
-            if (pid) {
-              await addComment(pid, {
-                authorEmail: "pladet@usach.cl",
-                content: `🔄 **Cambio de estado detectado (histórico)**\n\n${action.reason}\nEstado sugerido: **${action.newStatus}**`,
-                mentions: [],
-                createdAt: email.date ? email.date.toISOString() : new Date().toISOString(),
-              });
-              commented++;
-            }
-            break;
-          }
-
-          case "attach_document": {
-            const docPid = await findProjectIdByMemo(action.projectRef);
-            if (docPid) {
-              await addComment(docPid, {
-                authorEmail: "pladet@usach.cl",
-                content: `📎 **Documento detectado (histórico)**\nTipo: ${action.docType}\nArchivo: ${action.filename}`,
-                mentions: [],
-                createdAt: email.date ? email.date.toISOString() : new Date().toISOString(),
-              });
-              commented++;
-            }
-            break;
-          }
-
-          case "ignore":
-            skipped++;
-            break;
-        }
+        // Build and save draft
+        const draft = buildDraftFromAction(email, action, emailDateStr);
+        await createEmailDraft(draft);
+        created++;
       } catch (err) {
         console.error(`Error processing historical email: ${email.subject}`, err);
         skipped++;
@@ -170,7 +95,7 @@ export async function POST(req: NextRequest) {
       actions: [
         {
           type: "info",
-          detail: `Procesamiento histórico: lote ${Math.floor(offset / BATCH_SIZE) + 1} — ${created} creados, ${commented} comentarios, ${skipped} ignorados`,
+          detail: `Procesamiento histórico (borradores): lote ${Math.floor(offset / BATCH_SIZE) + 1} — ${created} borradores creados, ${skipped} ignorados`,
           success: true,
         },
       ],
@@ -187,7 +112,7 @@ export async function POST(req: NextRequest) {
       total,
       processed: emails.length,
       created,
-      commented,
+      commented: 0,
       skipped,
     });
   } catch (err) {
@@ -195,6 +120,73 @@ export async function POST(req: NextRequest) {
     console.error("Historical sync error:", err);
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
+}
+
+// ── Build draft from classification ──
+
+function buildDraftFromAction(
+  email: ParsedEmail,
+  action: EmailAction,
+  emailDateStr: string
+): Omit<EmailDraft, "id"> {
+  const base: Omit<EmailDraft, "id"> = {
+    from: email.from,
+    fromName: email.fromName,
+    subject: email.subject,
+    body: email.body.slice(0, 2000),
+    emailDate: emailDateStr,
+    attachments: email.attachments,
+    suggestedAction: action.type,
+    suggestedTitle: "",
+    suggestedMemo: "",
+    suggestedUnit: "",
+    suggestedPriority: "media",
+    suggestedDashboardType: "compras",
+    suggestedCategory: "",
+    suggestedSector: "",
+    suggestedProjectRef: "",
+    suggestedDetail: "",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+
+  switch (action.type) {
+    case "create_project":
+      base.suggestedTitle = action.data.title;
+      base.suggestedMemo = action.data.memorandumNumber;
+      base.suggestedUnit = action.data.requestingUnit;
+      base.suggestedPriority = action.data.priority;
+      base.suggestedDashboardType = action.data.dashboardType;
+      base.suggestedCategory = action.data.categoriaProyecto;
+      base.suggestedSector = action.data.sector;
+      base.suggestedDetail = action.data.description;
+      break;
+
+    case "add_comment":
+      base.suggestedProjectRef = action.projectRef;
+      base.suggestedDetail = action.comment;
+      base.suggestedTitle = email.subject;
+      break;
+
+    case "update_status":
+      base.suggestedProjectRef = action.projectRef;
+      base.suggestedDetail = `${action.reason} → ${action.newStatus}`;
+      base.suggestedTitle = email.subject;
+      break;
+
+    case "attach_document":
+      base.suggestedProjectRef = action.projectRef;
+      base.suggestedDetail = `${action.docType}: ${action.filename}`;
+      base.suggestedTitle = email.subject;
+      break;
+
+    case "ignore":
+      base.suggestedDetail = action.reason;
+      base.suggestedTitle = email.subject;
+      break;
+  }
+
+  return base;
 }
 
 // ── Helpers ──
@@ -208,18 +200,5 @@ async function getExistingMemoNumbers(): Promise<string[]> {
       .filter(Boolean);
   } catch {
     return [];
-  }
-}
-
-async function findProjectIdByMemo(memoNumber: string): Promise<string | null> {
-  try {
-    const q = query(collection(db, "projects"));
-    const snapshot = await getDocs(q);
-    const match = snapshot.docs.find(
-      (d) => d.data().memorandumNumber === memoNumber
-    );
-    return match?.id || null;
-  } catch {
-    return null;
   }
 }

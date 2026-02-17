@@ -2,7 +2,7 @@
  * POST /api/email-sync
  *
  * Cron endpoint: reads unread emails from pladet@usach.cl,
- * classifies them, and creates/updates projects in Firestore.
+ * classifies them, and saves them as DRAFTS for admin review.
  *
  * Protected by CRON_SECRET to prevent unauthorized access.
  */
@@ -19,7 +19,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { createProject, addComment } from "@/lib/firestore";
+import { createEmailDraft, checkDuplicateDraft } from "@/lib/firestore";
 
 const SYNC_LOG_COLLECTION = "email-sync-log";
 
@@ -37,17 +37,14 @@ interface SyncLogEntry {
 
 // Verify cron secret or admin auth
 function isAuthorized(req: NextRequest): boolean {
-  // Check Vercel cron secret
   const authHeader = req.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
 
-  // Check manual trigger secret via query param
   const url = new URL(req.url);
   const secret = url.searchParams.get("secret");
   if (cronSecret && secret === cronSecret) return true;
 
-  // Allow in development
   if (process.env.NODE_ENV === "development") return true;
 
   return false;
@@ -92,135 +89,44 @@ async function handleSync(req: NextRequest) {
       return NextResponse.json({ message: "No new emails", emailsRead: 0 });
     }
 
-    // 2. Get existing project memo numbers for reference matching
+    // 2. Get existing project memo numbers for classification
     const existingMemos = await getExistingMemoNumbers();
 
-    // 3. Process each email
+    let draftsCreated = 0;
+    let skipped = 0;
+
+    // 3. Process each email → save as draft
     for (const email of emails) {
-      const action = classifyEmail(email, existingMemos);
-
       try {
-        switch (action.type) {
-          case "create_project": {
-            const projectData = {
-              title: action.data.title,
-              description: action.data.description,
-              status: "recepcion_requerimiento",
-              priority: action.data.priority,
-              memorandumNumber: action.data.memorandumNumber,
-              requestingUnit: action.data.requestingUnit,
-              contactName: action.data.contactName,
-              contactEmail: action.data.contactEmail,
-              budget: "0",
-              dueDate: null,
-              tipoFinanciamiento: null,
-              codigoProyectoUsa: "",
-              tipoDesarrollo: "",
-              disciplinaLider: "",
-              sector: action.data.sector,
-              categoriaProyecto: action.data.categoriaProyecto,
-              dashboardType: action.data.dashboardType,
-              createdAt: new Date().toISOString(),
-              commentCount: 1, // the source email comment
-            };
-
-            const newId = await createProject(projectData);
-
-            // Add the source email as the first comment
-            await addComment(newId, {
-              authorEmail: "pladet@usach.cl",
-              content: `📧 **Creado automáticamente desde correo**\n\nDe: ${email.fromName || email.from}\nAsunto: ${email.subject}\n\n${email.body.slice(0, 500)}`,
-              mentions: [],
-              createdAt: new Date().toISOString(),
-            });
-
-            actions.push({
-              type: "create_project",
-              detail: `Proyecto creado: "${action.data.title}" (${action.data.dashboardType}) — MEM: ${action.data.memorandumNumber}`,
-              success: true,
-            });
-            break;
-          }
-
-          case "add_comment": {
-            // Find project ID by memo number
-            const projectId = await findProjectIdByMemo(action.projectRef);
-            if (projectId) {
-              await addComment(projectId, {
-                authorEmail: action.fromEmail,
-                content: action.comment,
-                mentions: [],
-                createdAt: new Date().toISOString(),
-              });
-              actions.push({
-                type: "add_comment",
-                detail: `Comentario agregado a ${action.projectRef}: "${email.subject}"`,
-                success: true,
-              });
-            } else {
-              actions.push({
-                type: "add_comment",
-                detail: `No se encontró proyecto para ${action.projectRef}`,
-                success: false,
-                error: "Proyecto no encontrado",
-              });
-            }
-            break;
-          }
-
-          case "update_status": {
-            // For now, log the suggested change but don't auto-move
-            // (status changes should be reviewed by the team)
-            actions.push({
-              type: "update_status",
-              detail: `⚠️ Cambio de estado sugerido para ${action.projectRef}: → ${action.newStatus}. Razón: ${action.reason}`,
-              success: true,
-            });
-
-            // Add as comment instead of moving
-            const pid = await findProjectIdByMemo(action.projectRef);
-            if (pid) {
-              await addComment(pid, {
-                authorEmail: "pladet@usach.cl",
-                content: `🔄 **Posible cambio de estado detectado**\n\n${action.reason}\n\nEstado sugerido: **${action.newStatus}**\n\n_Revise y actualice manualmente si corresponde._`,
-                mentions: [],
-                createdAt: new Date().toISOString(),
-              });
-            }
-            break;
-          }
-
-          case "attach_document": {
-            actions.push({
-              type: "attach_document",
-              detail: `Documento detectado para ${action.projectRef}: ${action.docType} (${action.filename})`,
-              success: true,
-            });
-
-            const docPid = await findProjectIdByMemo(action.projectRef);
-            if (docPid) {
-              await addComment(docPid, {
-                authorEmail: "pladet@usach.cl",
-                content: `📎 **Documento recibido por correo**\n\nTipo: ${action.docType}\nArchivo: ${action.filename}\nDe: ${email.fromName || email.from}`,
-                mentions: [],
-                createdAt: new Date().toISOString(),
-              });
-            }
-            break;
-          }
-
-          case "ignore": {
-            actions.push({
-              type: "ignore",
-              detail: action.reason,
-              success: true,
-            });
-            break;
-          }
+        // Check for duplicate draft
+        const emailDateStr = email.date ? email.date.toISOString() : new Date().toISOString();
+        const isDuplicate = await checkDuplicateDraft(email.subject, email.from, emailDateStr);
+        if (isDuplicate) {
+          actions.push({
+            type: "ignore",
+            detail: `Borrador duplicado: "${email.subject.slice(0, 60)}"`,
+            success: true,
+          });
+          skipped++;
+          continue;
         }
+
+        // Classify email (for suggestions only)
+        const action = classifyEmail(email, existingMemos);
+
+        // Build draft from classification
+        const draft = buildDraftFromAction(email, action, emailDateStr);
+        await createEmailDraft(draft);
+        draftsCreated++;
+
+        actions.push({
+          type: "create_draft",
+          detail: `Borrador creado: "${email.subject.slice(0, 60)}" — sugerencia: ${action.type}`,
+          success: true,
+        });
       } catch (err) {
         actions.push({
-          type: action.type,
+          type: "error",
           detail: `Error procesando: ${email.subject}`,
           success: false,
           error: err instanceof Error ? err.message : "Unknown error",
@@ -238,9 +144,10 @@ async function handleSync(req: NextRequest) {
     await saveSyncLog(logEntry);
 
     return NextResponse.json({
-      message: "Sync completed",
+      message: "Sync completed — drafts created",
       emailsRead: emails.length,
-      actions: actions.length,
+      draftsCreated,
+      skipped,
       duration: logEntry.duration,
     });
   } catch (err) {
@@ -257,6 +164,77 @@ async function handleSync(req: NextRequest) {
   }
 }
 
+// ── Build draft from classification ──
+
+import type { EmailAction } from "@/lib/email-processor";
+import type { ParsedEmail } from "@/lib/email-reader";
+import type { EmailDraft } from "@/lib/firestore";
+
+function buildDraftFromAction(
+  email: ParsedEmail,
+  action: EmailAction,
+  emailDateStr: string
+): Omit<EmailDraft, "id"> {
+  const base: Omit<EmailDraft, "id"> = {
+    from: email.from,
+    fromName: email.fromName,
+    subject: email.subject,
+    body: email.body.slice(0, 2000),
+    emailDate: emailDateStr,
+    attachments: email.attachments,
+    suggestedAction: action.type,
+    suggestedTitle: "",
+    suggestedMemo: "",
+    suggestedUnit: "",
+    suggestedPriority: "media",
+    suggestedDashboardType: "compras",
+    suggestedCategory: "",
+    suggestedSector: "",
+    suggestedProjectRef: "",
+    suggestedDetail: "",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+
+  switch (action.type) {
+    case "create_project":
+      base.suggestedTitle = action.data.title;
+      base.suggestedMemo = action.data.memorandumNumber;
+      base.suggestedUnit = action.data.requestingUnit;
+      base.suggestedPriority = action.data.priority;
+      base.suggestedDashboardType = action.data.dashboardType;
+      base.suggestedCategory = action.data.categoriaProyecto;
+      base.suggestedSector = action.data.sector;
+      base.suggestedDetail = action.data.description;
+      break;
+
+    case "add_comment":
+      base.suggestedProjectRef = action.projectRef;
+      base.suggestedDetail = action.comment;
+      base.suggestedTitle = email.subject;
+      break;
+
+    case "update_status":
+      base.suggestedProjectRef = action.projectRef;
+      base.suggestedDetail = `${action.reason} → ${action.newStatus}`;
+      base.suggestedTitle = email.subject;
+      break;
+
+    case "attach_document":
+      base.suggestedProjectRef = action.projectRef;
+      base.suggestedDetail = `${action.docType}: ${action.filename}`;
+      base.suggestedTitle = email.subject;
+      break;
+
+    case "ignore":
+      base.suggestedDetail = action.reason;
+      base.suggestedTitle = email.subject;
+      break;
+  }
+
+  return base;
+}
+
 // ── Firestore helpers ──
 
 async function getExistingMemoNumbers(): Promise<string[]> {
@@ -268,19 +246,6 @@ async function getExistingMemoNumbers(): Promise<string[]> {
       .filter(Boolean);
   } catch {
     return [];
-  }
-}
-
-async function findProjectIdByMemo(memoNumber: string): Promise<string | null> {
-  try {
-    const q = query(collection(db, "projects"));
-    const snapshot = await getDocs(q);
-    const match = snapshot.docs.find(
-      (d) => d.data().memorandumNumber === memoNumber
-    );
-    return match?.id || null;
-  } catch {
-    return null;
   }
 }
 
