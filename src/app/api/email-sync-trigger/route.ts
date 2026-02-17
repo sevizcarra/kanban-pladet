@@ -2,18 +2,23 @@
  * POST /api/email-sync-trigger
  *
  * Manual sync trigger from the UI.
- * Runs the sync logic directly (no internal fetch that could timeout).
+ * Same logic as cron: auto-applies matched projects, drafts for new ones.
  */
 
 import { NextResponse } from "next/server";
 import { fetchUnreadEmails } from "@/lib/email-reader";
-import { classifyEmail } from "@/lib/email-processor";
+import { classifyEmail, detectStatusAdvance } from "@/lib/email-processor";
 import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
 import type { ParsedEmail } from "@/lib/email-reader";
 import type { EmailDraft } from "@/lib/firestore";
 import { collection, addDoc, getDocs, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { createEmailDraft, checkDuplicateDraft } from "@/lib/firestore";
+import {
+  createEmailDraft,
+  checkDuplicateDraft,
+  updateProject,
+  addComment,
+} from "@/lib/firestore";
 
 export async function POST() {
   if (!process.env.PLADET_APP_PASSWORD) {
@@ -38,6 +43,7 @@ export async function POST() {
     const existingProjects = await getExistingProjects();
     const actions: { type: string; detail: string; success: boolean; error?: string }[] = [];
     let draftsCreated = 0;
+    let autoApplied = 0;
     let skipped = 0;
 
     for (const email of emails) {
@@ -51,6 +57,25 @@ export async function POST() {
         }
 
         const action = classifyEmail(email, existingProjects);
+
+        // ── AUTO-APPLY for matched projects ──
+        if (action.type === "update_status" || action.type === "add_comment" || action.type === "attach_document") {
+          const applied = await autoApplyAction(email, action, existingProjects);
+          if (applied) {
+            const draft = buildDraftFromAction(email, action, emailDateStr);
+            draft.status = "approved" as const;
+            await createEmailDraft(draft);
+            autoApplied++;
+            actions.push({
+              type: "auto_apply",
+              detail: `Auto-aplicado: ${action.type} — "${email.subject.slice(0, 50)}"`,
+              success: true,
+            });
+            continue;
+          }
+        }
+
+        // ── DRAFT for new projects or unmatched ──
         const draft = buildDraftFromAction(email, action, emailDateStr);
         await createEmailDraft(draft);
         draftsCreated++;
@@ -81,6 +106,7 @@ export async function POST() {
       message: "Sync completed",
       emailsRead: emails.length,
       draftsCreated,
+      autoApplied,
       skipped,
       duration: Date.now() - startTime,
     });
@@ -94,6 +120,82 @@ export async function POST() {
     });
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
+}
+
+// ── Auto-apply action to existing project ──
+
+async function autoApplyAction(
+  email: ParsedEmail,
+  action: EmailAction,
+  existingProjects: ProjectMatchData[]
+): Promise<boolean> {
+  try {
+    if (action.type === "update_status") {
+      const project = existingProjects.find(p => p.id === action.projectRef);
+      if (!project) return false;
+
+      const fullText = `${email.subject} ${email.body}`;
+      const newStatus = detectStatusAdvance(fullText, project.status || "recepcion_requerimiento");
+
+      if (newStatus) {
+        await updateProject(action.projectRef, { status: newStatus });
+        await addComment(action.projectRef, {
+          authorEmail: "pladet@usach.cl",
+          content: `🤖 **Avance automático** → ${getStatusLabel(newStatus)}\n\nDetectado en correo de ${email.fromName || email.from}:\n"${email.subject}"\n\nMotivo: ${action.reason}`,
+          mentions: [],
+          createdAt: new Date().toISOString(),
+        });
+        return true;
+      }
+
+      // No advance — add as comment
+      await addComment(action.projectRef, {
+        authorEmail: "pladet@usach.cl",
+        content: `📧 **${email.fromName || email.from}** — ${email.subject}\n\n${(email.body || "").slice(0, 500)}`,
+        mentions: [],
+        createdAt: new Date().toISOString(),
+      });
+      return true;
+    }
+
+    if (action.type === "add_comment") {
+      await addComment(action.projectRef, {
+        authorEmail: "pladet@usach.cl",
+        content: `📧 **${email.fromName || email.from}** — ${email.subject}\n\n${(email.body || "").slice(0, 500)}`,
+        mentions: [],
+        createdAt: new Date().toISOString(),
+      });
+      return true;
+    }
+
+    if (action.type === "attach_document") {
+      await addComment(action.projectRef, {
+        authorEmail: "pladet@usach.cl",
+        content: `📎 **Documento detectado** — ${action.docType}: ${action.filename}\n\nDe: ${email.fromName || email.from}\nAsunto: ${email.subject}`,
+        mentions: [],
+        createdAt: new Date().toISOString(),
+      });
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.error("Error auto-applying action:", err);
+    return false;
+  }
+}
+
+function getStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    recepcion_requerimiento: "Recepción Requerimiento",
+    asignacion_profesional: "En Asignación de Profesional",
+    en_diseno: "En Diseño",
+    gestion_compra: "En Gestión de Compra",
+    coordinacion_ejecucion: "En Coord. de Ejecución",
+    en_ejecucion: "En Ejecución",
+    terminada: "Terminada",
+  };
+  return labels[status] || status;
 }
 
 // ── Helpers ──
@@ -120,6 +222,7 @@ function buildDraftFromAction(
     suggestedSector: "",
     suggestedProjectRef: "",
     suggestedDetail: "",
+    suggestedStatus: "recepcion_requerimiento",
     status: "pending",
     createdAt: new Date().toISOString(),
   };
@@ -134,6 +237,7 @@ function buildDraftFromAction(
       base.suggestedCategory = action.data.categoriaProyecto;
       base.suggestedSector = action.data.sector;
       base.suggestedDetail = action.data.description;
+      base.suggestedStatus = action.data.detectedStatus;
       break;
     case "add_comment":
       base.suggestedProjectRef = action.projectRef;
@@ -144,6 +248,7 @@ function buildDraftFromAction(
       base.suggestedProjectRef = action.projectRef;
       base.suggestedDetail = `${action.reason} → ${action.newStatus}`;
       base.suggestedTitle = email.subject;
+      base.suggestedStatus = action.newStatus;
       break;
     case "attach_document":
       base.suggestedProjectRef = action.projectRef;
@@ -173,6 +278,7 @@ async function getExistingProjects(): Promise<ProjectMatchData[]> {
         contactEmail: data.contactEmail || "",
         contactName: data.contactName || "",
         sector: data.sector || "",
+        status: data.status || "recepcion_requerimiento",
         idLicitacion: data.idLicitacion,
         codigoProyectoDCI: data.codigoProyectoDCI,
         codigoProyectoUsa: data.codigoProyectoUsa,

@@ -169,6 +169,7 @@ export interface EmailDraft {
   suggestedSector: string;
   suggestedProjectRef: string;  // for comment/status actions
   suggestedDetail: string;      // extra info (comment text, status reason, etc.)
+  suggestedStatus: string;      // detected initial status or new status for auto-advance
   // Draft status
   status: "pending" | "approved" | "dismissed";
   approvedProjectId?: string;
