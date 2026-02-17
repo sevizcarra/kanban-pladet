@@ -427,7 +427,7 @@ export default function EmailSyncPanel() {
 
   // ── Smart Grouping helpers ──
 
-  // Stop words common in Chilean institutional emails
+  // Stop words — expanded with institutional terms that cause false groupings
   const STOP_WORDS = new Set([
     "de", "del", "la", "el", "los", "las", "un", "una", "unos", "unas",
     "en", "con", "por", "para", "al", "a", "y", "o", "e", "que", "se",
@@ -438,6 +438,11 @@ export default function EmailSyncPanel() {
     "favor", "adjunto", "adjunta", "saludos", "atte", "atentamente",
     "informo", "informamos", "solicito", "solicitamos", "envío", "envio",
     "the", "of", "and", "to", "in", "for", "from",
+    // Institutional noise words — too generic to cluster by
+    "nuevo", "nueva", "comentario", "comentarios", "notificación", "notificacion",
+    "memo", "memorándum", "memorandum", "std", "sistema", "trazabilidad",
+    "documento", "documentos", "aviso", "circular", "comunicado",
+    "información", "informacion", "solicitud", "requerimiento",
   ]);
 
   /** Strip all email prefixes (Re, Fwd, RV, etc.) recursively */
@@ -454,89 +459,79 @@ export default function EmailSyncPanel() {
   };
 
   /**
-   * Generic notification prefixes in STD / institutional systems.
-   * These add noise and cause unrelated emails to cluster together.
-   * We strip them so tokens focus on the actual project/memo identifier.
+   * STEP 1 of grouping: Try to extract a specific document/memo ID from the subject.
+   * If found, this becomes the EXACT group key — no fuzzy matching needed.
+   * Returns null if no specific ID is found.
    */
-  const NOTIFICATION_PREFIXES = [
-    /^nuevo\s+comentario\s*(en|sobre|del?)?\s*/i,
-    /^notificaci[oó]n\s*(std|sistema)?\s*[-:.]?\s*/i,
-    /^aviso\s*(de\s+)?/i,
-    /^alerta\s*(de\s+)?/i,
-    /^recordatorio\s*[-:.]?\s*/i,
-    /^actualizaci[oó]n\s*(de\s+)?/i,
-    /^informaci[oó]n\s*(de\s+)?/i,
-    /^resumen\s*(de\s+)?/i,
-    /^circular\s*(n[°º.]?\s*\d+)?\s*[-:.]?\s*/i,
-    /^comunicado\s*(de\s+)?/i,
-  ];
+  const extractDocumentId = (subject: string): string | null => {
+    const cleaned = stripPrefixes(subject || "");
 
-  /** Strip notification-style prefixes that cause false groupings */
-  const stripNotificationPrefixes = (s: string): string => {
-    let result = s;
-    for (const p of NOTIFICATION_PREFIXES) {
-      result = result.replace(p, "").trim();
+    // Patterns that extract a unique document identifier
+    const idPatterns: { pattern: RegExp; prefix: string }[] = [
+      { pattern: /memor[aá]ndum?\s*(?:n[°º.]?\s*)?(\d+)/i, prefix: "MEMO" },
+      { pattern: /memo\s*(?:n[°º.]?\s*)?(\d+)/i, prefix: "MEMO" },
+      { pattern: /MEM[-\s]?(\d{4})[-\s]?(\d+)/i, prefix: "MEM" },
+      { pattern: /licitaci[oó]n\s*(?:n[°º.]?\s*)?([\w\d-]+)/i, prefix: "LIC" },
+      { pattern: /OC[-\s]?(\d+)/i, prefix: "OC" },
+      { pattern: /CDP[-\s]?(\d+)/i, prefix: "CDP" },
+      { pattern: /DCI[-\s]?([\w\d-]+)/i, prefix: "DCI" },
+      { pattern: /resoluci[oó]n\s*(?:n[°º.]?\s*)?(\d+)/i, prefix: "RES" },
+      { pattern: /decreto\s*(?:n[°º.]?\s*)?(\d+)/i, prefix: "DEC" },
+      { pattern: /oficio\s*(?:n[°º.]?\s*)?(\d+)/i, prefix: "OFI" },
+      { pattern: /expediente\s*(?:n[°º.]?\s*)?([\w\d-]+)/i, prefix: "EXP" },
+    ];
+
+    for (const { pattern, prefix } of idPatterns) {
+      const m = cleaned.match(pattern);
+      if (m) {
+        const id = m[2] ? `${m[1]}-${m[2]}` : m[1];
+        return `docid:${prefix}-${id}`.toLowerCase();
+      }
     }
-    return result;
+
+    return null;
   };
 
-  /** Extract meaningful tokens from a subject */
+  /** STEP 2: For subjects without a document ID, extract tokens for fuzzy matching */
   const extractTokens = (subject: string): string[] => {
-    // Strip email prefixes first, then notification prefixes
-    let cleaned = stripPrefixes(subject || "");
-    cleaned = stripNotificationPrefixes(cleaned);
-
-    cleaned = cleaned
+    const cleaned = stripPrefixes(subject || "")
       .toLowerCase()
       .replace(/[.,;:!?¿¡()\[\]{}"'«»—–\-_\/\\|@#$%^&*+=~`<>]/g, " ")
-      .replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g, " ")  // remove dates
-      .replace(/\d{1,2}:\d{2}/g, " ")  // remove times
+      .replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g, " ")  // dates
+      .replace(/\d{1,2}:\d{2}/g, " ")  // times
+      // Remove entire notification phrases before tokenizing
+      .replace(/nuevo\s+comentario\s*(en|sobre|del?)?\s*/gi, " ")
+      .replace(/notificaci[oó]n\s*(std|sistema|documental)?\s*/gi, " ")
+      .replace(/aviso\s*(de\s+)?/gi, " ")
+      .replace(/recordatorio\s*/gi, " ")
+      .replace(/actualizaci[oó]n\s*(de\s+)?/gi, " ")
       .replace(/\s+/g, " ")
       .trim();
 
     return cleaned
       .split(" ")
       .filter(t => t.length > 2 && !STOP_WORDS.has(t))
-      // keep numbers that look like codes (3+ digits or alphanumeric IDs)
       .filter(t => !/^\d{1,2}$/.test(t));
   };
 
-  /**
-   * Enhanced similarity that gives EXTRA weight to identifiers
-   * (numbers, codes) vs common words.
-   */
+  /** Weighted Jaccard similarity — identifiers (with digits) count 3x */
   const weightedSimilarity = (a: string[], b: string[]): number => {
     if (a.length === 0 && b.length === 0) return 1;
     if (a.length === 0 || b.length === 0) return 0;
 
-    const isIdentifier = (t: string) => /\d/.test(t); // tokens containing digits
-
-    let weightedIntersection = 0;
-    let weightedUnionA = 0;
-    let weightedUnionB = 0;
-
-    const setB = new Set(b);
+    const isId = (t: string) => /\d/.test(t);
     const setA = new Set(a);
+    const setB = new Set(b);
+    let inter = 0, uA = 0, uB = 0;
 
-    for (const t of setA) {
-      const w = isIdentifier(t) ? 3 : 1; // identifiers count 3x
-      weightedUnionA += w;
-      if (setB.has(t)) weightedIntersection += w;
-    }
-    for (const t of setB) {
-      const w = isIdentifier(t) ? 3 : 1;
-      weightedUnionB += w;
-    }
+    for (const t of setA) { const w = isId(t) ? 3 : 1; uA += w; if (setB.has(t)) inter += w; }
+    for (const t of setB) { const w = isId(t) ? 3 : 1; uB += w; }
 
-    const weightedUnion = weightedUnionA + weightedUnionB - weightedIntersection;
-    return weightedUnion === 0 ? 0 : weightedIntersection / weightedUnion;
+    const union = uA + uB - inter;
+    return union === 0 ? 0 : inter / union;
   };
 
-  /**
-   * Greedy clustering: for each draft, find existing cluster with best similarity.
-   * If similarity >= threshold → add to cluster; otherwise → new cluster.
-   */
-  const SIMILARITY_THRESHOLD = 0.4; // 40% weighted token overlap to group
+  const SIMILARITY_THRESHOLD = 0.4;
 
   // ── Filtered drafts ──
   const uniqueSenders = Array.from(new Set(drafts.map(d => d.fromName || d.from))).sort();
@@ -573,34 +568,49 @@ export default function EmailSyncPanel() {
   }
 
   const groupedDrafts: DraftGroup[] = (() => {
-    // Step 1: Separate project-ref drafts from subject-based drafts
-    const projGroups = new Map<string, EmailDraft[]>();
-    const subjectDrafts: EmailDraft[] = [];
+    // Three-tier grouping:
+    //   Tier 1: By suggestedProjectRef (matched to existing project)
+    //   Tier 2: By extracted document ID (memo number, OC, licitación, etc.) — EXACT match
+    //   Tier 3: By token similarity (fuzzy) for everything else
+
+    const projGroups = new Map<string, EmailDraft[]>();   // Tier 1
+    const docIdGroups = new Map<string, EmailDraft[]>();   // Tier 2
+    const fuzzyDrafts: EmailDraft[] = [];                  // Tier 3
 
     for (const d of filteredDrafts) {
+      // Tier 1: existing project ref
       if (d.suggestedProjectRef && d.suggestedProjectRef.trim() !== "") {
         const key = `proj:${d.suggestedProjectRef}`;
         if (!projGroups.has(key)) projGroups.set(key, []);
         projGroups.get(key)!.push(d);
-      } else {
-        subjectDrafts.push(d);
+        continue;
       }
+
+      // Tier 2: extract document ID from subject
+      const docId = extractDocumentId(d.subject);
+      if (docId) {
+        if (!docIdGroups.has(docId)) docIdGroups.set(docId, []);
+        docIdGroups.get(docId)!.push(d);
+        continue;
+      }
+
+      // Tier 3: fuzzy
+      fuzzyDrafts.push(d);
     }
 
-    // Step 2: Cluster subject-based drafts using token similarity
+    // Tier 3: Cluster remaining drafts by token similarity
     interface Cluster {
       id: string;
-      tokens: string[];      // representative tokens (union of first few)
-      label: string;          // display label (best/longest subject)
+      tokens: string[];
+      label: string;
       drafts: EmailDraft[];
     }
 
     const clusters: Cluster[] = [];
 
-    for (const draft of subjectDrafts) {
+    for (const draft of fuzzyDrafts) {
       const tokens = extractTokens(draft.subject);
 
-      // Find best matching cluster
       let bestCluster: Cluster | null = null;
       let bestScore = 0;
 
@@ -613,18 +623,14 @@ export default function EmailSyncPanel() {
       }
 
       if (bestCluster && bestScore >= SIMILARITY_THRESHOLD) {
-        // Add to existing cluster
         bestCluster.drafts.push(draft);
-        // Update representative tokens (union, but keep manageable)
         const tokenSet = new Set([...bestCluster.tokens, ...tokens]);
         bestCluster.tokens = Array.from(tokenSet);
-        // Use longest subject as label
         const cleaned = stripPrefixes(draft.subject);
         if (cleaned.length > stripPrefixes(bestCluster.label).length) {
           bestCluster.label = cleaned;
         }
       } else {
-        // New cluster
         clusters.push({
           id: `cluster:${clusters.length}`,
           tokens,
@@ -634,22 +640,27 @@ export default function EmailSyncPanel() {
       }
     }
 
-    // Step 3: Build DraftGroup[] from all sources
+    // Build DraftGroup[] from all three tiers
     const groups: DraftGroup[] = [];
 
-    // From project-ref groups
     for (const [key, items] of projGroups) {
       items.sort((a, b) => new Date(b.emailDate).getTime() - new Date(a.emailDate).getTime());
       groups.push(buildGroup(key, items, key.replace("proj:", "")));
     }
 
-    // From subject clusters
+    for (const [key, items] of docIdGroups) {
+      items.sort((a, b) => new Date(b.emailDate).getTime() - new Date(a.emailDate).getTime());
+      // Use the key as a nice label like "MEMO-123"
+      const niceLabel = key.replace("docid:", "").toUpperCase();
+      groups.push(buildGroup(key, items, "", `${niceLabel} — ${items[0].subject}`));
+    }
+
     for (const cluster of clusters) {
       cluster.drafts.sort((a, b) => new Date(b.emailDate).getTime() - new Date(a.emailDate).getTime());
       groups.push(buildGroup(cluster.id, cluster.drafts, "", cluster.label));
     }
 
-    // Sort groups: largest first, then by newest email
+    // Sort: largest groups first, then by newest email
     groups.sort((a, b) => {
       if (b.drafts.length !== a.drafts.length) return b.drafts.length - a.drafts.length;
       return new Date(b.dateRange.newest).getTime() - new Date(a.dateRange.newest).getTime();
