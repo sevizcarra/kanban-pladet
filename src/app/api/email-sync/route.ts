@@ -10,9 +10,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchUnreadEmails } from "@/lib/email-reader";
 import { classifyEmail } from "@/lib/email-processor";
-import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
-import type { ParsedEmail } from "@/lib/email-reader";
-import type { EmailDraft } from "@/lib/firestore";
 import {
   collection,
   addDoc,
@@ -92,7 +89,7 @@ async function handleSync(req: NextRequest) {
       return NextResponse.json({ message: "No new emails", emailsRead: 0 });
     }
 
-    // 2. Get existing projects for classification
+    // 2. Get existing project memo numbers for classification
     const existingProjects = await getExistingProjects();
 
     let draftsCreated = 0;
@@ -101,12 +98,13 @@ async function handleSync(req: NextRequest) {
     // 3. Process each email → save as draft
     for (const email of emails) {
       try {
+        // Check for duplicate draft
         const emailDateStr = email.date ? email.date.toISOString() : new Date().toISOString();
         const isDuplicate = await checkDuplicateDraft(email.subject, email.from, emailDateStr);
         if (isDuplicate) {
           actions.push({
             type: "ignore",
-            detail: `Duplicado: "${email.subject.slice(0, 60)}"`,
+            detail: `Borrador duplicado: "${email.subject.slice(0, 60)}"`,
             success: true,
           });
           skipped++;
@@ -116,14 +114,14 @@ async function handleSync(req: NextRequest) {
         // Classify email (for suggestions only)
         const action = classifyEmail(email, existingProjects);
 
-        // Save as draft for admin review
+        // Build draft from classification
         const draft = buildDraftFromAction(email, action, emailDateStr);
         await createEmailDraft(draft);
         draftsCreated++;
 
         actions.push({
           type: "create_draft",
-          detail: `Borrador: "${email.subject.slice(0, 60)}" — sugerencia: ${action.type}`,
+          detail: `Borrador creado: "${email.subject.slice(0, 60)}" — sugerencia: ${action.type}`,
           success: true,
         });
       } catch (err) {
@@ -168,6 +166,10 @@ async function handleSync(req: NextRequest) {
 
 // ── Build draft from classification ──
 
+import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
+import type { ParsedEmail } from "@/lib/email-reader";
+import type { EmailDraft } from "@/lib/firestore";
+
 function buildDraftFromAction(
   email: ParsedEmail,
   action: EmailAction,
@@ -190,7 +192,6 @@ function buildDraftFromAction(
     suggestedSector: "",
     suggestedProjectRef: "",
     suggestedDetail: "",
-    suggestedStatus: "recepcion_requerimiento",
     status: "pending",
     createdAt: new Date().toISOString(),
   };
@@ -205,7 +206,6 @@ function buildDraftFromAction(
       base.suggestedCategory = action.data.categoriaProyecto;
       base.suggestedSector = action.data.sector;
       base.suggestedDetail = action.data.description;
-      base.suggestedStatus = action.data.detectedStatus;
       break;
 
     case "add_comment":
@@ -218,7 +218,6 @@ function buildDraftFromAction(
       base.suggestedProjectRef = action.projectRef;
       base.suggestedDetail = `${action.reason} → ${action.newStatus}`;
       base.suggestedTitle = email.subject;
-      base.suggestedStatus = action.newStatus;
       break;
 
     case "attach_document":
@@ -252,7 +251,6 @@ async function getExistingProjects(): Promise<ProjectMatchData[]> {
         contactEmail: data.contactEmail || "",
         contactName: data.contactName || "",
         sector: data.sector || "",
-        status: data.status || "recepcion_requerimiento",
         idLicitacion: data.idLicitacion,
         codigoProyectoDCI: data.codigoProyectoDCI,
         codigoProyectoUsa: data.codigoProyectoUsa,

@@ -232,7 +232,6 @@ export default function EmailSyncPanel() {
         description: draft.body?.slice(0, 500) || "",
         contactName: draft.fromName || "",
         contactEmail: draft.from || "",
-        status: (draft as unknown as { suggestedStatus?: string }).suggestedStatus || "recepcion_requerimiento",
       };
 
       const res = await fetch("/api/email-drafts", {
@@ -363,7 +362,6 @@ export default function EmailSyncPanel() {
         description: first.body?.slice(0, 500) || "",
         contactName: first.fromName || "",
         contactEmail: first.from || "",
-        status: (first as unknown as { suggestedStatus?: string }).suggestedStatus || "recepcion_requerimiento",
       };
 
       const res = await fetch("/api/email-drafts", {

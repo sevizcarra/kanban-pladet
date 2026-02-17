@@ -68,7 +68,6 @@ export async function POST(req: NextRequest) {
       description,
       contactName,
       contactEmail,
-      status: initialStatus, // detected status from classifier (or admin override)
     } = body;
 
     // ── GROUP APPROVAL ──
@@ -87,11 +86,11 @@ export async function POST(req: NextRequest) {
       // Unique senders
       const senders = Array.from(new Set(emails.map((e: { fromName: string; from: string }) => e.fromName || e.from)));
 
-      // Create project — use detected status instead of always "recepcion_requerimiento"
+      // Create project
       const projectData = {
         title: title || "Sin título",
         description: description || "",
-        status: initialStatus || "recepcion_requerimiento",
+        status: "recepcion_requerimiento",
         priority: priority || "media",
         memorandumNumber: memorandumNumber || "",
         requestingUnit: requestingUnit || "",
@@ -150,11 +149,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "draftId or draftIds required" }, { status: 400 });
     }
 
-    // Create the project in Firestore — use detected status
+    // Create the project in Firestore
     const projectData = {
       title: title || "Sin título",
       description: description || "",
-      status: initialStatus || "recepcion_requerimiento",
+      status: "recepcion_requerimiento",
       priority: priority || "media",
       memorandumNumber: memorandumNumber || "",
       requestingUnit: requestingUnit || "",

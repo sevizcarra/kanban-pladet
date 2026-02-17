@@ -2,8 +2,8 @@
  * POST /api/email-sync-historical-trigger
  *
  * Proxy for historical email processing.
- * Same logic as email-sync-historical but called directly from UI.
- * All emails saved as drafts for admin review.
+ * Instead of fetching the other endpoint (which can timeout),
+ * this directly runs the same logic with CRON_SECRET injected.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
   const offset = body.offset || 0;
 
   try {
+    // 1. Fetch batch of emails
     const { emails, total } = await fetchAllEmails(offset, BATCH_SIZE);
 
     if (emails.length === 0) {
@@ -47,11 +48,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 2. Get existing memo numbers
     const existingProjects = await getExistingProjects();
 
     let created = 0;
     let skipped = 0;
 
+    // 3. Process each email → save as draft
     for (const email of emails) {
       try {
         const emailDateStr = email.date ? email.date.toISOString() : new Date().toISOString();
@@ -72,6 +75,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Save log
     await addDoc(collection(db, "email-sync-log"), {
       timestamp: new Date().toISOString(),
       emailsRead: emails.length,
@@ -129,7 +133,6 @@ function buildDraftFromAction(
     suggestedSector: "",
     suggestedProjectRef: "",
     suggestedDetail: "",
-    suggestedStatus: "recepcion_requerimiento",
     status: "pending",
     createdAt: new Date().toISOString(),
   };
@@ -144,7 +147,6 @@ function buildDraftFromAction(
       base.suggestedCategory = action.data.categoriaProyecto;
       base.suggestedSector = action.data.sector;
       base.suggestedDetail = action.data.description;
-      base.suggestedStatus = action.data.detectedStatus;
       break;
     case "add_comment":
       base.suggestedProjectRef = action.projectRef;
@@ -155,7 +157,6 @@ function buildDraftFromAction(
       base.suggestedProjectRef = action.projectRef;
       base.suggestedDetail = `${action.reason} → ${action.newStatus}`;
       base.suggestedTitle = email.subject;
-      base.suggestedStatus = action.newStatus;
       break;
     case "attach_document":
       base.suggestedProjectRef = action.projectRef;
@@ -185,7 +186,6 @@ async function getExistingProjects(): Promise<ProjectMatchData[]> {
         contactEmail: data.contactEmail || "",
         contactName: data.contactName || "",
         sector: data.sector || "",
-        status: data.status || "recepcion_requerimiento",
         idLicitacion: data.idLicitacion,
         codigoProyectoDCI: data.codigoProyectoDCI,
         codigoProyectoUsa: data.codigoProyectoUsa,

@@ -146,7 +146,6 @@ function buildDraftFromAction(
     suggestedSector: "",
     suggestedProjectRef: "",
     suggestedDetail: "",
-    suggestedStatus: "recepcion_requerimiento",
     status: "pending",
     createdAt: new Date().toISOString(),
   };
@@ -161,7 +160,6 @@ function buildDraftFromAction(
       base.suggestedCategory = action.data.categoriaProyecto;
       base.suggestedSector = action.data.sector;
       base.suggestedDetail = action.data.description;
-      base.suggestedStatus = action.data.detectedStatus;
       break;
 
     case "add_comment":
@@ -174,7 +172,6 @@ function buildDraftFromAction(
       base.suggestedProjectRef = action.projectRef;
       base.suggestedDetail = `${action.reason} → ${action.newStatus}`;
       base.suggestedTitle = email.subject;
-      base.suggestedStatus = action.newStatus;
       break;
 
     case "attach_document":
@@ -208,7 +205,6 @@ async function getExistingProjects(): Promise<ProjectMatchData[]> {
         contactEmail: data.contactEmail || "",
         contactName: data.contactName || "",
         sector: data.sector || "",
-        status: data.status || "recepcion_requerimiento",
         idLicitacion: data.idLicitacion,
         codigoProyectoDCI: data.codigoProyectoDCI,
         codigoProyectoUsa: data.codigoProyectoUsa,

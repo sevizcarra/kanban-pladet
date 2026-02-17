@@ -4,8 +4,6 @@
  * Uses 5 independent signals (codes, contact, subject, unit, content) to score
  * how likely an email relates to each existing project. When score >= 60,
  * the email is linked to that project with a suggested action.
- *
- * v2: Smart title generation + automatic status detection + auto-advance
  */
 
 import type { ParsedEmail } from "./email-reader";
@@ -20,7 +18,6 @@ export interface ProjectMatchData {
   contactEmail: string;
   contactName: string;
   sector: string;
-  status?: string; // current project status for auto-advance logic
   idLicitacion?: string;
   codigoProyectoDCI?: string;
   codigoProyectoUsa?: string;
@@ -44,8 +41,6 @@ export interface NewProjectFromEmail {
   priority: "alta" | "media" | "baja";
   categoriaProyecto: string;
   sector: string;
-  /** Etapa inicial detectada automáticamente del contenido del correo */
-  detectedStatus: string;
 }
 
 // ── Known patterns (kept from original) ──
@@ -515,11 +510,9 @@ function extractProjectData(email: ParsedEmail, memoNumber: string): NewProjectF
     }
   }
 
-  // ── SMART TITLE: extract clean project name ──
-  const title = generateCleanTitle(email);
-
-  // ── SMART STATUS: detect initial stage from email content ──
-  const detectedStatus = detectStatusFromContent(fullText, isObras);
+  const title = email.subject
+    .replace(/^(RE:|FWD?:|Memorándum\s*\d+\s*[-–—]\s*)/gi, "")
+    .trim() || `Requerimiento MEM-${year}-${memoNumber}`;
 
   return {
     title,
@@ -532,206 +525,7 @@ function extractProjectData(email: ParsedEmail, memoNumber: string): NewProjectF
     priority,
     categoriaProyecto: category,
     sector: "",
-    detectedStatus,
   };
-}
-
-// ════════════════════════════════════════════
-// SMART TITLE GENERATION
-// ════════════════════════════════════════════
-
-/**
- * Genera un título limpio y corto para el proyecto.
- * En vez de usar el asunto crudo del correo ("Re: Fwd: Memorándum N° 456 - Solicitud de..."),
- * extrae la descripción real del trabajo: "Reparación baños Edificio X"
- */
-function generateCleanTitle(email: ParsedEmail): string {
-  const subject = email.subject || "";
-  const body = email.body || "";
-
-  // Step 1: Strip Re:/Fwd:/RV: prefixes recursively
-  let cleaned = subject
-    .replace(/^(\s*(re|fwd?|rv|respuesta|reenv[ií]o)\s*:\s*)+/gi, "")
-    .trim();
-
-  // Step 2: Strip notification prefixes (STD, etc.)
-  cleaned = cleaned
-    .replace(/^(nuevo\s+comentario\s+(en|de)\s*)/i, "")
-    .replace(/^(notificaci[oó]n\s*(std|sistema)[:\s]*)/i, "")
-    .replace(/^(alerta\s+(de\s+)?)/i, "")
-    .trim();
-
-  // Step 3: Strip memo/document ID prefix — keep the description AFTER it
-  const memoMatch = cleaned.match(
-    /^(?:memor[aá]ndum?|memo|MEM[-\s]?\d{4}[-\s]?\d+)\s*(?:n[°º.]?\s*)?\d*\s*[-–—:]\s*/i
-  );
-  if (memoMatch) {
-    const afterMemo = cleaned.slice(memoMatch[0].length).trim();
-    if (afterMemo.length > 10) {
-      cleaned = afterMemo;
-    }
-  }
-
-  // Step 4: Strip "Solicitud de" / "Se solicita" prefix (keep the actual request)
-  cleaned = cleaned
-    .replace(/^solicitud\s+(de\s+)?/i, "")
-    .replace(/^se\s+solicita\s+/i, "")
-    .replace(/^requerimiento\s+(de\s+)?/i, "")
-    .trim();
-
-  // Step 5: If the cleaned subject is too short/generic, try extracting from body
-  if (cleaned.length < 10 || /^(sin\s*asunto|no\s*subject|\(sin\s*tema\))$/i.test(cleaned)) {
-    const bodyTitle = extractTitleFromBody(body);
-    if (bodyTitle) {
-      cleaned = bodyTitle;
-    }
-  }
-
-  // Step 6: Capitalize first letter, truncate to reasonable length
-  if (cleaned.length > 0) {
-    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-  }
-
-  // Cap at 80 chars — clean cut at last space
-  if (cleaned.length > 80) {
-    const cut = cleaned.lastIndexOf(" ", 80);
-    cleaned = cleaned.slice(0, cut > 40 ? cut : 80);
-  }
-
-  return cleaned || "Nuevo requerimiento";
-}
-
-/**
- * When the subject line is useless, try to extract a meaningful title from the email body.
- * Looks for patterns like "Se solicita reparación de baños en edificio X".
- */
-function extractTitleFromBody(body: string): string | null {
-  if (!body) return null;
-
-  // Take first 1000 chars, clean up
-  const text = body.slice(0, 1000).replace(/\r?\n/g, " ").replace(/\s+/g, " ");
-
-  // Pattern 1: "solicita/requiere [description]"
-  const reqMatch = text.match(
-    /(?:se\s+)?(?:solicita|requiere|necesita)\s+(.{15,80})(?:\.|,|\n|$)/i
-  );
-  if (reqMatch) {
-    return reqMatch[1].trim().replace(/[.,;:]+$/, "");
-  }
-
-  // Pattern 2: "motivo:" or "asunto:" followed by description
-  const motivoMatch = text.match(
-    /(?:motivo|asunto|materia|ref(?:erencia)?)\s*:\s*(.{10,80})(?:\.|,|\n|$)/i
-  );
-  if (motivoMatch) {
-    return motivoMatch[1].trim().replace(/[.,;:]+$/, "");
-  }
-
-  // Pattern 3: First meaningful sentence (after greeting)
-  const afterGreeting = text.replace(/^.*?(estimad[oa]s?|hola|buenos?\s+d[ií]as?|buenas?\s+tardes?)[^.]*\.\s*/i, "");
-  const firstSentence = afterGreeting.match(/^(.{15,80}?)(?:\.|$)/);
-  if (firstSentence) {
-    return firstSentence[1].trim().replace(/[.,;:]+$/, "");
-  }
-
-  return null;
-}
-
-// ════════════════════════════════════════════
-// SMART STATUS DETECTION
-// ════════════════════════════════════════════
-
-/**
- * Analiza el contenido del correo para determinar en qué etapa del proyecto
- * debería empezar la tarjeta. No todos los correos son "Recepción de Requerimiento".
- *
- * Compras flow: recepcion → asignacion → en_diseno → gestion_compra → coord_ejecucion → en_ejecucion → terminada
- * Obras flow:   recepcion → asignacion → coord_ejecucion → en_ejecucion → terminada
- */
-function detectStatusFromContent(fullText: string, isObras: boolean): string {
-  // Check from MOST advanced to LEAST advanced (so we don't under-classify)
-
-  // Terminada
-  if (/recepci[oó]n\s*(provisoria|definitiva|conforme)/i.test(fullText)) {
-    return "terminada";
-  }
-
-  // En Ejecución
-  if (/acta\s*de\s*inicio/i.test(fullText) ||
-      /en\s*ejecuci[oó]n/i.test(fullText) ||
-      /inicio\s*(de\s*)?obra/i.test(fullText)) {
-    return "en_ejecucion";
-  }
-
-  // Coordinación de Ejecución
-  if (/orden\s*de\s*compra|OC\s*\d+/i.test(fullText) ||
-      /aceptaci[oó]n\s*(de\s*)?OC/i.test(fullText) ||
-      /contrato\s*(firmado|suscrito)/i.test(fullText)) {
-    return "coordinacion_ejecucion";
-  }
-
-  // Gestión de Compra (only for compras dashboard)
-  if (!isObras) {
-    if (/resoluci[oó]n\s*(de\s*)?adjudicaci[oó]n/i.test(fullText) ||
-        /CDP\s*(aprobado|emitido)/i.test(fullText) ||
-        /publicaci[oó]n.*mercado\s*p[uú]blico/i.test(fullText) ||
-        /licitaci[oó]n\s*(p[uú]blica|publicada|abierta)/i.test(fullText) ||
-        /evaluaci[oó]n\s*(de\s*)?oferta/i.test(fullText)) {
-      return "gestion_compra";
-    }
-  }
-
-  // En Diseño (only for compras dashboard)
-  if (!isObras) {
-    if (/bases\s*t[eé]cnicas/i.test(fullText) ||
-        /especificaciones\s*t[eé]cnicas/i.test(fullText) ||
-        /EETT/i.test(fullText) ||
-        /dise[nñ]o\s*(de\s*)?(proyecto|arquitect|ingenier)/i.test(fullText) ||
-        /itemizado/i.test(fullText) ||
-        /presupuesto\s*(detallado|oficial)/i.test(fullText)) {
-      return "en_diseno";
-    }
-  }
-
-  // Asignación de Profesional
-  if (/asignaci[oó]n\s*(de\s*)?profesional/i.test(fullText) ||
-      /profesional\s*asignado/i.test(fullText)) {
-    return "asignacion_profesional";
-  }
-
-  // Default: Recepción de Requerimiento
-  return "recepcion_requerimiento";
-}
-
-/**
- * Determina si un correo debería avanzar un proyecto existente.
- * Retorna el nuevo status si corresponde, o null si no hay cambio.
- * Respeta el orden del flujo: nunca retrocede un proyecto.
- */
-export function detectStatusAdvance(
-  fullText: string,
-  currentStatus: string,
-  dashboardType?: string
-): string | null {
-  const isObrasProject = dashboardType === "obras";
-
-  // Define the status order for comparison
-  const statusOrder = isObrasProject
-    ? ["recepcion_requerimiento", "asignacion_profesional", "coordinacion_ejecucion", "en_ejecucion", "terminada"]
-    : ["recepcion_requerimiento", "asignacion_profesional", "en_diseno", "gestion_compra", "coordinacion_ejecucion", "en_ejecucion", "terminada"];
-
-  const currentIdx = statusOrder.indexOf(currentStatus);
-  if (currentIdx === -1) return null;
-
-  const detectedStatus = detectStatusFromContent(fullText, isObrasProject);
-  const detectedIdx = statusOrder.indexOf(detectedStatus);
-
-  // Only advance forward, never backwards
-  if (detectedIdx > currentIdx) {
-    return detectedStatus;
-  }
-
-  return null;
 }
 
 function cleanText(text: string): string {
