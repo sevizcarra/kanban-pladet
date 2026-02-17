@@ -48,7 +48,7 @@ export default function EmailSyncPanel() {
   const handleManualSync = async () => {
     setSyncing(true);
     try {
-      const res = await fetch("/api/email-sync?secret=" + encodeURIComponent(prompt("Ingrese el secreto de sincronización:") || ""));
+      const res = await fetch("/api/email-sync-trigger", { method: "POST" });
       if (res.ok) {
         await fetchLogs();
       }
@@ -100,7 +100,7 @@ export default function EmailSyncPanel() {
             Sincronización de Correo
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            pladet@usach.cl — Lectura automática cada 3 minutos
+            pladet@usach.cl — Lectura automática diaria + sincronización manual
           </p>
         </div>
         <button
