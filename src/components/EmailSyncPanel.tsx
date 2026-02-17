@@ -453,9 +453,40 @@ export default function EmailSyncPanel() {
     return result;
   };
 
+  /**
+   * Generic notification prefixes in STD / institutional systems.
+   * These add noise and cause unrelated emails to cluster together.
+   * We strip them so tokens focus on the actual project/memo identifier.
+   */
+  const NOTIFICATION_PREFIXES = [
+    /^nuevo\s+comentario\s*(en|sobre|del?)?\s*/i,
+    /^notificaci[oó]n\s*(std|sistema)?\s*[-:.]?\s*/i,
+    /^aviso\s*(de\s+)?/i,
+    /^alerta\s*(de\s+)?/i,
+    /^recordatorio\s*[-:.]?\s*/i,
+    /^actualizaci[oó]n\s*(de\s+)?/i,
+    /^informaci[oó]n\s*(de\s+)?/i,
+    /^resumen\s*(de\s+)?/i,
+    /^circular\s*(n[°º.]?\s*\d+)?\s*[-:.]?\s*/i,
+    /^comunicado\s*(de\s+)?/i,
+  ];
+
+  /** Strip notification-style prefixes that cause false groupings */
+  const stripNotificationPrefixes = (s: string): string => {
+    let result = s;
+    for (const p of NOTIFICATION_PREFIXES) {
+      result = result.replace(p, "").trim();
+    }
+    return result;
+  };
+
   /** Extract meaningful tokens from a subject */
   const extractTokens = (subject: string): string[] => {
-    const cleaned = stripPrefixes(subject || "")
+    // Strip email prefixes first, then notification prefixes
+    let cleaned = stripPrefixes(subject || "");
+    cleaned = stripNotificationPrefixes(cleaned);
+
+    cleaned = cleaned
       .toLowerCase()
       .replace(/[.,;:!?¿¡()\[\]{}"'«»—–\-_\/\\|@#$%^&*+=~`<>]/g, " ")
       .replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g, " ")  // remove dates
@@ -470,23 +501,42 @@ export default function EmailSyncPanel() {
       .filter(t => !/^\d{1,2}$/.test(t));
   };
 
-  /** Jaccard similarity between two token sets (0 to 1) */
-  const jaccardSimilarity = (a: string[], b: string[]): number => {
+  /**
+   * Enhanced similarity that gives EXTRA weight to identifiers
+   * (numbers, codes) vs common words.
+   */
+  const weightedSimilarity = (a: string[], b: string[]): number => {
     if (a.length === 0 && b.length === 0) return 1;
     if (a.length === 0 || b.length === 0) return 0;
-    const setA = new Set(a);
+
+    const isIdentifier = (t: string) => /\d/.test(t); // tokens containing digits
+
+    let weightedIntersection = 0;
+    let weightedUnionA = 0;
+    let weightedUnionB = 0;
+
     const setB = new Set(b);
-    let intersection = 0;
-    for (const t of setA) { if (setB.has(t)) intersection++; }
-    const union = setA.size + setB.size - intersection;
-    return union === 0 ? 0 : intersection / union;
+    const setA = new Set(a);
+
+    for (const t of setA) {
+      const w = isIdentifier(t) ? 3 : 1; // identifiers count 3x
+      weightedUnionA += w;
+      if (setB.has(t)) weightedIntersection += w;
+    }
+    for (const t of setB) {
+      const w = isIdentifier(t) ? 3 : 1;
+      weightedUnionB += w;
+    }
+
+    const weightedUnion = weightedUnionA + weightedUnionB - weightedIntersection;
+    return weightedUnion === 0 ? 0 : weightedIntersection / weightedUnion;
   };
 
   /**
    * Greedy clustering: for each draft, find existing cluster with best similarity.
    * If similarity >= threshold → add to cluster; otherwise → new cluster.
    */
-  const SIMILARITY_THRESHOLD = 0.4; // 40% token overlap is enough to group
+  const SIMILARITY_THRESHOLD = 0.4; // 40% weighted token overlap to group
 
   // ── Filtered drafts ──
   const uniqueSenders = Array.from(new Set(drafts.map(d => d.fromName || d.from))).sort();
@@ -555,7 +605,7 @@ export default function EmailSyncPanel() {
       let bestScore = 0;
 
       for (const cluster of clusters) {
-        const score = jaccardSimilarity(tokens, cluster.tokens);
+        const score = weightedSimilarity(tokens, cluster.tokens);
         if (score > bestScore) {
           bestScore = score;
           bestCluster = cluster;

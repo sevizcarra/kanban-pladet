@@ -130,15 +130,22 @@ export function classifyEmail(
   if (match) {
     const project = existingProjects.find(p => p.id === match.projectId);
 
-    // Check for status-changing keywords
-    for (const sk of STATUS_KEYWORDS) {
-      if (sk.pattern.test(fullText)) {
-        return {
-          type: "update_status",
-          projectRef: match.projectId,
-          newStatus: sk.status,
-          reason: `${sk.label} — de ${email.fromName || email.from}: "${truncate(subject, 60)}" (score: ${match.score})`,
-        };
+    // Detect STD (Sistema de Trazabilidad Documental) notifications
+    // These are informational comments only — they should NEVER trigger status changes
+    const isSTDNotification = /nuevo\s+comentario|notificaci[oó]n\s*(std|sistema)/i.test(subject)
+      || /std@usach|trazabilidad/i.test(email.from);
+
+    // Check for status-changing keywords — but NOT for STD notifications
+    if (!isSTDNotification) {
+      for (const sk of STATUS_KEYWORDS) {
+        if (sk.pattern.test(fullText)) {
+          return {
+            type: "update_status",
+            projectRef: match.projectId,
+            newStatus: sk.status,
+            reason: `${sk.label} — de ${email.fromName || email.from}: "${truncate(subject, 60)}" (score: ${match.score})`,
+          };
+        }
       }
     }
 
