@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAllEmails } from "@/lib/email-reader";
 import { classifyEmail } from "@/lib/email-processor";
-import type { EmailAction } from "@/lib/email-processor";
+import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
 import type { ParsedEmail } from "@/lib/email-reader";
 import type { EmailDraft } from "@/lib/firestore";
 import { collection, getDocs, query, addDoc } from "firebase/firestore";
@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Get existing memo numbers for classification hints
-    const existingMemos = await getExistingMemoNumbers();
+    // 2. Get existing projects for classification
+    const existingProjects = await getExistingProjects();
 
     let created = 0;
     let skipped = 0;
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Classify email (for suggestions only)
-        const action = classifyEmail(email, existingMemos);
+        const action = classifyEmail(email, existingProjects);
 
         // Build and save draft
         const draft = buildDraftFromAction(email, action, emailDateStr);
@@ -191,13 +191,25 @@ function buildDraftFromAction(
 
 // ── Helpers ──
 
-async function getExistingMemoNumbers(): Promise<string[]> {
+async function getExistingProjects(): Promise<ProjectMatchData[]> {
   try {
     const q = query(collection(db, "projects"));
     const snapshot = await getDocs(q);
-    return snapshot.docs
-      .map((d) => d.data().memorandumNumber as string)
-      .filter(Boolean);
+    return snapshot.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        memorandumNumber: data.memorandumNumber || "",
+        title: data.title || "",
+        requestingUnit: data.requestingUnit || "",
+        contactEmail: data.contactEmail || "",
+        contactName: data.contactName || "",
+        sector: data.sector || "",
+        idLicitacion: data.idLicitacion,
+        codigoProyectoDCI: data.codigoProyectoDCI,
+        codigoProyectoUsa: data.codigoProyectoUsa,
+      } as ProjectMatchData;
+    });
   } catch {
     return [];
   }

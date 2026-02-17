@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAllEmails } from "@/lib/email-reader";
 import { classifyEmail } from "@/lib/email-processor";
-import type { EmailAction } from "@/lib/email-processor";
+import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
 import type { ParsedEmail } from "@/lib/email-reader";
 import type { EmailDraft } from "@/lib/firestore";
 import { collection, getDocs, query, addDoc } from "firebase/firestore";
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Get existing memo numbers
-    const existingMemos = await getExistingMemoNumbers();
+    const existingProjects = await getExistingProjects();
 
     let created = 0;
     let skipped = 0;
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const action = classifyEmail(email, existingMemos);
+        const action = classifyEmail(email, existingProjects);
         const draft = buildDraftFromAction(email, action, emailDateStr);
         await createEmailDraft(draft);
         created++;
@@ -172,13 +172,25 @@ function buildDraftFromAction(
   return base;
 }
 
-async function getExistingMemoNumbers(): Promise<string[]> {
+async function getExistingProjects(): Promise<ProjectMatchData[]> {
   try {
     const q = query(collection(db, "projects"));
     const snapshot = await getDocs(q);
-    return snapshot.docs
-      .map((d) => d.data().memorandumNumber as string)
-      .filter(Boolean);
+    return snapshot.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        memorandumNumber: data.memorandumNumber || "",
+        title: data.title || "",
+        requestingUnit: data.requestingUnit || "",
+        contactEmail: data.contactEmail || "",
+        contactName: data.contactName || "",
+        sector: data.sector || "",
+        idLicitacion: data.idLicitacion,
+        codigoProyectoDCI: data.codigoProyectoDCI,
+        codigoProyectoUsa: data.codigoProyectoUsa,
+      } as ProjectMatchData;
+    });
   } catch {
     return [];
   }

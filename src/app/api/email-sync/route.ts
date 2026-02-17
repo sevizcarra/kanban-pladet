@@ -90,7 +90,7 @@ async function handleSync(req: NextRequest) {
     }
 
     // 2. Get existing project memo numbers for classification
-    const existingMemos = await getExistingMemoNumbers();
+    const existingProjects = await getExistingProjects();
 
     let draftsCreated = 0;
     let skipped = 0;
@@ -112,7 +112,7 @@ async function handleSync(req: NextRequest) {
         }
 
         // Classify email (for suggestions only)
-        const action = classifyEmail(email, existingMemos);
+        const action = classifyEmail(email, existingProjects);
 
         // Build draft from classification
         const draft = buildDraftFromAction(email, action, emailDateStr);
@@ -166,7 +166,7 @@ async function handleSync(req: NextRequest) {
 
 // ── Build draft from classification ──
 
-import type { EmailAction } from "@/lib/email-processor";
+import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
 import type { ParsedEmail } from "@/lib/email-reader";
 import type { EmailDraft } from "@/lib/firestore";
 
@@ -237,13 +237,25 @@ function buildDraftFromAction(
 
 // ── Firestore helpers ──
 
-async function getExistingMemoNumbers(): Promise<string[]> {
+async function getExistingProjects(): Promise<ProjectMatchData[]> {
   try {
     const q = query(collection(db, "projects"));
     const snapshot = await getDocs(q);
-    return snapshot.docs
-      .map((d) => d.data().memorandumNumber as string)
-      .filter(Boolean);
+    return snapshot.docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        memorandumNumber: data.memorandumNumber || "",
+        title: data.title || "",
+        requestingUnit: data.requestingUnit || "",
+        contactEmail: data.contactEmail || "",
+        contactName: data.contactName || "",
+        sector: data.sector || "",
+        idLicitacion: data.idLicitacion,
+        codigoProyectoDCI: data.codigoProyectoDCI,
+        codigoProyectoUsa: data.codigoProyectoUsa,
+      } as ProjectMatchData;
+    });
   } catch {
     return [];
   }
