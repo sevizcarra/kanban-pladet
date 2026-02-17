@@ -88,6 +88,9 @@ export default function EmailSyncPanel() {
   const [dismissingAll, setDismissingAll] = useState(false);
   const [viewMode, setViewMode] = useState<"grouped" | "individual">("grouped");
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [groupEditForm, setGroupEditForm] = useState<Record<string, string>>({});
+  const [approvingGroup, setApprovingGroup] = useState<string | null>(null);
 
   // Sync log state
   const [logs, setLogs] = useState<SyncLog[]>([]);
@@ -307,6 +310,77 @@ export default function EmailSyncPanel() {
       categoriaProyecto: draft.suggestedCategory || "",
       sector: draft.suggestedSector || "",
     });
+  };
+
+  // ── Group actions ──
+  const startGroupEditing = (groupKey: string, groupDrafts: EmailDraft[]) => {
+    setEditingGroup(groupKey);
+    // Use the most common / best suggested values from the group
+    const first = groupDrafts[0];
+    const bestTitle = groupDrafts.find(d => d.suggestedTitle)?.suggestedTitle || first.subject || "";
+    const bestMemo = groupDrafts.find(d => d.suggestedMemo)?.suggestedMemo || "";
+    const bestUnit = groupDrafts.find(d => d.suggestedUnit)?.suggestedUnit || "";
+    const bestSector = groupDrafts.find(d => d.suggestedSector)?.suggestedSector || "";
+    const bestCategory = groupDrafts.find(d => d.suggestedCategory)?.suggestedCategory || "";
+    const bestDashboard = groupDrafts.find(d => d.suggestedDashboardType)?.suggestedDashboardType || "compras";
+    const bestPriority = groupDrafts.find(d => d.suggestedPriority)?.suggestedPriority || "media";
+
+    setGroupEditForm({
+      title: bestTitle,
+      memorandumNumber: bestMemo,
+      requestingUnit: bestUnit,
+      priority: bestPriority,
+      dashboardType: bestDashboard,
+      categoriaProyecto: bestCategory,
+      sector: bestSector,
+    });
+  };
+
+  const handleApproveGroup = async (groupKey: string, groupDrafts: EmailDraft[]) => {
+    setApprovingGroup(groupKey);
+    try {
+      const form = editingGroup === groupKey ? groupEditForm : {};
+      const first = groupDrafts[0];
+
+      const payload = {
+        draftIds: groupDrafts.map(d => d.id),
+        draftsData: groupDrafts.map(d => ({
+          id: d.id,
+          from: d.from,
+          fromName: d.fromName,
+          subject: d.subject,
+          body: (d.body || "").slice(0, 500),
+          emailDate: d.emailDate,
+        })),
+        title: form.title || first.suggestedTitle || first.subject,
+        memorandumNumber: form.memorandumNumber || first.suggestedMemo || "",
+        requestingUnit: form.requestingUnit || first.suggestedUnit || "",
+        priority: form.priority || first.suggestedPriority || "media",
+        dashboardType: form.dashboardType || first.suggestedDashboardType || "compras",
+        categoriaProyecto: form.categoriaProyecto || first.suggestedCategory || "",
+        sector: form.sector || first.suggestedSector || "",
+        description: first.body?.slice(0, 500) || "",
+        contactName: first.fromName || "",
+        contactEmail: first.from || "",
+      };
+
+      const res = await fetch("/api/email-drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const ids = new Set(groupDrafts.map(d => d.id));
+        setDrafts(prev => prev.filter(d => !ids.has(d.id)));
+        setEditingGroup(null);
+        setExpandedGroup(null);
+      }
+    } catch (err) {
+      console.error("Error approving group:", err);
+    } finally {
+      setApprovingGroup(null);
+    }
   };
 
   // ── Helpers ──
@@ -988,25 +1062,53 @@ export default function EmailSyncPanel() {
                           {/* Actions */}
                           <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                             {!isSingleEmail && (
-                              <button
-                                onClick={() => {
-                                  const ids = group.drafts.map(d => d.id);
-                                  if (!confirm(`¿Descartar los ${ids.length} correos de este grupo?`)) return;
-                                  (async () => {
-                                    for (let i = 0; i < ids.length; i += 100) {
-                                      const chunk = ids.slice(i, i + 100);
-                                      await fetch(`/api/email-drafts?ids=${chunk.join(",")}`, { method: "DELETE" });
+                              <>
+                                <button
+                                  onClick={() => {
+                                    const ids = group.drafts.map(d => d.id);
+                                    if (!confirm(`¿Descartar los ${ids.length} correos de este grupo?`)) return;
+                                    (async () => {
+                                      for (let i = 0; i < ids.length; i += 100) {
+                                        const chunk = ids.slice(i, i + 100);
+                                        await fetch(`/api/email-drafts?ids=${chunk.join(",")}`, { method: "DELETE" });
+                                      }
+                                      setDrafts(prev => prev.filter(d => !ids.includes(d.id)));
+                                      setExpandedGroup(null);
+                                    })();
+                                  }}
+                                  className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition"
+                                  title="Descartar grupo"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  Descartar
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (!isGroupExpanded) {
+                                      setExpandedGroup(group.key);
+                                      startGroupEditing(group.key, group.drafts);
+                                    } else if (editingGroup === group.key) {
+                                      handleApproveGroup(group.key, group.drafts);
+                                    } else {
+                                      startGroupEditing(group.key, group.drafts);
                                     }
-                                    setDrafts(prev => prev.filter(d => !ids.includes(d.id)));
-                                    setExpandedGroup(null);
-                                  })();
-                                }}
-                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition"
-                                title="Descartar grupo"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                Descartar
-                              </button>
+                                  }}
+                                  disabled={approvingGroup === group.key}
+                                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                    approvingGroup === group.key
+                                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                      : "bg-green-600 text-white hover:bg-green-700"
+                                  }`}
+                                  title="Aprobar grupo y crear tarjeta compilada"
+                                >
+                                  {approvingGroup === group.key ? (
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Check className="w-3.5 h-3.5" />
+                                  )}
+                                  {isGroupExpanded && editingGroup === group.key ? "Crear Tarjeta" : "Aprobar Grupo"}
+                                </button>
+                              </>
                             )}
                             {isSingleEmail && (
                               <>
@@ -1060,7 +1162,7 @@ export default function EmailSyncPanel() {
                           </div>
                         )}
 
-                        {/* Group expanded: list of emails */}
+                        {/* Group expanded: edit form + list of emails */}
                         {!isSingleEmail && isGroupExpanded && (
                           <div className="border-t border-gray-100 bg-gray-50">
                             {/* Senders summary */}
@@ -1069,6 +1171,115 @@ export default function EmailSyncPanel() {
                                 <span className="font-semibold">Remitentes:</span> {group.senders.join(", ")}
                               </p>
                             </div>
+
+                            {/* Group edit form for compiled card */}
+                            {editingGroup === group.key && (
+                              <div className="px-4 py-4 border-b border-gray-200 bg-green-50/50 space-y-3">
+                                <p className="text-xs font-bold text-green-700 uppercase tracking-wide flex items-center gap-1.5">
+                                  <Layers className="w-3.5 h-3.5" />
+                                  Tarjeta compilada — {group.drafts.length} correos → 1 tarjeta
+                                </p>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="col-span-2">
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Título de la tarjeta</label>
+                                    <input
+                                      type="text"
+                                      value={groupEditForm.title || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, title: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">N° Memorándum</label>
+                                    <input
+                                      type="text"
+                                      value={groupEditForm.memorandumNumber || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, memorandumNumber: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40"
+                                      placeholder="MEM-2026-001"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Unidad Solicitante</label>
+                                    <input
+                                      type="text"
+                                      value={groupEditForm.requestingUnit || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, requestingUnit: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Dashboard</label>
+                                    <select
+                                      value={groupEditForm.dashboardType || "compras"}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, dashboardType: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      <option value="compras">Compras</option>
+                                      <option value="obras">Obras</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Prioridad</label>
+                                    <select
+                                      value={groupEditForm.priority || "media"}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, priority: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      {Object.entries(PRIORITIES).map(([key, val]) => (
+                                        <option key={key} value={key}>{val.label}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Categoría</label>
+                                    <select
+                                      value={groupEditForm.categoriaProyecto || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, categoriaProyecto: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      <option value="">Sin categoría</option>
+                                      {PROJECT_CATEGORIES.map((cat) => (
+                                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Sector</label>
+                                    <input
+                                      type="text"
+                                      value={groupEditForm.sector || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, sector: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-end gap-2 pt-1">
+                                  <button
+                                    onClick={() => setEditingGroup(null)}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-200 transition"
+                                  >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    onClick={() => handleApproveGroup(group.key, group.drafts)}
+                                    disabled={approvingGroup === group.key}
+                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition ${
+                                      approvingGroup === group.key
+                                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                        : "bg-green-600 text-white hover:bg-green-700"
+                                    }`}
+                                  >
+                                    {approvingGroup === group.key ? (
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Check className="w-3.5 h-3.5" />
+                                    )}
+                                    Crear Tarjeta Compilada ({group.drafts.length} correos)
+                                  </button>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Individual emails in group */}
                             <div className="divide-y divide-gray-100">

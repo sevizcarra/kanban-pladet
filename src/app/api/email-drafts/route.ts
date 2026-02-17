@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       draftId,
+      draftIds,       // array of IDs for group approval
+      draftsData,     // array of { id, from, fromName, subject, body, emailDate } for group
       // Editable fields the admin may have modified
       title,
       memorandumNumber,
@@ -68,8 +70,83 @@ export async function POST(req: NextRequest) {
       contactEmail,
     } = body;
 
+    // ── GROUP APPROVAL ──
+    if (draftIds && Array.isArray(draftIds) && draftIds.length > 0) {
+      const emails: { from: string; fromName: string; subject: string; body: string; emailDate: string }[] = draftsData || [];
+
+      // Build a compiled description from all emails
+      const compiledEmails = emails
+        .sort((a: { emailDate: string }, b: { emailDate: string }) => new Date(a.emailDate).getTime() - new Date(b.emailDate).getTime())
+        .map((e: { fromName: string; from: string; subject: string; emailDate: string; body: string }, i: number) => {
+          const date = new Date(e.emailDate).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+          return `[${i + 1}] ${date} — ${e.fromName || e.from}\nAsunto: ${e.subject}\n${(e.body || "").slice(0, 300)}`;
+        })
+        .join("\n\n---\n\n");
+
+      // Unique senders
+      const senders = Array.from(new Set(emails.map((e: { fromName: string; from: string }) => e.fromName || e.from)));
+
+      // Create project
+      const projectData = {
+        title: title || "Sin título",
+        description: description || "",
+        status: "recepcion_requerimiento",
+        priority: priority || "media",
+        memorandumNumber: memorandumNumber || "",
+        requestingUnit: requestingUnit || "",
+        contactName: contactName || senders[0] || "",
+        contactEmail: contactEmail || (emails[0]?.from || ""),
+        budget: "0",
+        dueDate: null,
+        tipoFinanciamiento: null,
+        codigoProyectoUsa: "",
+        tipoDesarrollo: "",
+        disciplinaLider: "",
+        sector: sector || "",
+        categoriaProyecto: categoriaProyecto || "",
+        dashboardType: dashboardType || "compras",
+        createdAt: new Date().toISOString(),
+        commentCount: 1,
+      };
+
+      const newProjectId = await createProject(projectData);
+
+      // Add compiled comment with all emails
+      const commentContent = [
+        `📧 **Tarjeta compilada desde ${draftIds.length} correos**`,
+        `Remitentes: ${senders.join(", ")}`,
+        "",
+        compiledEmails.slice(0, 3000),
+      ].join("\n");
+
+      await addComment(newProjectId, {
+        authorEmail: "pladet@usach.cl",
+        content: commentContent,
+        mentions: [],
+        createdAt: new Date().toISOString(),
+      });
+
+      // Mark all drafts as approved
+      const now = new Date().toISOString();
+      for (const id of draftIds) {
+        await updateEmailDraft(id, {
+          status: "approved",
+          approvedProjectId: newProjectId,
+          reviewedAt: now,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        projectId: newProjectId,
+        approvedCount: draftIds.length,
+        message: `Grupo aprobado: ${draftIds.length} correos → 1 tarjeta`,
+      });
+    }
+
+    // ── SINGLE APPROVAL ──
     if (!draftId) {
-      return NextResponse.json({ error: "draftId required" }, { status: 400 });
+      return NextResponse.json({ error: "draftId or draftIds required" }, { status: 400 });
     }
 
     // Create the project in Firestore
