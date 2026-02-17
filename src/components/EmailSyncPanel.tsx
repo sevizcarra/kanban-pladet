@@ -351,25 +351,68 @@ export default function EmailSyncPanel() {
     }
   };
 
-  // ── Grouping helpers ──
-  const normalizeSubject = (subject: string): string => {
-    return (subject || "")
-      .replace(/^(re|fwd|rv|env):\s*/gi, "")
-      .replace(/^(re|fwd|rv|env)\[\d+\]:\s*/gi, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
+  // ── Smart Grouping helpers ──
+
+  // Stop words common in Chilean institutional emails
+  const STOP_WORDS = new Set([
+    "de", "del", "la", "el", "los", "las", "un", "una", "unos", "unas",
+    "en", "con", "por", "para", "al", "a", "y", "o", "e", "que", "se",
+    "su", "sus", "es", "no", "si", "le", "lo", "más", "muy", "ya",
+    "como", "pero", "este", "esta", "estos", "estas", "ese", "esa",
+    "ha", "han", "fue", "ser", "son", "está", "están",
+    "estimado", "estimada", "estimados", "estimadas",
+    "favor", "adjunto", "adjunta", "saludos", "atte", "atentamente",
+    "informo", "informamos", "solicito", "solicitamos", "envío", "envio",
+    "the", "of", "and", "to", "in", "for", "from",
+  ]);
+
+  /** Strip all email prefixes (Re, Fwd, RV, etc.) recursively */
+  const stripPrefixes = (s: string): string => {
+    let prev = "";
+    let result = s;
+    while (result !== prev) {
+      prev = result;
+      result = result
+        .replace(/^(re|fwd|rv|env|respuesta|reenviar|reenvío|reenvio)(\[\d+\])?:\s*/gi, "")
+        .trim();
+    }
+    return result;
   };
 
-  const getGroupKey = (draft: EmailDraft): string => {
-    // If matched to existing project, group by project ref
-    if (draft.suggestedProjectRef && draft.suggestedProjectRef.trim() !== "") {
-      return `proj:${draft.suggestedProjectRef}`;
-    }
-    // Otherwise group by normalized subject
-    const norm = normalizeSubject(draft.subject);
-    return norm ? `subj:${norm}` : `single:${draft.id}`;
+  /** Extract meaningful tokens from a subject */
+  const extractTokens = (subject: string): string[] => {
+    const cleaned = stripPrefixes(subject || "")
+      .toLowerCase()
+      .replace(/[.,;:!?¿¡()\[\]{}"'«»—–\-_\/\\|@#$%^&*+=~`<>]/g, " ")
+      .replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g, " ")  // remove dates
+      .replace(/\d{1,2}:\d{2}/g, " ")  // remove times
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return cleaned
+      .split(" ")
+      .filter(t => t.length > 2 && !STOP_WORDS.has(t))
+      // keep numbers that look like codes (3+ digits or alphanumeric IDs)
+      .filter(t => !/^\d{1,2}$/.test(t));
   };
+
+  /** Jaccard similarity between two token sets (0 to 1) */
+  const jaccardSimilarity = (a: string[], b: string[]): number => {
+    if (a.length === 0 && b.length === 0) return 1;
+    if (a.length === 0 || b.length === 0) return 0;
+    const setA = new Set(a);
+    const setB = new Set(b);
+    let intersection = 0;
+    for (const t of setA) { if (setB.has(t)) intersection++; }
+    const union = setA.size + setB.size - intersection;
+    return union === 0 ? 0 : intersection / union;
+  };
+
+  /**
+   * Greedy clustering: for each draft, find existing cluster with best similarity.
+   * If similarity >= threshold → add to cluster; otherwise → new cluster.
+   */
+  const SIMILARITY_THRESHOLD = 0.4; // 40% token overlap is enough to group
 
   // ── Filtered drafts ──
   const uniqueSenders = Array.from(new Set(drafts.map(d => d.fromName || d.from))).sort();
@@ -406,45 +449,80 @@ export default function EmailSyncPanel() {
   }
 
   const groupedDrafts: DraftGroup[] = (() => {
-    const map = new Map<string, EmailDraft[]>();
+    // Step 1: Separate project-ref drafts from subject-based drafts
+    const projGroups = new Map<string, EmailDraft[]>();
+    const subjectDrafts: EmailDraft[] = [];
+
     for (const d of filteredDrafts) {
-      const key = getGroupKey(d);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(d);
+      if (d.suggestedProjectRef && d.suggestedProjectRef.trim() !== "") {
+        const key = `proj:${d.suggestedProjectRef}`;
+        if (!projGroups.has(key)) projGroups.set(key, []);
+        projGroups.get(key)!.push(d);
+      } else {
+        subjectDrafts.push(d);
+      }
     }
 
-    const groups: DraftGroup[] = [];
-    for (const [key, items] of map) {
-      // Sort by date descending (newest first)
-      items.sort((a, b) => new Date(b.emailDate).getTime() - new Date(a.emailDate).getTime());
+    // Step 2: Cluster subject-based drafts using token similarity
+    interface Cluster {
+      id: string;
+      tokens: string[];      // representative tokens (union of first few)
+      label: string;          // display label (best/longest subject)
+      drafts: EmailDraft[];
+    }
 
-      const senders = Array.from(new Set(items.map(d => d.fromName || d.from)));
-      const dates = items.map(d => d.emailDate).sort();
-      const actionTypes = Array.from(new Set(items.map(d => d.suggestedAction)));
+    const clusters: Cluster[] = [];
 
-      // Determine main action (most frequent non-ignore)
-      const actionCounts: Record<string, number> = {};
-      items.forEach(d => { actionCounts[d.suggestedAction] = (actionCounts[d.suggestedAction] || 0) + 1; });
-      const mainAction = Object.entries(actionCounts)
-        .filter(([a]) => a !== "ignore")
-        .sort((a, b) => b[1] - a[1])[0]?.[0] || items[0].suggestedAction;
+    for (const draft of subjectDrafts) {
+      const tokens = extractTokens(draft.subject);
 
-      // Label: use project ref title or the first subject
-      let label = items[0].subject || "(sin asunto)";
-      if (key.startsWith("proj:")) {
-        label = items[0].suggestedTitle || items[0].subject || key.replace("proj:", "");
+      // Find best matching cluster
+      let bestCluster: Cluster | null = null;
+      let bestScore = 0;
+
+      for (const cluster of clusters) {
+        const score = jaccardSimilarity(tokens, cluster.tokens);
+        if (score > bestScore) {
+          bestScore = score;
+          bestCluster = cluster;
+        }
       }
 
-      groups.push({
-        key,
-        label,
-        projectRef: key.startsWith("proj:") ? key.replace("proj:", "") : "",
-        drafts: items,
-        senders,
-        dateRange: { oldest: dates[0], newest: dates[dates.length - 1] },
-        actionTypes,
-        mainAction,
-      });
+      if (bestCluster && bestScore >= SIMILARITY_THRESHOLD) {
+        // Add to existing cluster
+        bestCluster.drafts.push(draft);
+        // Update representative tokens (union, but keep manageable)
+        const tokenSet = new Set([...bestCluster.tokens, ...tokens]);
+        bestCluster.tokens = Array.from(tokenSet);
+        // Use longest subject as label
+        const cleaned = stripPrefixes(draft.subject);
+        if (cleaned.length > stripPrefixes(bestCluster.label).length) {
+          bestCluster.label = cleaned;
+        }
+      } else {
+        // New cluster
+        clusters.push({
+          id: `cluster:${clusters.length}`,
+          tokens,
+          label: stripPrefixes(draft.subject) || draft.subject,
+          drafts: [draft],
+        });
+      }
+    }
+
+    // Step 3: Build DraftGroup[] from all sources
+    const groups: DraftGroup[] = [];
+
+    // From project-ref groups
+    for (const [key, items] of projGroups) {
+      items.sort((a, b) => new Date(b.emailDate).getTime() - new Date(a.emailDate).getTime());
+      groups.push(buildGroup(key, items, key.replace("proj:", "")));
+    }
+
+    // From subject clusters
+    for (const cluster of clusters) {
+      cluster.drafts.sort((a, b) => new Date(b.emailDate).getTime() - new Date(a.emailDate).getTime());
+      groups.push(buildGroup(cluster.id, cluster.drafts, "", cluster.label));
     }
 
     // Sort groups: largest first, then by newest email
@@ -455,6 +533,31 @@ export default function EmailSyncPanel() {
 
     return groups;
   })();
+
+  function buildGroup(key: string, items: EmailDraft[], projectRef: string, overrideLabel?: string): DraftGroup {
+    const senders = Array.from(new Set(items.map(d => d.fromName || d.from)));
+    const dates = items.map(d => d.emailDate).sort();
+    const actionTypes = Array.from(new Set(items.map(d => d.suggestedAction)));
+
+    const actionCounts: Record<string, number> = {};
+    items.forEach(d => { actionCounts[d.suggestedAction] = (actionCounts[d.suggestedAction] || 0) + 1; });
+    const mainAction = Object.entries(actionCounts)
+      .filter(([a]) => a !== "ignore")
+      .sort((a, b) => b[1] - a[1])[0]?.[0] || items[0].suggestedAction;
+
+    const label = overrideLabel || items[0].suggestedTitle || items[0].subject || "(sin asunto)";
+
+    return {
+      key,
+      label,
+      projectRef,
+      drafts: items,
+      senders,
+      dateRange: { oldest: dates[0], newest: dates[dates.length - 1] },
+      actionTypes,
+      mainAction,
+    };
+  }
 
   // ── Draft detail renderer (shared by grouped + individual views) ──
   const renderDraftDetail = (draft: EmailDraft) => {
