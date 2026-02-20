@@ -319,7 +319,9 @@ export function extractRecinto(asunto: string): string {
     const match = text.match(pattern);
     if (match && match[group]) {
       let recinto = match[group]
-        .replace(/[""\s]+$/g, "")  // trim trailing quotes/spaces
+        .replace(/[""\s()\[\]]+$/g, "")  // trim trailing quotes/spaces/parens
+        .replace(/^[""\s()\[\]]+/g, "")  // trim leading quotes/spaces/parens
+        .replace(/,\s*factura.*$/i, "")  // remove trailing invoice references
         .replace(/\s+/g, " ")
         .trim();
       if (recinto.length >= 6) {
