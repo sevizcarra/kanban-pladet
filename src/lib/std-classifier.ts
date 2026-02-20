@@ -86,8 +86,11 @@ export function classifySTDDocument(doc: STDDocumentRecord): STDClassification {
 // ── Relevance Filter ──
 
 function checkRelevance(asuntoLower: string, cuerpo: string, unidad: string): string | null {
-  // HR / personnel
+  // HR / personnel / honorarios
   if (/carga\s*familiar|tramite\s*de\s*carga|honorarios\s*20\d{2}|regularizaci[oó]n\s*honorarios/i.test(asuntoLower)) {
+    return "personal_hr";
+  }
+  if (/autorizaci[oó]n\s*de\s*recursos.*honorarios|renovaci[oó]n\s*honorarios/i.test(asuntoLower)) {
     return "personal_hr";
   }
 
@@ -116,9 +119,47 @@ function checkRelevance(asuntoLower: string, cuerpo: string, unidad: string): st
     return "visita_sin_proyecto";
   }
 
-  // Contract renewals / borrador contrato arriendo
-  if (/borrador\s*contrato\s*arriendo|renovaci[oó]n\s*contrato\s*arriendo/i.test(asuntoLower)) {
+  // Contract renewals / borrador contrato arriendo / regularización contrato
+  if (/borrador\s*(de\s*)?(regularizaci[oó]n\s*)?contrato\s*arriendo|renovaci[oó]n\s*contrato\s*arriendo/i.test(asuntoLower)) {
     return "contrato_arriendo";
+  }
+  if (/regularizaci[oó]n\s*contrato\s*arriendo/i.test(asuntoLower)) {
+    return "contrato_arriendo";
+  }
+
+  // EDP — Estado de Pago (payment milestones for existing projects, not new projects)
+  if (/^edp\s/i.test(asuntoLower) || /estado\s*de\s*pago\s*\d/i.test(asuntoLower)) {
+    return "estado_pago";
+  }
+
+  // NDC — Nota de Crédito (financial adjustments)
+  if (/^ndc\s/i.test(asuntoLower) || /nota\s*de\s*cr[eé]dito/i.test(asuntoLower)) {
+    return "nota_credito";
+  }
+
+  // Devolución de retenciones (financial — relates to existing project)
+  if (/devoluci[oó]n\s*de\s*retenciones/i.test(asuntoLower)) {
+    return "devolucion_financiera";
+  }
+
+  // Regularización de pago (payment adjustments)
+  if (/regularizaci[oó]n\s*de\s*pago/i.test(asuntoLower)) {
+    return "regularizacion_pago";
+  }
+
+  // Envío de presupuesto / traslado DOMO (budget transfers, not projects)
+  if (/env[ií]o\s*de\s*presupuesto/i.test(asuntoLower) && !/obra|proyecto|construcci/i.test(asuntoLower)) {
+    return "presupuesto_admin";
+  }
+
+  // Clasificación de gastos (accounting)
+  if (/clasificaci[oó]n\s*de\s*gastos/i.test(asuntoLower)) {
+    return "contabilidad";
+  }
+
+  // Resoluciones without obra/proyecto context
+  if (/^resoluci[oó]n\s*(para|de|que)/i.test(asuntoLower) && !/obra|proyecto|construcci|licitaci/i.test(asuntoLower)) {
+    return "resolucion_admin";
   }
 
   // Situación/estado reports without actionable items
@@ -132,10 +173,10 @@ function checkRelevance(asuntoLower: string, cuerpo: string, unidad: string): st
 // ── Memo Type Inference ──
 
 function inferMemoTipo(asuntoLower: string): STDClassification["memoTipo"] {
-  if (/solicita\s*cdp|cdp\s*para/i.test(asuntoLower)) return "cdp";
+  if (/solicita\s*cdp|cdp\s*para|^cdp\s/i.test(asuntoLower)) return "cdp";
   if (/licitaci[oó]n/i.test(asuntoLower)) return "licitacion";
   if (/cotizaci[oó]n/i.test(asuntoLower)) return "cotizacion";
-  if (/pago\s*(de\s*la\s*)?factura|factura\s*\d+/i.test(asuntoLower)) return "pago";
+  if (/pago\s*(de\s*la\s*)?(factura|cotizaci)|factura\s*\d+|pago\s*final|remite\s*pago/i.test(asuntoLower)) return "pago";
   if (/compra\s*[aá]gil/i.test(asuntoLower)) return "compra_agil";
   if (/resoluci[oó]n/i.test(asuntoLower)) return "resolucion";
   return "otro";
@@ -191,16 +232,20 @@ export function normalizeTitleForGrouping(asunto: string): string {
   // Remove common prefixes
   const prefixes = [
     /^solicita\s*cdp\s*(para\s*)?[""]?/i,
-    /^solicita\s*compra\s*[aá]gil\s*/i,
+    /^solicita\s*compra\s*[aá]gil\s*(de\s*)?[""]?/i,
     /^solicita\s*/i,
     /^licitaci[oó]n\s*l1\s*[""]?/i,
+    /^licitaci[oó]n\s*p[uú]blica\s*[""]?/i,
     /^licitaci[oó]n\s*[""]?/i,
     /^cotizaci[oó]n\s*convenio\s*marco\s*(para\s*)?[""]?/i,
-    /^cotizaci[oó]n\s*[""]?/i,
-    /^pago\s*de\s*la\s*factura\s*\d+\s*(correspondiente\s*(al?\s*)?)?/i,
+    /^cotizaci[oó]n\s*(por\s*)?[""]?/i,
+    /^pago\s*(final\s*)?(de\s*la\s*)?(factura\s*\d+\s*)?(correspondiente\s*(al?\s*)?)?/i,
+    /^pago\s*(por\s*)?cotizaci[oó]n\s*(por\s*)?convenio\s*marco\s*[""]?/i,
+    /^pago\s*(por\s*)?compra\s*[aá]gil\s*(por\s*)?[""]?/i,
     /^remite\s*pago\s*de\s*la\s*factura\s*[nN]?°?\s*\d+\s*(correspondiente\s*(al?\s*)?)?/i,
     /^edp\s*(n°?\s*\d+\s*)?[""]?/i,
     /^ndc\s*\d*\s*/i,
+    /^cdp\s*(para\s*)?[""]?/i,
   ];
 
   for (const prefix of prefixes) {
@@ -218,6 +263,9 @@ export function normalizeTitleForGrouping(asunto: string): string {
 }
 
 // ── Group Memos by Project ──
+
+// Types of memos that initiate a project (vs payment/follow-up memos)
+const PROJECT_INITIATING_TYPES = new Set(["cdp", "licitacion", "cotizacion", "compra_agil"]);
 
 export function groupMemosByProject(docs: STDDocumentRecord[]): ProjectGroup[] {
   const groups = new Map<string, ProjectGroup>();
@@ -243,6 +291,10 @@ export function groupMemosByProject(docs: STDDocumentRecord[]): ProjectGroup[] {
       if (!group.budget && doc.budget) group.budget = doc.budget;
       if (!group.codigoUsa && doc.codigoUsa) group.codigoUsa = doc.codigoUsa;
       if (!group.plazoEjecucion && doc.plazoEjecucion) group.plazoEjecucion = doc.plazoEjecucion;
+      // Promote classification if this memo is project-initiating
+      if (PROJECT_INITIATING_TYPES.has(classification.memoTipo)) {
+        group.classification = classification;
+      }
       // Use the longest title as the "best" title
       if (doc.asunto.length > group.title.length) {
         group.title = doc.asunto;
@@ -267,5 +319,18 @@ export function groupMemosByProject(docs: STDDocumentRecord[]): ProjectGroup[] {
     }
   }
 
-  return Array.from(groups.values());
+  // Post-filter: only keep groups that have at least one project-initiating memo
+  // OR are "otro" type with clear project indicators in the title
+  const result: ProjectGroup[] = [];
+  for (const group of groups.values()) {
+    const hasInitiating = group.memos.some(m => PROJECT_INITIATING_TYPES.has(m.tipo));
+    const hasProjectKeywords = /obra|proyecto|construcci|instalaci|reparaci|remodelaci|habilitaci|suministro|adquisici|normalizaci|implementaci/i.test(group.title);
+
+    if (hasInitiating || hasProjectKeywords) {
+      result.push(group);
+    }
+    // Groups with only pago/resolucion/otro memos and no project keywords → skip
+  }
+
+  return result;
 }
