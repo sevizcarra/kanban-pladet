@@ -273,61 +273,68 @@ export function normalizeTitleForGrouping(asunto: string): string {
 
 /**
  * Extract the physical location (recinto) from an STD document title.
- * Strips action prefixes (habilitación, climatización, reparación, etc.)
- * to get the core building/location name.
+ * Uses location marker keywords (edificio, sector, planta, sala, etc.)
+ * to find the building/area name within the title.
+ *
+ * Returns empty string if no clear location can be identified.
+ * The field is editable in the UI, so admins can correct/set it manually.
  *
  * Examples:
- *   "Habilitación planta nitrógeno FACIMED" → "PLANTA NITRÓGENO FACIMED"
- *   "Climatización planta nitrógeno" → "PLANTA NITRÓGENO"
- *   "Reparación baños edificio CITECAMP" → "EDIFICIO CITECAMP"
- *   "Normalización eléctrica laboratorio biología" → "LABORATORIO BIOLOGÍA"
+ *   "... muro cortina del edificio Rector Eduardo Morales Santos" → "EDIFICIO RECTOR EDUARDO MORALES SANTOS"
+ *   "26-NE-AC-INSTALACION FIBRA OPTICA SECTOR 08 - PRORRECTORIA" → "SECTOR 08"
+ *   "... climatización planta de nitrógeno, Fac. Química" → "PLANTA DE NITRÓGENO"
+ *   "... normalización eléctrica sala de clases 788-FAE" → "SALA DE CLASES 788-FAE"
  */
 export function extractRecinto(asunto: string): string {
-  let text = asunto;
+  const text = asunto;
 
-  // 1. Remove procurement prefixes first (same as normalizeTitleForGrouping)
-  const procurementPrefixes = [
-    /^solicita\s*cdp\s*(para\s*)?[""]?/i,
-    /^solicita\s*compra\s*[aá]gil\s*(de\s*)?[""]?/i,
-    /^solicita\s*/i,
-    /^licitaci[oó]n\s*l1\s*[""]?/i,
-    /^licitaci[oó]n\s*p[uú]blica\s*[""]?/i,
-    /^licitaci[oó]n\s*[""]?/i,
-    /^cotizaci[oó]n\s*convenio\s*marco\s*(para\s*)?[""]?/i,
-    /^cotizaci[oó]n\s*(por\s*)?[""]?/i,
-    /^pago\s*(final\s*)?(de\s*la\s*)?(factura\s*\d+\s*)?(correspondiente\s*(al?\s*)?)?/i,
-    /^cdp\s*(para\s*)?[""]?/i,
+  // Location marker patterns — ordered by specificity.
+  // Each captures the marker keyword + what follows (the location name).
+  const locationPatterns: { pattern: RegExp; group: number }[] = [
+    // "EDIFICIO X" — captures edificio + name (up to comma, period, or end)
+    { pattern: /\b(edificio\s+[^,.\n"]+)/i, group: 1 },
+    // "SECTOR XX" — captures sector + number/name
+    { pattern: /\b(sector\s+\d+[\w\s|-]*?)(?:\s*[-–,.]|\s+(?:de\s+)?prorr|\s*$)/i, group: 1 },
+    // "PLANTA (DE) X" — captures planta + name
+    { pattern: /\b(planta\s+(?:de\s+)?[^,.\n"]+?)(?:\s*[,"]|\s+facul|\s*$)/i, group: 1 },
+    // "LABORATORIO (DE) X"
+    { pattern: /\b(laboratorio\s+(?:de\s+)?[^,.\n"]+)/i, group: 1 },
+    // "HOSPITAL X"
+    { pattern: /\b(hospital\s+[^,.\n"]+)/i, group: 1 },
+    // "CASA CENTRAL"
+    { pattern: /\b(casa\s+central)/i, group: 1 },
+    // "GIMNASIO X"
+    { pattern: /\b(gimnasio\s+[^,.\n"]*)/i, group: 1 },
+    // "SALA DE X" — sala de clases, sala de consejo, etc.
+    { pattern: /\b(sala\s+(?:de\s+)?[^,.\n"]+)/i, group: 1 },
+    // "PATIO X"
+    { pattern: /\b(patio\s+[^,.\n"]+)/i, group: 1 },
+    // "ESCUELA DE X"
+    { pattern: /\b(escuela\s+de\s+[^,.\n"]+)/i, group: 1 },
+    // "PLAZA (SECTOR) X"
+    { pattern: /\b(plaza\s+(?:sector\s+)?[^,.\n"]+)/i, group: 1 },
   ];
-  for (const prefix of procurementPrefixes) {
-    text = text.replace(prefix, "");
+
+  for (const { pattern, group } of locationPatterns) {
+    const match = text.match(pattern);
+    if (match && match[group]) {
+      let recinto = match[group]
+        .replace(/[""\s]+$/g, "")  // trim trailing quotes/spaces
+        .replace(/\s+/g, " ")
+        .trim();
+      if (recinto.length >= 6) {
+        return recinto.toUpperCase();
+      }
+    }
   }
 
-  // 2. Remove action/work-type prefixes to get to the location
-  const actionPrefixes = [
-    /^(habilitaci[oó]n|climatizaci[oó]n|reparaci[oó]n|remodelaci[oó]n|normalizaci[oó]n|mantenci[oó]n|mejoramiento|implementaci[oó]n|instalaci[oó]n|adquisici[oó]n|reposici[oó]n|construcci[oó]n|demolici[oó]n|ampliaci[oó]n|adecuaci[oó]n|restauraci[oó]n|suministro|pintura|impermeabilizaci[oó]n)\s+(de\s+)?(la\s+|el\s+|los\s+|las\s+)?/i,
-    // Handle compound: "suministro e instalación de ..."
-    /^suministro\s+(e\s+)?instalaci[oó]n\s+(de\s+)?(la\s+|el\s+|los\s+|las\s+)?/i,
-  ];
-  for (const prefix of actionPrefixes) {
-    text = text.replace(prefix, "");
+  // Fallback: look for known USACH building/faculty abbreviations at end of title
+  const facultyMatch = text.match(/[-–,]\s*(FAE|FAHU|FACIMED|FING|FARAC|FACCM|FADER|FACTEC|FQYB|BACH|CIBAP|DVE|VIME)\b/i);
+  if (facultyMatch) {
+    return facultyMatch[1].toUpperCase();
   }
 
-  // 3. Remove item-type prefixes that describe WHAT is being bought (not WHERE)
-  const itemPrefixes = [
-    /^(sistema\s+de\s+|equipo\s+de\s+|equipamiento\s+(de\s+)?|red\s+de\s+|cubierta\s+(de\s+)?|cielo\s+(de\s+)?|piso\s+(de\s+)?|puerta[s]?\s+(de\s+)?|ventana[s]?\s+(de\s+)?|luminaria[s]?\s+(de\s+|para\s+)?|tabique[s]?\s+(de\s+|para\s+)?)/i,
-  ];
-  for (const prefix of itemPrefixes) {
-    text = text.replace(prefix, "");
-  }
-
-  // 4. Clean up trailing quotes, extra whitespace
-  text = text.replace(/[""]$/g, "").replace(/\s+/g, " ").trim();
-
-  // 5. If the remaining text is too short or generic, return empty
-  if (text.length < 4) return "";
-
-  // 6. Uppercase for consistency
-  return text.toUpperCase();
+  return "";
 }
 
 // ── Group Memos by Project ──
