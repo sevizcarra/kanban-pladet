@@ -237,117 +237,135 @@ export async function fetchSTDDocument(
 
 function parseSTDDocument(html: string, sourceUrl: string): STDDocumentData {
   const $ = cheerio.load(html);
+  const fullText = $("body").text();
 
-  // Helper to find label→value pairs in the detail section
+  // ── Extract Número and Período from the heading ──
+  // Pattern: "Detalle del Memorandum XXXX del Periodo YYYY"
+  let numero = "";
+  let periodo = "";
+  const headingMatch = fullText.match(
+    /Detalle\s+del\s+Memorandum\s+(\d+)\s+del\s+Periodo\s+(\d{4})/i
+  );
+  if (headingMatch) {
+    numero = headingMatch[1];
+    periodo = headingMatch[2];
+  }
+
+  // ── Helper: find field value by looking for label text in the page ──
+  // The STD page uses a table with label cells and value cells
   const getFieldValue = (label: string): string => {
-    // Try multiple strategies to find field values
-    // Strategy 1: Look for text content matching the label
     let value = "";
 
-    $("td, th, dt, div, span, label").each((_, el) => {
-      const text = $(el).text().trim();
-      if (text.toLowerCase().startsWith(label.toLowerCase())) {
-        // The value is in the next sibling or a nearby element
+    // Strategy: find text node containing the label, then get the next cell/sibling value
+    $("td, th, dt, div.col, span, label, strong, b").each((_, el) => {
+      const elText = $(el).text().trim();
+      // Exact match or starts-with (avoid partial matches)
+      if (
+        elText.toLowerCase() === label.toLowerCase() ||
+        elText.toLowerCase() === label.toLowerCase() + ":"
+      ) {
+        // Get the next sibling element's text
         const next = $(el).next();
         if (next.length) {
-          value = next.text().trim();
+          const nextText = next.text().trim();
+          if (nextText && nextText.length < 500) {
+            value = nextText;
+            return false; // break
+          }
+        }
+        // Try parent's next sibling
+        const parentNext = $(el).parent().next();
+        if (parentNext.length) {
+          const pnText = parentNext.text().trim();
+          if (pnText && pnText.length < 500) {
+            value = pnText;
+            return false;
+          }
         }
       }
     });
 
     if (value) return value;
 
-    // Strategy 2: Look in table rows
-    $("tr").each((_, row) => {
-      const cells = $(row).find("td, th");
-      cells.each((i, cell) => {
-        if ($(cell).text().trim().toLowerCase().includes(label.toLowerCase())) {
-          const nextCell = cells.eq(i + 1);
-          if (nextCell.length) {
-            value = nextCell.text().trim();
-          }
-        }
-      });
-    });
+    // Strategy 2: regex from full text — find "Label\s+Value" pattern
+    const labelEsc = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(
+      `${labelEsc}[:\\s]+([^\\n]{2,200})`,
+      "i"
+    );
+    const match = fullText.match(regex);
+    if (match?.[1]) {
+      // Clean up: stop at the next known label
+      const raw = match[1].trim();
+      const stopAt = raw.search(
+        /\b(Número|Periodo|Unidad|Estado|Motivo|Asunto|Referencia|Fecha|Prioridad|Copiados|Trámite)/i
+      );
+      return stopAt > 0 ? raw.slice(0, stopAt).trim() : raw;
+    }
 
-    return value;
+    return "";
   };
 
-  // Extract main document fields
-  const numero = getFieldValue("Número") || getFieldValue("Numero") || "";
-  const periodo = getFieldValue("Periodo") || getFieldValue("Período") || "";
-  const unidadRemitente = getFieldValue("Unidad Remitente") || "";
-  const estadoUnidadAnterior = getFieldValue("Estado Unidad Anterior") || getFieldValue("Estado") || "";
-  const asunto = getFieldValue("Asunto") || "";
-  const unidadCreadora = getFieldValue("Unidad Creadora") || "";
-  const fechaCreado = getFieldValue("Fecha Creado") || getFieldValue("Fecha Creación") || "";
-  const ultimaModificacion = getFieldValue("Última Modificación") || getFieldValue("Ultima Modificacion") || "";
-  const tramiteOrigen = getFieldValue("Trámite Origen") || getFieldValue("Tramite Origen") || "";
+  // ── Extract fields ──
+  const unidadRemitente = getFieldValue("Unidad Remitente");
+  const estadoUnidadAnterior = getFieldValue("Estado Unidad Anterior") || getFieldValue("Estado Actual");
+  const asunto = getFieldValue("Asunto");
+  const unidadCreadora = getFieldValue("Unidad Creadora");
+  const fechaCreado = getFieldValue("Fecha Creado") || getFieldValue("Fecha Creación");
+  const ultimaModificacion = getFieldValue("Última Modificación") || getFieldValue("Ultima Modificacion");
+  const tramiteOrigen = getFieldValue("Trámite Origen") || getFieldValue("Tramite Origen");
 
-  // Extract motivos (may be a list)
+  // Motivos
   const motivos: string[] = [];
-  const motivoSection = getFieldValue("Motivo");
-  if (motivoSection) {
-    motivoSection.split(/[,\n]/).forEach((m) => {
-      const cleaned = m.trim();
-      if (cleaned) motivos.push(cleaned);
-    });
+  const motivoRaw = getFieldValue("Motivo");
+  if (motivoRaw) {
+    motivoRaw
+      .split(/[•\n]/)
+      .map((m) => m.replace(/^[\s-]+/, "").trim())
+      .filter(Boolean)
+      .forEach((m) => motivos.push(m));
   }
 
-  // Extract "Cuerpo del Documento" — the main body text
+  // ── Extract "Cuerpo del Documento" ──
   let cuerpoDocumento = "";
-  const bodyHeader = $("*").filter((_, el) =>
-    $(el).text().trim() === "Cuerpo del Documento" ||
-    $(el).text().trim() === "Cuerpo del documento"
-  );
-  if (bodyHeader.length) {
-    // Get all text after the header until the next section
-    let nextEl = bodyHeader.first().parent().next();
-    const bodyParts: string[] = [];
-    let count = 0;
-    while (nextEl.length && count < 20) {
-      const text = nextEl.text().trim();
-      // Stop at section headers like "Archivos", "Historial", etc.
-      if (/^(Archivos|Comentarios|Historial|Trámites|Compartidos)/i.test(text)) break;
-      if (text) bodyParts.push(text);
-      nextEl = nextEl.next();
-      count++;
-    }
-    cuerpoDocumento = bodyParts.join("\n");
+  const bodyIdx = fullText.indexOf("Cuerpo del Documento");
+  if (bodyIdx >= 0) {
+    const afterBody = fullText.slice(bodyIdx + 20);
+    // Stop at known section markers
+    const endIdx = afterBody.search(
+      /\b(Archivos|Comentarios Externos|Comentarios Internos|Historial Externo|Historial Interno|Trámites Secundarios|Compartidos)\b/
+    );
+    cuerpoDocumento = (endIdx > 0 ? afterBody.slice(0, endIdx) : afterBody.slice(0, 3000)).trim();
   }
 
-  // Fallback: try to get body from a specific div/section
-  if (!cuerpoDocumento) {
-    // Look for any large text block that could be the body
-    $("div, p").each((_, el) => {
-      const text = $(el).text().trim();
-      if (text.length > 100 && text.includes("solicita") || text.includes("Estimad")) {
-        if (!cuerpoDocumento || text.length > cuerpoDocumento.length) {
-          cuerpoDocumento = text;
-        }
-      }
-    });
-  }
-
-  // Extract archivos (file attachments)
+  // ── Extract attachments ──
   const archivos: string[] = [];
   $("a").each((_, el) => {
     const href = $(el).attr("href") || "";
     const text = $(el).text().trim();
-    if (href.includes("archivo") || href.includes("download") || href.includes("file")) {
-      if (text) archivos.push(text);
+    if (
+      (href.includes("archivo") || href.includes("download") || href.includes("file")) &&
+      text &&
+      text.length > 3
+    ) {
+      archivos.push(text);
     }
   });
 
-  // Extract Historial Externo table
+  // ── Extract Historial Externo table ──
   const historialExterno: STDHistoryEntry[] = [];
-  // Find the table after "Historial Externo" heading
   const tables = $("table");
   tables.each((_, table) => {
-    const headers = $(table).find("th").map((_, th) => $(th).text().trim().toLowerCase()).get();
-    if (headers.some((h) => h.includes("origen")) && headers.some((h) => h.includes("destino"))) {
+    const headers = $(table)
+      .find("th")
+      .map((_, th) => $(th).text().trim().toLowerCase())
+      .get();
+    if (
+      headers.some((h) => h.includes("origen")) &&
+      headers.some((h) => h.includes("destino"))
+    ) {
       $(table)
-        .find("tbody tr, tr")
+        .find("tbody tr")
         .each((_, row) => {
           const cells = $(row).find("td");
           if (cells.length >= 5) {
@@ -357,7 +375,7 @@ function parseSTDDocument(html: string, sourceUrl: string): STDDocumentData {
               destino: cells.eq(2).text().trim(),
               estado: cells.eq(3).text().trim(),
               comentario: cells.eq(4).text().trim(),
-              fecha: cells.eq(5)?.text()?.trim() || "",
+              fecha: cells.length > 5 ? cells.eq(5).text().trim() : "",
             });
           }
         });
