@@ -68,6 +68,18 @@ export interface Project {
   sortOrder?: number; // Orden dentro de la columna
   dashboardType?: "compras" | "obras"; // Tipo de dashboard
   cuadrillas?: string[]; // Cuadrillas asignadas (obras)
+  // STD Integration
+  memos?: MemoLink[];                   // Memorándums vinculados (multi-memo)
+  dataSource?: "manual" | "std" | "mixed"; // Origen de los datos
+  stdAsunto?: string;                   // Título original del STD
+  stdCuerpoDoc?: string;               // Cuerpo del documento STD (referencia)
+}
+
+export interface MemoLink {
+  key: string;          // "MEM-2026-3899"
+  tipo: "cdp" | "licitacion" | "cotizacion" | "pago" | "compra_agil" | "resolucion" | "otro";
+  asunto: string;       // Asunto del memo en el STD
+  fecha: string;        // Fecha del correo/memo
 }
 
 export interface Comment {

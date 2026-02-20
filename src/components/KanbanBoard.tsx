@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, useCallback } from "react";
-import { STATUSES, PRIORITIES, PROFESSIONALS, CUADRILLAS, getProgress, daysLeft, getAntecedentesIncompletos } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, CUADRILLAS, getProgress, daysLeft, getAntecedentesIncompletos, getCompletenessScore } from "@/lib/constants";
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
 import ProgressBar from "./ProgressBar";
@@ -162,6 +162,21 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isFrozen || isFlagged ? 'text-white bg-white/20' : 'text-gray-500 bg-gray-50'}`}>{p.requestingUnit}</span>
           </div>
 
+          {/* Multi-memo display */}
+          {p.memos && p.memos.length > 0 && (
+            <p className={`text-[10px] truncate mt-0.5 ${isFrozen || isFlagged ? 'text-white/70' : 'text-gray-400'}`}>
+              {p.memos.slice(0, 2).map(m => m.key).join(" · ")}
+              {p.memos.length > 2 && ` +${p.memos.length - 2}`}
+            </p>
+          )}
+
+          {/* Tipo Licitación badge */}
+          {p.tipoLicitacion && (
+            <span className={`inline-block px-1.5 py-0 text-[9px] font-bold rounded mb-1 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-700'}`}>
+              {p.tipoLicitacion}
+            </span>
+          )}
+
           {/* Cuadrilla badges (obras projects) */}
           {p.cuadrillas && p.cuadrillas.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-1">
@@ -175,6 +190,30 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
               })}
             </div>
           )}
+
+          {/* Completeness bar */}
+          {(() => {
+            const score = getCompletenessScore(p as unknown as Record<string, unknown>);
+            if (score.pct === 100) return null;
+            return (
+              <div className="mt-1.5 mb-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${score.pct >= 75 ? 'bg-emerald-400' : score.pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
+                      style={{ width: `${score.pct}%` }}
+                    />
+                  </div>
+                  <span className={`text-[9px] flex-shrink-0 ${isFrozen || isFlagged ? 'text-white/60' : 'text-gray-400'}`}>{score.filled}/{score.total}</span>
+                </div>
+                {score.missingCritical.length > 0 && (
+                  <p className={`text-[9px] mt-0.5 truncate ${isFrozen || isFlagged ? 'text-white/60' : 'text-amber-500'}`}>
+                    ⚠ {score.missingCritical.join(" · ")}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           <div className={`flex items-center justify-between mt-2.5 pt-2 border-t ${isFrozen || isFlagged ? 'border-white/30' : 'border-gray-100'}`}>
             {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] ? (

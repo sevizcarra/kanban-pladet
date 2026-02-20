@@ -284,6 +284,11 @@ export default function ProjectDetail({
               <h1 className="text-lg font-bold text-gray-900 truncate">{project.title}</h1>
               <button onClick={() => setEditingTitle(true)} className="p-1 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600 flex-shrink-0"><Pencil className="w-3.5 h-3.5" /></button>
               <span className="bg-[#F97316]/10 text-[#F97316] px-2 py-0.5 rounded font-mono text-[11px] font-bold tracking-wide flex-shrink-0">{generatedCode || "—"}</span>
+              {project.dataSource === "std" && (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0">
+                  STD
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -437,6 +442,44 @@ export default function ProjectDetail({
                   </div>
                 </div>
               </div>
+
+              {/* Memorándums Vinculados */}
+              {project.memos && project.memos.length > 0 && (
+                <div className="bg-white rounded-lg border p-4">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    Memorándums Vinculados
+                  </h3>
+                  <div className="space-y-2">
+                    {project.memos.map((memo, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <span className="font-mono font-medium text-gray-700">{memo.key}</span>
+                        <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                          memo.tipo === "cdp" ? "bg-blue-100 text-blue-700" :
+                          memo.tipo === "licitacion" ? "bg-teal-100 text-teal-700" :
+                          memo.tipo === "cotizacion" ? "bg-purple-100 text-purple-700" :
+                          memo.tipo === "pago" ? "bg-amber-100 text-amber-700" :
+                          memo.tipo === "compra_agil" ? "bg-orange-100 text-orange-700" :
+                          "bg-gray-100 text-gray-700"
+                        }`}>
+                          {memo.tipo === "cdp" ? "CDP" :
+                           memo.tipo === "licitacion" ? "Licitación" :
+                           memo.tipo === "cotizacion" ? "Cotización" :
+                           memo.tipo === "pago" ? "Pago" :
+                           memo.tipo === "compra_agil" ? "Compra Ágil" :
+                           memo.tipo}
+                        </span>
+                        <span className="text-xs text-gray-400 truncate flex-1">{memo.asunto}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {project.dataSource === "std" && (
+                    <p className="text-[10px] text-emerald-600 mt-2 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" /></svg>
+                      Importado desde STD
+                    </p>
+                  )}
+                </div>
+              )}
 
               {projectIsObras ? (
                 /* Obras: simplified antecedentes */

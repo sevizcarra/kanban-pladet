@@ -197,6 +197,49 @@ export const getAntecedentesIncompletos = (p: {
   return { incompleto: faltantes.length > 0, faltantes, total: campos.length, completados: campos.length - faltantes.length };
 };
 
+// Campos clave para el indicador de completitud de la tarjeta
+const KEY_FIELDS: { field: string; label: string; critical: boolean }[] = [
+  { field: "title", label: "Título", critical: true },
+  { field: "memorandumNumber", label: "N° Memorándum", critical: true },
+  { field: "requestingUnit", label: "Unidad Requirente", critical: true },
+  { field: "budget", label: "Presupuesto", critical: false },
+  { field: "tipoLicitacion", label: "Tipo Licitación", critical: false },
+  { field: "jefeProyectoId", label: "Jefe de Proyecto", critical: true },
+  { field: "inspectorId", label: "Inspector Técnico", critical: false },
+  { field: "sector", label: "Sector", critical: false },
+];
+
+export const getCompletenessScore = (p: Record<string, unknown>): {
+  filled: number;
+  total: number;
+  pct: number;
+  missing: string[];
+  missingCritical: string[];
+} => {
+  let filled = 0;
+  const missing: string[] = [];
+  const missingCritical: string[] = [];
+
+  for (const kf of KEY_FIELDS) {
+    const val = p[kf.field];
+    const isFilled = val !== undefined && val !== null && val !== "" && val !== 0;
+    if (isFilled) {
+      filled++;
+    } else {
+      missing.push(kf.label);
+      if (kf.critical) missingCritical.push(kf.label);
+    }
+  }
+
+  return {
+    filled,
+    total: KEY_FIELDS.length,
+    pct: Math.round((filled / KEY_FIELDS.length) * 100),
+    missing,
+    missingCritical,
+  };
+};
+
 export const getProgress = (
   id: string,
   subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean; compraAceptacionOC?: boolean },
