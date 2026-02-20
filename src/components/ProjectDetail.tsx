@@ -547,9 +547,9 @@ export default function ProjectDetail({
                                   {rp.tipoLicitacion}
                                 </span>
                               )}
-                              {rp.budget && rp.budget !== "0" && (
+                              {rp.budget && rp.budget !== "0" && !isNaN(Number(rp.budget)) && (
                                 <span className="text-[10px] text-gray-500">
-                                  ${fmt(rp.budget)}
+                                  {fmt(rp.budget)}
                                 </span>
                               )}
                               {rp.memorandumNumber && (
