@@ -122,7 +122,7 @@ async function handleScan(offset: number, batchSize: number, startTime: number) 
   // Check if we're done (processed all 500 or reached end of mailbox)
   const nextOffset = offset + emails.length;
   const maxEmails = Math.min(total, 500); // Only process last 500
-  const done = nextOffset >= maxEmails || emails.length < safeBatchSize;
+  const done = nextOffset >= maxEmails || emails.length === 0;
 
   // Get current stats
   const stats = await getSTDLinkStats();
