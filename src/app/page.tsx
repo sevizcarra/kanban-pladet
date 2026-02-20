@@ -368,11 +368,13 @@ export default function Home() {
         <Header userEmail={authUser.email} onLogout={handleLogout} />
         <ProjectDetail
           project={matchingProject}
+          allProjects={projects}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onToggleFreeze={handleFreezeConfirm}
           onDuplicate={handleDuplicate}
           onBack={() => setSelectedProject(null)}
+          onSelectProject={(id: string) => { const p = projects.find(pr => pr.id === id); if (p) setSelectedProject(p); }}
           userEmail={authUser.email || ""}
         />
       </div>

@@ -68,6 +68,8 @@ export interface Project {
   sortOrder?: number; // Orden dentro de la columna
   dashboardType?: "compras" | "obras"; // Tipo de dashboard
   cuadrillas?: string[]; // Cuadrillas asignadas (obras)
+  // Recinto (location grouping — links related purchases for the same physical location)
+  recinto?: string;                    // e.g. "Planta Nitrógeno FACIMED"
   // STD Integration
   memos?: MemoLink[];                   // Memorándums vinculados (multi-memo)
   dataSource?: "manual" | "std" | "mixed"; // Origen de los datos

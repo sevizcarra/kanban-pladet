@@ -31,6 +31,7 @@ export async function GET() {
       groups: groups.map(g => ({
         title: cleanTitle(g.title),
         normalizedTitle: g.normalizedTitle,
+        recinto: g.recinto || "—",
         memos: g.memos.map(m => ({ key: m.key, tipo: m.tipo })),
         tipoLicitacion: g.classification.tipoLicitacion || "—",
         categoriaProyecto: g.classification.categoriaProyecto || "—",
@@ -102,6 +103,7 @@ export async function POST() {
             codigoUsa: group.codigoUsa,
             plazoEjecucion: group.plazoEjecucion,
             tipoLicitacion: group.classification.tipoLicitacion,
+            recinto: group.recinto,
             dataSource: "std",
             stdAsunto: group.title,
           }),

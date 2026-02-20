@@ -130,6 +130,7 @@ export async function POST(req: NextRequest) {
         if (allMemos.length > 0) projectData.memos = allMemos;
         if (stdEnrichment.stdAsunto) projectData.stdAsunto = stdEnrichment.stdAsunto;
         if (stdEnrichment.plazoEjecucion) projectData.plazoEjecucion = stdEnrichment.plazoEjecucion;
+        if (stdEnrichment.recinto) projectData.recinto = stdEnrichment.recinto;
       }
 
       const newProjectId = await createProject(projectData as Parameters<typeof createProject>[0]);
@@ -212,6 +213,9 @@ export async function POST(req: NextRequest) {
       }
       if (stdEnrichment.plazoEjecucion) {
         projectData.plazoEjecucion = stdEnrichment.plazoEjecucion;
+      }
+      if (stdEnrichment.recinto) {
+        projectData.recinto = stdEnrichment.recinto;
       }
     }
 
@@ -299,6 +303,7 @@ interface STDEnrichment {
   dataSource?: string;
   stdAsunto?: string;
   stdCuerpoDoc?: string;
+  recinto?: string;
 }
 
 /** Parse suggestedDetail JSON for STD enrichment data */

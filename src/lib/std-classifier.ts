@@ -17,11 +17,13 @@ export interface STDClassification {
   dashboardType: "compras" | "obras";
   memoTipo: "cdp" | "licitacion" | "cotizacion" | "pago" | "compra_agil" | "resolucion" | "otro";
   normalizedTitle: string;    // For grouping memos by project
+  recinto: string;            // Extracted physical location/building name
 }
 
 export interface ProjectGroup {
   normalizedTitle: string;
   title: string;              // Best title (from the most descriptive memo)
+  recinto: string;            // Extracted physical location/building
   memos: {
     key: string;
     tipo: string;
@@ -55,6 +57,7 @@ export function classifySTDDocument(doc: STDDocumentRecord): STDClassification {
       dashboardType: "compras",
       memoTipo: "otro",
       normalizedTitle: "",
+      recinto: "",
     };
   }
 
@@ -73,6 +76,9 @@ export function classifySTDDocument(doc: STDDocumentRecord): STDClassification {
   // 6. Normalize title for grouping
   const normalizedTitle = normalizeTitleForGrouping(asunto);
 
+  // 7. Extract recinto (physical location)
+  const recinto = extractRecinto(asunto);
+
   return {
     filteredOut: false,
     tipoLicitacion,
@@ -80,6 +86,7 @@ export function classifySTDDocument(doc: STDDocumentRecord): STDClassification {
     dashboardType,
     memoTipo,
     normalizedTitle,
+    recinto,
   };
 }
 
@@ -262,6 +269,67 @@ export function normalizeTitleForGrouping(asunto: string): string {
   return normalized.toUpperCase();
 }
 
+// ── Recinto Extraction ──
+
+/**
+ * Extract the physical location (recinto) from an STD document title.
+ * Strips action prefixes (habilitación, climatización, reparación, etc.)
+ * to get the core building/location name.
+ *
+ * Examples:
+ *   "Habilitación planta nitrógeno FACIMED" → "PLANTA NITRÓGENO FACIMED"
+ *   "Climatización planta nitrógeno" → "PLANTA NITRÓGENO"
+ *   "Reparación baños edificio CITECAMP" → "EDIFICIO CITECAMP"
+ *   "Normalización eléctrica laboratorio biología" → "LABORATORIO BIOLOGÍA"
+ */
+export function extractRecinto(asunto: string): string {
+  let text = asunto;
+
+  // 1. Remove procurement prefixes first (same as normalizeTitleForGrouping)
+  const procurementPrefixes = [
+    /^solicita\s*cdp\s*(para\s*)?[""]?/i,
+    /^solicita\s*compra\s*[aá]gil\s*(de\s*)?[""]?/i,
+    /^solicita\s*/i,
+    /^licitaci[oó]n\s*l1\s*[""]?/i,
+    /^licitaci[oó]n\s*p[uú]blica\s*[""]?/i,
+    /^licitaci[oó]n\s*[""]?/i,
+    /^cotizaci[oó]n\s*convenio\s*marco\s*(para\s*)?[""]?/i,
+    /^cotizaci[oó]n\s*(por\s*)?[""]?/i,
+    /^pago\s*(final\s*)?(de\s*la\s*)?(factura\s*\d+\s*)?(correspondiente\s*(al?\s*)?)?/i,
+    /^cdp\s*(para\s*)?[""]?/i,
+  ];
+  for (const prefix of procurementPrefixes) {
+    text = text.replace(prefix, "");
+  }
+
+  // 2. Remove action/work-type prefixes to get to the location
+  const actionPrefixes = [
+    /^(habilitaci[oó]n|climatizaci[oó]n|reparaci[oó]n|remodelaci[oó]n|normalizaci[oó]n|mantenci[oó]n|mejoramiento|implementaci[oó]n|instalaci[oó]n|adquisici[oó]n|reposici[oó]n|construcci[oó]n|demolici[oó]n|ampliaci[oó]n|adecuaci[oó]n|restauraci[oó]n|suministro|pintura|impermeabilizaci[oó]n)\s+(de\s+)?(la\s+|el\s+|los\s+|las\s+)?/i,
+    // Handle compound: "suministro e instalación de ..."
+    /^suministro\s+(e\s+)?instalaci[oó]n\s+(de\s+)?(la\s+|el\s+|los\s+|las\s+)?/i,
+  ];
+  for (const prefix of actionPrefixes) {
+    text = text.replace(prefix, "");
+  }
+
+  // 3. Remove item-type prefixes that describe WHAT is being bought (not WHERE)
+  const itemPrefixes = [
+    /^(sistema\s+de\s+|equipo\s+de\s+|equipamiento\s+(de\s+)?|red\s+de\s+|cubierta\s+(de\s+)?|cielo\s+(de\s+)?|piso\s+(de\s+)?|puerta[s]?\s+(de\s+)?|ventana[s]?\s+(de\s+)?|luminaria[s]?\s+(de\s+|para\s+)?|tabique[s]?\s+(de\s+|para\s+)?)/i,
+  ];
+  for (const prefix of itemPrefixes) {
+    text = text.replace(prefix, "");
+  }
+
+  // 4. Clean up trailing quotes, extra whitespace
+  text = text.replace(/[""]$/g, "").replace(/\s+/g, " ").trim();
+
+  // 5. If the remaining text is too short or generic, return empty
+  if (text.length < 4) return "";
+
+  // 6. Uppercase for consistency
+  return text.toUpperCase();
+}
+
 // ── Group Memos by Project ──
 
 // Types of memos that initiate a project (vs payment/follow-up memos)
@@ -303,6 +371,7 @@ export function groupMemosByProject(docs: STDDocumentRecord[]): ProjectGroup[] {
       groups.set(normalized, {
         normalizedTitle: normalized,
         title: doc.asunto,
+        recinto: classification.recinto,
         memos: [{
           key: memoKey,
           tipo: classification.memoTipo,

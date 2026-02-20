@@ -318,6 +318,7 @@ function applySTDEnrichment(
     tipoLicitacion: classification.tipoLicitacion,
     categoriaProyecto: classification.categoriaProyecto,
     memoTipo: classification.memoTipo,
+    recinto: classification.recinto,
     dataSource: "std",
     stdAsunto: stdDoc.asunto,
     stdCuerpoDoc: stdDoc.cuerpoDocumento?.slice(0, 500) || "",

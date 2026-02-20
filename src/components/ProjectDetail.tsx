@@ -23,6 +23,8 @@ import {
   FolderOpen,
   Snowflake,
   Copy,
+  Building2,
+  ArrowRight,
 } from "lucide-react";
 import {
   STATUSES,
@@ -52,11 +54,13 @@ import { Project } from "@/types/project";
 
 interface ProjectDetailProps {
   project: Project;
+  allProjects?: Project[];
   onBack: () => void;
   onUpdate: (p: Project) => void;
   onDelete: (id: string, reason: string) => void;
   onToggleFreeze?: (project: Project, justification: string) => void;
   onDuplicate?: (project: Project) => void;
+  onSelectProject?: (id: string) => void;
   userEmail: string;
 }
 
@@ -87,11 +91,13 @@ type TabId = "general" | "equipo" | "diseno" | "compras" | "ejecucion" | "coment
 
 export default function ProjectDetail({
   project,
+  allProjects,
   onBack,
   onUpdate,
   onDelete,
   onToggleFreeze,
   onDuplicate,
+  onSelectProject,
   userEmail,
 }: ProjectDetailProps) {
   // Local editable state
@@ -138,6 +144,17 @@ export default function ProjectDetail({
   const [ubicacionLat, setUbicacionLat] = useState(project.ubicacionLat || 0);
   const [ubicacionLng, setUbicacionLng] = useState(project.ubicacionLng || 0);
   const [ubicacionNombre, setUbicacionNombre] = useState(project.ubicacionNombre || "");
+
+  // Recinto
+  const [recinto, setRecinto] = useState(project.recinto || "");
+
+  // Related projects (same recinto)
+  const relatedProjects = useMemo(() => {
+    if (!recinto || !allProjects) return [];
+    return allProjects.filter(
+      (p) => p.id !== project.id && p.recinto && p.recinto.toUpperCase() === recinto.toUpperCase()
+    );
+  }, [recinto, allProjects, project.id]);
 
   // Title editing
   const [editingTitle, setEditingTitle] = useState(false);
@@ -211,6 +228,7 @@ export default function ProjectDetail({
       fechaRecDefinitiva: fechaRecDefinitiva || "",
       ubicacionLat, ubicacionLng, ubicacionNombre,
       cuadrillas,
+      recinto: recinto || undefined,
     };
     onUpdate(updated);
     setSaved(true);
@@ -441,6 +459,25 @@ export default function ProjectDetail({
                     <input type="email" value={infoContactEmail === "—" ? "" : infoContactEmail} onChange={(e) => setInfoContactEmail(e.target.value)} placeholder="correo@ejemplo.cl" className={inputCls} />
                   </div>
                 </div>
+                {/* Recinto field */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-xs text-gray-800 font-semibold mb-1 flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5 text-violet-500" />
+                        Recinto
+                      </label>
+                      <input type="text" value={recinto} onChange={(e) => setRecinto(e.target.value)} placeholder="Ej: Planta Nitrógeno FACIMED" className={inputCls} />
+                    </div>
+                    {recinto && relatedProjects.length > 0 && (
+                      <div className="col-span-2 flex items-end">
+                        <span className="text-xs text-violet-600 font-medium pb-2">
+                          {relatedProjects.length} proyecto{relatedProjects.length !== 1 ? "s" : ""} en el mismo recinto
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Memorándums Vinculados */}
@@ -478,6 +515,55 @@ export default function ProjectDetail({
                       Importado desde STD
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Related projects (same recinto) */}
+              {recinto && relatedProjects.length > 0 && (
+                <div className="bg-violet-50 rounded-lg border border-violet-200 p-4">
+                  <h3 className="text-xs font-semibold text-violet-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5" />
+                    Mismo Recinto — {recinto}
+                  </h3>
+                  <div className="space-y-2">
+                    {relatedProjects.map((rp) => {
+                      const rpStatus = getStatusObj(rp.status, rp.tipoDesarrollo, rp.dashboardType);
+                      return (
+                        <button
+                          key={rp.id}
+                          onClick={() => onSelectProject?.(rp.id)}
+                          className="w-full flex items-center gap-3 bg-white rounded-lg border border-violet-100 px-3 py-2.5 hover:border-violet-300 hover:shadow-sm transition text-left group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate group-hover:text-violet-700 transition">
+                              {rp.title}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${rpStatus?.color || "bg-gray-100 text-gray-600"}`}>
+                                {rpStatus?.label || rp.status}
+                              </span>
+                              {rp.tipoLicitacion && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-teal-100 text-teal-700">
+                                  {rp.tipoLicitacion}
+                                </span>
+                              )}
+                              {rp.budget && rp.budget !== "0" && (
+                                <span className="text-[10px] text-gray-500">
+                                  ${fmt(rp.budget)}
+                                </span>
+                              )}
+                              {rp.memorandumNumber && (
+                                <span className="text-[10px] font-mono text-gray-400">
+                                  {rp.memorandumNumber}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-violet-500 transition flex-shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
