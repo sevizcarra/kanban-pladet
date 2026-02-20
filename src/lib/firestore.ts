@@ -273,3 +273,135 @@ export async function checkDuplicateDraft(subject: string, from: string, emailDa
   return !snapshot.empty;
 }
 
+
+// ── STD Links (collection: std-links) ──
+const STD_LINKS_COLLECTION = "std-links";
+
+export interface STDLink {
+  id: string;
+  url: string;
+  memoNumber: string;
+  memoPeriod: string;
+  memoKey: string;
+  emailSubject: string;
+  emailFrom: string;
+  emailDate: string;
+  emailUid: number;
+  emailType: "despacho" | "comentario" | "recepcion" | "otro";
+  scrapedAt: string | null;
+  createdAt: string;
+}
+
+export async function saveSTDLinks(links: Omit<STDLink, "id">[]): Promise<number> {
+  let saved = 0;
+  for (let i = 0; i < links.length; i += 500) {
+    const chunk = links.slice(i, i + 500);
+    const batch = writeBatch(db);
+    for (const link of chunk) {
+      // Use memoKey as document ID for deduplication
+      const docId = link.memoKey + "_" + link.emailUid;
+      const ref = doc(db, STD_LINKS_COLLECTION, docId);
+      const cleanData: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(link)) {
+        if (value !== undefined) cleanData[key] = value;
+      }
+      batch.set(ref, cleanData, { merge: true });
+    }
+    await batch.commit();
+    saved += chunk.length;
+  }
+  return saved;
+}
+
+export async function getUnscrapedMemoKeys(): Promise<{ memoKey: string; url: string }[]> {
+  const q = query(
+    collection(db, STD_LINKS_COLLECTION),
+    where("scrapedAt", "==", null)
+  );
+  const snapshot = await getDocs(q);
+  // Deduplicate by memoKey — only need one URL per memo
+  const memoMap = new Map<string, string>();
+  snapshot.docs.forEach(d => {
+    const data = d.data();
+    if (data.memoKey && data.url && !memoMap.has(data.memoKey)) {
+      memoMap.set(data.memoKey, data.url);
+    }
+  });
+  return Array.from(memoMap.entries()).map(([memoKey, url]) => ({ memoKey, url }));
+}
+
+export async function markLinksScraped(memoKey: string): Promise<void> {
+  const q = query(
+    collection(db, STD_LINKS_COLLECTION),
+    where("memoKey", "==", memoKey)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return;
+  const now = new Date().toISOString();
+  const batch = writeBatch(db);
+  snapshot.docs.forEach(d => {
+    batch.update(d.ref, { scrapedAt: now });
+  });
+  await batch.commit();
+}
+
+export async function getSTDLinkStats(): Promise<{ total: number; scraped: number; pending: number; uniqueMemos: number }> {
+  const snapshot = await getDocs(collection(db, STD_LINKS_COLLECTION));
+  const memoKeys = new Set<string>();
+  let scraped = 0;
+  snapshot.docs.forEach(d => {
+    const data = d.data();
+    if (data.memoKey) memoKeys.add(data.memoKey);
+    if (data.scrapedAt) scraped++;
+  });
+  return {
+    total: snapshot.size,
+    scraped,
+    pending: snapshot.size - scraped,
+    uniqueMemos: memoKeys.size,
+  };
+}
+
+// ── STD Documents (collection: std-documents) ──
+const STD_DOCS_COLLECTION = "std-documents";
+
+export interface STDDocumentRecord {
+  id: string;
+  numero: string;
+  periodo: string;
+  memoKey: string;
+  asunto: string;
+  unidadRemitente: string;
+  unidadCreadora: string;
+  motivos: string[];
+  cuerpoDocumento: string;
+  budget: string;
+  codigoUsa: string;
+  plazoEjecucion: string;
+  historialExterno: { origen: string; movimiento: string; destino: string; estado: string; comentario: string; fecha: string }[];
+  archivos: string[];
+  sourceUrl: string;
+  scrapedAt: string;
+  emailCount: number;
+}
+
+export async function saveSTDDocument(memoKey: string, data: Omit<STDDocumentRecord, "id">): Promise<void> {
+  const ref = doc(db, STD_DOCS_COLLECTION, memoKey);
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) cleanData[key] = value;
+  }
+  // Use set with merge so we can update emailCount later
+  const { setDoc } = await import("firebase/firestore");
+  await setDoc(ref, cleanData, { merge: true });
+}
+
+export async function getSTDDocumentCount(): Promise<number> {
+  const snapshot = await getDocs(collection(db, STD_DOCS_COLLECTION));
+  return snapshot.size;
+}
+
+export async function getSTDDocuments(): Promise<STDDocumentRecord[]> {
+  const snapshot = await getDocs(collection(db, STD_DOCS_COLLECTION));
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as STDDocumentRecord));
+}

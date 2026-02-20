@@ -438,6 +438,38 @@ function decodeHTMLEntities(str: string): string {
     .replace(/&#39;/g, "'");
 }
 
+// ── Memo Extraction from Email Subject ──
+
+export interface MemoInfo {
+  number: string;
+  period: string;
+  key: string;       // "MEM-2026-3899"
+  type: "despacho" | "comentario" | "recepcion" | "otro";
+}
+
+/**
+ * Extract memo number, period, and type from an email subject line.
+ * Handles both "Memorándum 3899/2026 Despachado" and "Nuevo comentario en Memorandum 3942/2026"
+ */
+export function extractMemoFromSubject(subject: string): MemoInfo | null {
+  // Pattern 1: "Memorándum 3899/2026 Despachado: ..."
+  // Pattern 2: "Nuevo comentario en Memorandum 3942/2026"
+  // Pattern 3: "Memorándum 3899/2026 Recepcionado ..."
+  const match = subject.match(/Memor[aá]ndum?\s+(\d+)\/(\d+)/i);
+  if (!match) return null;
+
+  const number = match[1];
+  const period = match[2];
+  const key = `MEM-${period}-${number}`;
+
+  let type: MemoInfo["type"] = "otro";
+  if (/Despachado/i.test(subject)) type = "despacho";
+  else if (/comentario/i.test(subject)) type = "comentario";
+  else if (/Recepcionado/i.test(subject)) type = "recepcion";
+
+  return { number, period, key, type };
+}
+
 // ── Data Extraction from STD Document ──
 
 /**
