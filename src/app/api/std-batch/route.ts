@@ -35,10 +35,22 @@ import {
   getSTDLinkStats,
   saveSTDDocument,
   getSTDDocumentCount,
+  getSTDDocuments,
 } from "@/lib/firestore";
 import type { STDLink } from "@/lib/firestore";
 
 export const maxDuration = 60;
+
+// GET /api/std-batch — return all scraped documents for analysis
+export async function GET() {
+  try {
+    const docs = await getSTDDocuments();
+    const stats = await getSTDLinkStats();
+    return NextResponse.json({ documents: docs, stats, count: docs.length });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown" }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
