@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     // ── GROUP APPROVAL ──
     if (draftIds && Array.isArray(draftIds) && draftIds.length > 0) {
-      const emails: { from: string; fromName: string; subject: string; body: string; emailDate: string }[] = draftsData || [];
+      const emails: { from: string; fromName: string; subject: string; body: string; emailDate: string; suggestedDetail?: string }[] = draftsData || [];
 
       // Build a compiled description from all emails
       const compiledEmails = emails
@@ -86,8 +86,22 @@ export async function POST(req: NextRequest) {
       // Unique senders
       const senders = Array.from(new Set(emails.map((e: { fromName: string; from: string }) => e.fromName || e.from)));
 
+      // Check for STD enrichment from any draft in the group
+      const stdEnrichment = body.suggestedDetail
+        ? parseSTDDetail(body.suggestedDetail)
+        : emails.map((e: { suggestedDetail?: string }) => e.suggestedDetail).filter(Boolean).map(d => parseSTDDetail(d!)).find(d => d !== null) || null;
+
+      // Merge memos from all enriched drafts in the group
+      const allMemos: unknown[] = [];
+      for (const e of emails) {
+        if (e.suggestedDetail) {
+          const parsed = parseSTDDetail(e.suggestedDetail);
+          if (parsed?.memos) allMemos.push(...parsed.memos);
+        }
+      }
+
       // Create project
-      const projectData = {
+      const projectData: Record<string, unknown> = {
         title: title || "Sin título",
         description: description || "",
         status: "recepcion_requerimiento",
@@ -96,10 +110,10 @@ export async function POST(req: NextRequest) {
         requestingUnit: requestingUnit || "",
         contactName: contactName || senders[0] || "",
         contactEmail: contactEmail || (emails[0]?.from || ""),
-        budget: "0",
+        budget: stdEnrichment?.budget || "0",
         dueDate: null,
         tipoFinanciamiento: null,
-        codigoProyectoUsa: "",
+        codigoProyectoUsa: stdEnrichment?.codigoUsa || "",
         tipoDesarrollo: "",
         disciplinaLider: "",
         sector: sector || "",
@@ -109,7 +123,16 @@ export async function POST(req: NextRequest) {
         commentCount: 1,
       };
 
-      const newProjectId = await createProject(projectData);
+      // Add STD-enriched fields if available
+      if (stdEnrichment) {
+        projectData.dataSource = "std";
+        if (stdEnrichment.tipoLicitacion) projectData.tipoLicitacion = stdEnrichment.tipoLicitacion;
+        if (allMemos.length > 0) projectData.memos = allMemos;
+        if (stdEnrichment.stdAsunto) projectData.stdAsunto = stdEnrichment.stdAsunto;
+        if (stdEnrichment.plazoEjecucion) projectData.plazoEjecucion = stdEnrichment.plazoEjecucion;
+      }
+
+      const newProjectId = await createProject(projectData as Parameters<typeof createProject>[0]);
 
       // Add compiled comment with all emails
       const commentContent = [
@@ -149,8 +172,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "draftId or draftIds required" }, { status: 400 });
     }
 
+    // Check if suggestedDetail contains STD enrichment data
+    const stdEnrichment = body.suggestedDetail ? parseSTDDetail(body.suggestedDetail) : null;
+
     // Create the project in Firestore
-    const projectData = {
+    const projectData: Record<string, unknown> = {
       title: title || "Sin título",
       description: description || "",
       status: "recepcion_requerimiento",
@@ -159,10 +185,10 @@ export async function POST(req: NextRequest) {
       requestingUnit: requestingUnit || "",
       contactName: contactName || "",
       contactEmail: contactEmail || "",
-      budget: "0",
+      budget: stdEnrichment?.budget || "0",
       dueDate: null,
       tipoFinanciamiento: null,
-      codigoProyectoUsa: "",
+      codigoProyectoUsa: stdEnrichment?.codigoUsa || "",
       tipoDesarrollo: "",
       disciplinaLider: "",
       sector: sector || "",
@@ -172,12 +198,32 @@ export async function POST(req: NextRequest) {
       commentCount: 1,
     };
 
-    const newProjectId = await createProject(projectData);
+    // Add STD-enriched fields if available
+    if (stdEnrichment) {
+      projectData.dataSource = "std";
+      if (stdEnrichment.tipoLicitacion) {
+        projectData.tipoLicitacion = stdEnrichment.tipoLicitacion;
+      }
+      if (stdEnrichment.memos && stdEnrichment.memos.length > 0) {
+        projectData.memos = stdEnrichment.memos;
+      }
+      if (stdEnrichment.stdAsunto) {
+        projectData.stdAsunto = stdEnrichment.stdAsunto;
+      }
+      if (stdEnrichment.plazoEjecucion) {
+        projectData.plazoEjecucion = stdEnrichment.plazoEjecucion;
+      }
+    }
+
+    const newProjectId = await createProject(projectData as Parameters<typeof createProject>[0]);
 
     // Add the original email as the first comment
+    const commentPrefix = stdEnrichment
+      ? `📧 **Creado desde STD**`
+      : `📧 **Creado desde correo aprobado**`;
     await addComment(newProjectId, {
       authorEmail: "pladet@usach.cl",
-      content: `📧 **Creado desde correo aprobado**\n\nDe: ${contactName || contactEmail}\nAsunto: ${title}\n\n${(description || "").slice(0, 500)}`,
+      content: `${commentPrefix}\n\nDe: ${contactName || contactEmail}\nAsunto: ${title}\n\n${(description || "").slice(0, 500)}`,
       mentions: [],
       createdAt: new Date().toISOString(),
     });
@@ -237,5 +283,32 @@ export async function DELETE(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+// ── Helpers ──
+
+interface STDEnrichment {
+  memos?: { key: string; tipo: string; asunto: string; fecha: string }[];
+  budget?: string;
+  codigoUsa?: string;
+  plazoEjecucion?: string;
+  tipoLicitacion?: string;
+  categoriaProyecto?: string;
+  memoTipo?: string;
+  dataSource?: string;
+  stdAsunto?: string;
+  stdCuerpoDoc?: string;
+}
+
+/** Parse suggestedDetail JSON for STD enrichment data */
+function parseSTDDetail(detail: string): STDEnrichment | null {
+  if (!detail) return null;
+  try {
+    const parsed = JSON.parse(detail);
+    if (parsed.dataSource === "std") return parsed as STDEnrichment;
+    return null;
+  } catch {
+    return null;
   }
 }

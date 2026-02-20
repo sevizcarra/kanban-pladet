@@ -19,7 +19,16 @@ import {
   limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { createEmailDraft, checkDuplicateDraft } from "@/lib/firestore";
+import { createEmailDraft, checkDuplicateDraft, saveSTDDocument } from "@/lib/firestore";
+import {
+  extractSTDLinks,
+  extractMemoFromSubject,
+  loginToSTD,
+  fetchSTDDocument,
+  extractProjectFromSTD,
+} from "@/lib/std-scraper";
+import type { STDDocumentData } from "@/lib/std-scraper";
+import { classifySTDDocument } from "@/lib/std-classifier";
 
 const SYNC_LOG_COLLECTION = "email-sync-log";
 
@@ -116,6 +125,20 @@ async function handleSync(req: NextRequest) {
 
         // Build draft from classification
         const draft = buildDraftFromAction(email, action, emailDateStr);
+
+        // ── STD Enrichment: if this is an STD notification, scrape + classify ──
+        const isSTDEmail = /std@usach|trazabilidad/i.test(email.from);
+        if (isSTDEmail) {
+          const enriched = await enrichDraftWithSTD(email, draft);
+          if (enriched) {
+            actions.push({
+              type: "std_enriched",
+              detail: `STD enriquecido: "${draft.suggestedTitle?.slice(0, 50)}" — ${draft.suggestedMemo}`,
+              success: true,
+            });
+          }
+        }
+
         await createEmailDraft(draft);
         draftsCreated++;
 
@@ -164,11 +187,165 @@ async function handleSync(req: NextRequest) {
   }
 }
 
-// ── Build draft from classification ──
+// ── STD Enrichment ──
 
 import type { EmailAction, ProjectMatchData } from "@/lib/email-processor";
 import type { ParsedEmail } from "@/lib/email-reader";
 import type { EmailDraft } from "@/lib/firestore";
+
+// Reuse STD session across emails in the same sync run
+let cachedSTDSession: { cookies: string; csrfToken: string } | null = null;
+
+/**
+ * Enrich a draft with STD data by scraping the linked document.
+ * Mutates the draft object in place. Returns true if enriched.
+ */
+async function enrichDraftWithSTD(
+  email: ParsedEmail,
+  draft: Omit<EmailDraft, "id">
+): Promise<boolean> {
+  try {
+    // 1. Extract STD link from email
+    const links = extractSTDLinks(email.htmlBody || "", email.body || "");
+    if (links.length === 0) return false;
+
+    // 2. Extract memo info from subject
+    const memoInfo = extractMemoFromSubject(email.subject);
+
+    // 3. Login to STD (reuse session)
+    if (!cachedSTDSession) {
+      cachedSTDSession = await loginToSTD();
+    }
+
+    // 4. Scrape the first STD link
+    const stdDoc = await fetchSTDDocument(links[0], cachedSTDSession);
+    if (!stdDoc) {
+      // Session might have expired, retry once
+      cachedSTDSession = await loginToSTD();
+      const retryDoc = await fetchSTDDocument(links[0], cachedSTDSession);
+      if (!retryDoc) return false;
+      return applySTDEnrichment(draft, retryDoc, memoInfo, email);
+    }
+
+    return applySTDEnrichment(draft, stdDoc, memoInfo, email);
+  } catch (err) {
+    console.error("STD enrichment failed:", err);
+    return false;
+  }
+}
+
+/**
+ * Apply STD document data to the draft fields.
+ */
+function applySTDEnrichment(
+  draft: Omit<EmailDraft, "id">,
+  stdDoc: STDDocumentData,
+  memoInfo: ReturnType<typeof extractMemoFromSubject>,
+  email: ParsedEmail
+): boolean {
+  // Extract structured project data
+  const projectData = extractProjectFromSTD(stdDoc);
+
+  // Build the STDDocumentRecord to save to Firestore
+  const memoKey = memoInfo?.key || `MEM-${stdDoc.periodo}-${stdDoc.numero}`;
+  const docRecord = {
+    memoKey,
+    numero: stdDoc.numero,
+    periodo: stdDoc.periodo,
+    asunto: stdDoc.asunto,
+    unidadRemitente: stdDoc.unidadRemitente,
+    unidadCreadora: stdDoc.unidadCreadora,
+    cuerpoDocumento: stdDoc.cuerpoDocumento?.slice(0, 3000) || "",
+    budget: projectData.budget,
+    codigoUsa: projectData.codigoUsa,
+    plazoEjecucion: projectData.plazoEjecucion,
+    archivos: stdDoc.archivos,
+    sourceUrl: stdDoc.sourceUrl,
+    scrapedAt: new Date().toISOString(),
+  };
+
+  // Save to std-documents collection (fire and forget)
+  saveSTDDocument(memoKey, {
+    ...docRecord,
+    motivos: [],
+    historialExterno: [],
+    emailCount: 1,
+  } as Omit<import("@/lib/firestore").STDDocumentRecord, "id">).catch(err =>
+    console.error("Failed to save STD doc:", err)
+  );
+
+  // Classify using STD classifier
+  const classification = classifySTDDocument(docRecord as Parameters<typeof classifySTDDocument>[0]);
+
+  // Enrich the draft
+  draft.suggestedTitle = projectData.title;
+  draft.suggestedMemo = memoKey;
+  if (stdDoc.unidadRemitente) {
+    draft.suggestedUnit = mapToUnitCode(stdDoc.unidadRemitente);
+  }
+  if (classification.categoriaProyecto) {
+    draft.suggestedCategory = classification.categoriaProyecto;
+  }
+  draft.suggestedDashboardType = classification.dashboardType;
+
+  // If classifier says filter out → suggest ignore
+  if (classification.filteredOut) {
+    draft.suggestedAction = "ignore";
+    draft.suggestedDetail = JSON.stringify({
+      filterReason: classification.filterReason,
+      dataSource: "std",
+      stdAsunto: stdDoc.asunto,
+    });
+    return true;
+  }
+
+  // For relevant docs, override action to create_project if no match
+  if (draft.suggestedAction !== "add_comment" && draft.suggestedAction !== "update_status") {
+    draft.suggestedAction = "create_project";
+  }
+
+  // Store enriched data in suggestedDetail as JSON
+  draft.suggestedDetail = JSON.stringify({
+    memos: [{
+      key: memoKey,
+      tipo: classification.memoTipo,
+      asunto: stdDoc.asunto,
+      fecha: email.date?.toISOString() || new Date().toISOString(),
+    }],
+    budget: projectData.budget,
+    codigoUsa: projectData.codigoUsa,
+    plazoEjecucion: projectData.plazoEjecucion,
+    tipoLicitacion: classification.tipoLicitacion,
+    categoriaProyecto: classification.categoriaProyecto,
+    memoTipo: classification.memoTipo,
+    dataSource: "std",
+    stdAsunto: stdDoc.asunto,
+    stdCuerpoDoc: stdDoc.cuerpoDocumento?.slice(0, 500) || "",
+  });
+
+  return true;
+}
+
+/** Map full STD unit name to short code */
+function mapToUnitCode(fullName: string): string {
+  const upper = fullName.toUpperCase();
+  if (upper.includes("PRORRECTOR")) return "PRO";
+  if (upper.includes("RECTOR")) return "REC";
+  if (upper.includes("VRAE")) return "VRAE";
+  if (upper.includes("VINCULACI")) return "VIME";
+  if (upper.includes("INVESTIGACI")) return "VRIIC";
+  if (upper.includes("ARQUITECTURA")) return "FARAC";
+  if (upper.includes("INGENIER")) return "FING";
+  if (upper.includes("FACIMED") || upper.includes("CIENCIAS M")) return "FACIMED";
+  if (upper.includes("HUMANIDADES")) return "FAHU";
+  if (upper.includes("ADMINISTRACI") && upper.includes("ECONOM")) return "FAE";
+  if (upper.includes("TECNOL")) return "FACTEC";
+  if (upper.includes("COMPRAS") && upper.includes("LICITACION")) return "PRO";
+  if (upper.includes("PLANIFICACION") || upper.includes("DESARROLLO TERRITORIAL")) return "PRO";
+  return "";
+}
+
+// ── Build draft from classification ──
 
 function buildDraftFromAction(
   email: ParsedEmail,

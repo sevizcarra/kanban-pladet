@@ -69,6 +69,46 @@ interface SyncLog {
   duration: number;
 }
 
+// ── STD helpers ──
+
+interface STDDetail {
+  memos?: { key: string; tipo: string; asunto: string }[];
+  budget?: string;
+  tipoLicitacion?: string;
+  memoTipo?: string;
+  dataSource?: string;
+  stdAsunto?: string;
+}
+
+function parseSTDDetail(detail: string): STDDetail | null {
+  if (!detail) return null;
+  try {
+    const parsed = JSON.parse(detail);
+    if (parsed.dataSource === "std") return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const TIPO_LICITACION_LABELS: Record<string, string> = {
+  CA: "Compra Ágil",
+  L1: "Licitación L1",
+  CM: "Convenio Marco",
+  LIC: "Licitación Pública",
+  MEI: "Ejec. Interna",
+};
+
+const MEMO_TIPO_COLORS: Record<string, string> = {
+  cdp: "bg-blue-100 text-blue-700",
+  licitacion: "bg-teal-100 text-teal-700",
+  cotizacion: "bg-purple-100 text-purple-700",
+  pago: "bg-amber-100 text-amber-700",
+  compra_agil: "bg-orange-100 text-orange-700",
+  resolucion: "bg-slate-100 text-slate-700",
+  otro: "bg-gray-100 text-gray-600",
+};
+
 export default function EmailSyncPanel() {
   const [activeTab, setActiveTab] = useState<"bandeja" | "historial">("bandeja");
 
@@ -232,6 +272,7 @@ export default function EmailSyncPanel() {
         description: draft.body?.slice(0, 500) || "",
         contactName: draft.fromName || "",
         contactEmail: draft.from || "",
+        suggestedDetail: draft.suggestedDetail || "",
       };
 
       const res = await fetch("/api/email-drafts", {
@@ -342,6 +383,12 @@ export default function EmailSyncPanel() {
       const form = editingGroup === groupKey ? groupEditForm : {};
       const first = groupDrafts[0];
 
+      // Find first STD-enriched draft in the group
+      const stdDraft = groupDrafts.find(d => {
+        try { return d.suggestedDetail && JSON.parse(d.suggestedDetail).dataSource === "std"; }
+        catch { return false; }
+      });
+
       const payload = {
         draftIds: groupDrafts.map(d => d.id),
         draftsData: groupDrafts.map(d => ({
@@ -351,6 +398,7 @@ export default function EmailSyncPanel() {
           subject: d.subject,
           body: (d.body || "").slice(0, 500),
           emailDate: d.emailDate,
+          suggestedDetail: d.suggestedDetail || "",
         })),
         title: form.title || first.suggestedTitle || first.subject,
         memorandumNumber: form.memorandumNumber || first.suggestedMemo || "",
@@ -362,6 +410,7 @@ export default function EmailSyncPanel() {
         description: first.body?.slice(0, 500) || "",
         contactName: first.fromName || "",
         contactEmail: first.from || "",
+        suggestedDetail: stdDraft?.suggestedDetail || "",
       };
 
       const res = await fetch("/api/email-drafts", {
@@ -409,6 +458,41 @@ export default function EmailSyncPanel() {
       default:
         return <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">Sin Clasificar</span>;
     }
+  };
+
+  /** Render STD enrichment badges for a draft */
+  const getSTDBadges = (draft: EmailDraft) => {
+    const std = parseSTDDetail(draft.suggestedDetail);
+    if (!std) return null;
+    return (
+      <>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">STD</span>
+        {std.tipoLicitacion && TIPO_LICITACION_LABELS[std.tipoLicitacion] && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-100 text-teal-700">
+            {std.tipoLicitacion}
+          </span>
+        )}
+        {std.memoTipo && std.memoTipo !== "otro" && (
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${MEMO_TIPO_COLORS[std.memoTipo] || "bg-gray-100 text-gray-600"}`}>
+            {std.memoTipo.replace("_", " ")}
+          </span>
+        )}
+        {std.budget && std.budget !== "0" && (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-50 text-green-700">
+            {std.budget}
+          </span>
+        )}
+      </>
+    );
+  };
+
+  /** Get STD badges for a group (from any draft in the group) */
+  const getGroupSTDBadges = (groupDrafts: EmailDraft[]) => {
+    for (const d of groupDrafts) {
+      const badges = getSTDBadges(d);
+      if (badges) return badges;
+    }
+    return null;
   };
 
   const getLogActionIcon = (type: string) => {
@@ -1099,6 +1183,7 @@ export default function EmailSyncPanel() {
                                 {group.label}
                               </span>
                               {getActionBadge(group.mainAction)}
+                              {getGroupSTDBadges(group.drafts)}
                               {group.projectRef && (
                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
                                   Proyecto existente
@@ -1358,6 +1443,7 @@ export default function EmailSyncPanel() {
                                             {draft.subject || "(sin asunto)"}
                                           </span>
                                           {getActionBadge(draft.suggestedAction)}
+                                          {getSTDBadges(draft)}
                                           {draft.attachments?.length > 0 && <Paperclip className="w-3 h-3 text-gray-400" />}
                                         </div>
                                         <p className="text-[11px] text-gray-500">
@@ -1434,6 +1520,7 @@ export default function EmailSyncPanel() {
                             {draft.subject || "(sin asunto)"}
                           </span>
                           {getActionBadge(draft.suggestedAction)}
+                          {getSTDBadges(draft)}
                           {draft.suggestedDashboardType === "obras" ? (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Obras</span>
                           ) : (
