@@ -122,56 +122,59 @@ interface STDSession {
  */
 export async function loginToSTD(): Promise<STDSession> {
   const STD_URL = "https://std.usach.cl";
-  const STD_USER = process.env.STD_USER || "pladet@usach.cl";
-  const STD_PASS = process.env.STD_PASS || process.env.STD_PASSWORD || "";
+  const STD_FULL_EMAIL = process.env.STD_USER || "pladet@usach.cl";
+  const STD_PASS_VAL = process.env.STD_PASS || process.env.STD_PASSWORD || "";
 
-  if (!STD_PASS) {
+  if (!STD_PASS_VAL) {
     throw new Error("STD_PASS not configured");
   }
 
-  // Step 1: GET login page to get CSRF token
+  // Parse email into user + subdomain (STD form uses separate fields)
+  // e.g. "pladet@usach.cl" → email="pladet", subdomain="usach.cl"
+  const atIndex = STD_FULL_EMAIL.indexOf("@");
+  const emailUser = atIndex > 0 ? STD_FULL_EMAIL.slice(0, atIndex) : STD_FULL_EMAIL;
+  const subdomain = atIndex > 0 ? STD_FULL_EMAIL.slice(atIndex + 1) : "usach.cl";
+
+  // Step 1: GET login page to get CSRF token + cookies
   const loginPageRes = await fetch(`${STD_URL}/login`, {
     redirect: "manual",
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; PladetBot/1.0)",
-      Accept: "text/html",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      Accept: "text/html,application/xhtml+xml",
     },
   });
 
   const loginPageHTML = await loginPageRes.text();
   const cookies = extractCookies(loginPageRes);
 
-  // Extract CSRF token from the form
+  // Extract CSRF token and web_version from the form
   const $ = cheerio.load(loginPageHTML);
   const csrfToken =
     $('input[name="_token"]').val()?.toString() ||
     $('meta[name="csrf-token"]').attr("content") ||
     "";
+  const webVersion = $('input[name="web_version"]').val()?.toString() || "";
 
   if (!csrfToken) {
     console.warn("No CSRF token found — login might fail");
   }
 
-  // Step 2: POST login credentials
+  // Step 2: POST login with correct form fields
+  // STD form: _token, web_version, email (user part only), subdomain, password
   const formData = new URLSearchParams();
   formData.append("_token", csrfToken);
-  formData.append("email", STD_USER);
-  // STD login might use 'email' field which includes @domain,
-  // or separate email + domain fields. Let's try the standard form.
-  formData.append("password", STD_PASS);
-  // Some STD versions need domain separately
-  const emailParts = STD_USER.split("@");
-  if (emailParts.length === 2) {
-    formData.append("dominio", emailParts[1]);
-  }
+  if (webVersion) formData.append("web_version", webVersion);
+  formData.append("email", emailUser);
+  formData.append("subdomain", subdomain);
+  formData.append("password", STD_PASS_VAL);
 
   const loginRes = await fetch(`${STD_URL}/login`, {
     method: "POST",
     redirect: "manual",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": "Mozilla/5.0 (compatible; PladetBot/1.0)",
-      Accept: "text/html",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      Accept: "text/html,application/xhtml+xml",
       Cookie: cookies,
       Referer: `${STD_URL}/login`,
     },
@@ -184,7 +187,7 @@ export async function loginToSTD(): Promise<STDSession> {
   // Verify login worked by checking redirect location
   const location = loginRes.headers.get("location") || "";
   if (location.includes("login")) {
-    throw new Error("STD login failed — check credentials");
+    throw new Error(`STD login failed — redirected to: ${location}`);
   }
 
   return {
