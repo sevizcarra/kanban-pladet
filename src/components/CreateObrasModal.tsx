@@ -7,6 +7,7 @@ import {
   SECTORS,
   PROJECT_CATEGORIES,
   CUADRILLAS,
+  BIDDING_TYPES,
 } from "@/lib/constants";
 import { Project } from "@/types/project";
 
@@ -31,6 +32,13 @@ export default function CreateObrasModal({
     sector: "",
     cuadrillas: [] as string[],
     descripcion: "",
+    // New fields
+    nombreContacto: "",
+    emailContacto: "",
+    fechaEntrega: "",
+    tipoLicitacion: "",
+    budget: "",
+    recinto: "",
   });
 
   const canSubmit = form.nombre.trim().length > 0;
@@ -63,10 +71,12 @@ export default function CreateObrasModal({
       priority: form.prioridad,
       memorandumNumber: `MEM-${form.year}-${form.memorandum || "000"}`,
       requestingUnit: form.unidadRequirente,
-      contactName: "",
-      contactEmail: "",
-      budget: "0",
-      dueDate: null,
+      contactName: form.nombreContacto || "",
+      contactEmail: form.emailContacto || "",
+      budget: form.budget || "0",
+      dueDate: form.fechaEntrega || null,
+      tipoLicitacion: form.tipoLicitacion || "",
+      recinto: form.recinto || "",
       tipoFinanciamiento: null,
       codigoProyectoUsa: "",
       tipoDesarrollo: "",
@@ -221,6 +231,96 @@ export default function CreateObrasModal({
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
+          </div>
+
+          {/* Presupuesto, Licitación, Fecha */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Monto Asignado
+              </label>
+              <input
+                type="text"
+                name="budget"
+                value={form.budget}
+                onChange={handleInputChange}
+                placeholder="$0"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-green-400 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Tipo Licitación
+              </label>
+              <select
+                name="tipoLicitacion"
+                value={form.tipoLicitacion}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-green-400 outline-none"
+              >
+                <option value="">Seleccionar...</option>
+                {BIDDING_TYPES.map((bt) => (
+                  <option key={bt.value} value={bt.value}>{bt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Fecha Entrega
+              </label>
+              <input
+                type="date"
+                name="fechaEntrega"
+                value={form.fechaEntrega}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-green-400 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Recinto / Ubicación */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              Recinto / Ubicación
+            </label>
+            <input
+              type="text"
+              name="recinto"
+              value={form.recinto}
+              onChange={handleInputChange}
+              placeholder="Ej: Edificio FING, Campus principal"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-green-400 outline-none"
+            />
+          </div>
+
+          {/* Contacto */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Contacto (nombre)
+              </label>
+              <input
+                type="text"
+                name="nombreContacto"
+                value={form.nombreContacto}
+                onChange={handleInputChange}
+                placeholder="Nombre completo"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-green-400 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Contacto (email)
+              </label>
+              <input
+                type="email"
+                name="emailContacto"
+                value={form.emailContacto}
+                onChange={handleInputChange}
+                placeholder="correo@ejemplo.com"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-green-400 outline-none"
+              />
+            </div>
           </div>
 
           {/* Cuadrillas */}

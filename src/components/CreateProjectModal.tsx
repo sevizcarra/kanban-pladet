@@ -37,6 +37,9 @@ export default function CreateProjectModal({
     fechaEntrega: "",
     nombreContacto: "",
     emailContacto: "",
+    budget: "",
+    tipoFinanciamiento: "",
+    recinto: "",
   });
 
   const generatedCode = useMemo(() => {
@@ -81,9 +84,10 @@ export default function CreateProjectModal({
       requestingUnit: form.unidadRequirente || "—",
       contactName: form.nombreContacto || "—",
       contactEmail: form.emailContacto || "—",
-      budget: "0",
+      budget: form.budget || "0",
       dueDate: form.fechaEntrega || null,
-      tipoFinanciamiento: null,
+      tipoFinanciamiento: form.tipoFinanciamiento || null,
+      recinto: form.recinto || "",
       codigoProyectoUsa: generatedCode,
       tipoDesarrollo: form.tipoDesarrollo,
       disciplinaLider: form.disciplinaLider,
@@ -355,6 +359,58 @@ export default function CreateProjectModal({
                   value={form.emailContacto}
                   onChange={handleInputChange}
                   placeholder="correo@ejemplo.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Presupuesto y Ubicación */}
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">
+              Presupuesto y Ubicación
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Monto Asignado
+                </label>
+                <input
+                  type="text"
+                  name="budget"
+                  value={form.budget}
+                  onChange={handleInputChange}
+                  placeholder="$0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Tipo Financiamiento
+                </label>
+                <select
+                  name="tipoFinanciamiento"
+                  value={form.tipoFinanciamiento}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="presupuesto_regular">Presupuesto Regular</option>
+                  <option value="fondo_especial">Fondo Especial</option>
+                  <option value="convenio">Convenio</option>
+                  <option value="mixto">Mixto</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Recinto / Ubicación
+                </label>
+                <input
+                  type="text"
+                  name="recinto"
+                  value={form.recinto}
+                  onChange={handleInputChange}
+                  placeholder="Ej: Edificio FING, Campus principal"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 />
               </div>

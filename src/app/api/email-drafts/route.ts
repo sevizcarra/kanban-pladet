@@ -68,6 +68,13 @@ export async function POST(req: NextRequest) {
       description,
       contactName,
       contactEmail,
+      // New enrichment fields from redesigned UI
+      budget: formBudget,
+      tipoLicitacion: formTipoLicitacion,
+      recinto: formRecinto,
+      tipoDesarrollo: formTipoDesarrollo,
+      disciplinaLider: formDisciplinaLider,
+      tipoFinanciamiento: formTipoFinanciamiento,
     } = body;
 
     // ── GROUP APPROVAL ──
@@ -100,7 +107,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Create project
+      // Create project — form fields take priority, then STD enrichment, then defaults
       const projectData: Record<string, unknown> = {
         title: title || "Sin título",
         description: description || "",
@@ -110,12 +117,14 @@ export async function POST(req: NextRequest) {
         requestingUnit: requestingUnit || "",
         contactName: contactName || senders[0] || "",
         contactEmail: contactEmail || (emails[0]?.from || ""),
-        budget: stdEnrichment?.budget || "0",
+        budget: formBudget || stdEnrichment?.budget || "0",
         dueDate: null,
-        tipoFinanciamiento: null,
+        tipoFinanciamiento: formTipoFinanciamiento || null,
         codigoProyectoUsa: stdEnrichment?.codigoUsa || "",
-        tipoDesarrollo: "",
-        disciplinaLider: "",
+        tipoDesarrollo: formTipoDesarrollo || "",
+        disciplinaLider: formDisciplinaLider || "",
+        tipoLicitacion: formTipoLicitacion || stdEnrichment?.tipoLicitacion || "",
+        recinto: formRecinto || stdEnrichment?.recinto || "",
         sector: sector || "",
         categoriaProyecto: categoriaProyecto || "",
         dashboardType: dashboardType || "compras",
@@ -126,11 +135,9 @@ export async function POST(req: NextRequest) {
       // Add STD-enriched fields if available
       if (stdEnrichment) {
         projectData.dataSource = "std";
-        if (stdEnrichment.tipoLicitacion) projectData.tipoLicitacion = stdEnrichment.tipoLicitacion;
         if (allMemos.length > 0) projectData.memos = allMemos;
         if (stdEnrichment.stdAsunto) projectData.stdAsunto = stdEnrichment.stdAsunto;
         if (stdEnrichment.plazoEjecucion) projectData.plazoEjecucion = stdEnrichment.plazoEjecucion;
-        if (stdEnrichment.recinto) projectData.recinto = stdEnrichment.recinto;
       }
 
       const newProjectId = await createProject(projectData as Parameters<typeof createProject>[0]);
@@ -176,7 +183,7 @@ export async function POST(req: NextRequest) {
     // Check if suggestedDetail contains STD enrichment data
     const stdEnrichment = body.suggestedDetail ? parseSTDDetail(body.suggestedDetail) : null;
 
-    // Create the project in Firestore
+    // Create the project in Firestore — form fields take priority, then STD, then defaults
     const projectData: Record<string, unknown> = {
       title: title || "Sin título",
       description: description || "",
@@ -186,12 +193,14 @@ export async function POST(req: NextRequest) {
       requestingUnit: requestingUnit || "",
       contactName: contactName || "",
       contactEmail: contactEmail || "",
-      budget: stdEnrichment?.budget || "0",
+      budget: formBudget || stdEnrichment?.budget || "0",
       dueDate: null,
-      tipoFinanciamiento: null,
+      tipoFinanciamiento: formTipoFinanciamiento || null,
       codigoProyectoUsa: stdEnrichment?.codigoUsa || "",
-      tipoDesarrollo: "",
-      disciplinaLider: "",
+      tipoDesarrollo: formTipoDesarrollo || "",
+      disciplinaLider: formDisciplinaLider || "",
+      tipoLicitacion: formTipoLicitacion || stdEnrichment?.tipoLicitacion || "",
+      recinto: formRecinto || stdEnrichment?.recinto || "",
       sector: sector || "",
       categoriaProyecto: categoriaProyecto || "",
       dashboardType: dashboardType || "compras",
@@ -202,9 +211,6 @@ export async function POST(req: NextRequest) {
     // Add STD-enriched fields if available
     if (stdEnrichment) {
       projectData.dataSource = "std";
-      if (stdEnrichment.tipoLicitacion) {
-        projectData.tipoLicitacion = stdEnrichment.tipoLicitacion;
-      }
       if (stdEnrichment.memos && stdEnrichment.memos.length > 0) {
         projectData.memos = stdEnrichment.memos;
       }
@@ -213,9 +219,6 @@ export async function POST(req: NextRequest) {
       }
       if (stdEnrichment.plazoEjecucion) {
         projectData.plazoEjecucion = stdEnrichment.plazoEjecucion;
-      }
-      if (stdEnrichment.recinto) {
-        projectData.recinto = stdEnrichment.recinto;
       }
     }
 

@@ -26,7 +26,15 @@ import {
   Layers,
   List,
 } from "lucide-react";
-import { PROJECT_CATEGORIES, PRIORITIES } from "@/lib/constants";
+import {
+  PROJECT_CATEGORIES,
+  PRIORITIES,
+  BIDDING_TYPES,
+  SECTORS,
+  WORK_TYPES,
+  LEADING_DISCIPLINE,
+  REQUESTING_UNITS,
+} from "@/lib/constants";
 
 // ── Types ──
 
@@ -78,6 +86,12 @@ interface STDDetail {
   memoTipo?: string;
   dataSource?: string;
   stdAsunto?: string;
+  recinto?: string;
+  categoriaProyecto?: string;
+  plazoEjecucion?: string;
+  codigoUsa?: string;
+  tipoDesarrollo?: string;
+  disciplinaLider?: string;
 }
 
 function parseSTDDetail(detail: string): STDDetail | null {
@@ -273,6 +287,13 @@ export default function EmailSyncPanel() {
         contactName: draft.fromName || "",
         contactEmail: draft.from || "",
         suggestedDetail: draft.suggestedDetail || "",
+        // New enrichment fields
+        budget: form.budget || "",
+        tipoLicitacion: form.tipoLicitacion || "",
+        recinto: form.recinto || "",
+        tipoDesarrollo: form.tipoDesarrollo || "",
+        disciplinaLider: form.disciplinaLider || "",
+        tipoFinanciamiento: form.tipoFinanciamiento || "",
       };
 
       const res = await fetch("/api/email-drafts", {
@@ -342,14 +363,22 @@ export default function EmailSyncPanel() {
 
   const startEditing = (draft: EmailDraft) => {
     setEditingDraft(draft.id);
+    const std = parseSTDDetail(draft.suggestedDetail);
     setEditForm({
       title: draft.suggestedTitle || draft.subject,
       memorandumNumber: draft.suggestedMemo || "",
       requestingUnit: draft.suggestedUnit || "",
       priority: draft.suggestedPriority || "media",
       dashboardType: draft.suggestedDashboardType || "compras",
-      categoriaProyecto: draft.suggestedCategory || "",
+      categoriaProyecto: std?.categoriaProyecto || draft.suggestedCategory || "",
       sector: draft.suggestedSector || "",
+      // New STD-enriched fields
+      budget: std?.budget || "",
+      tipoLicitacion: std?.tipoLicitacion || "",
+      recinto: std?.recinto || "",
+      tipoDesarrollo: std?.tipoDesarrollo || "",
+      disciplinaLider: std?.disciplinaLider || "",
+      tipoFinanciamiento: "",
     });
   };
 
@@ -366,14 +395,28 @@ export default function EmailSyncPanel() {
     const bestDashboard = groupDrafts.find(d => d.suggestedDashboardType)?.suggestedDashboardType || "compras";
     const bestPriority = groupDrafts.find(d => d.suggestedPriority)?.suggestedPriority || "media";
 
+    // Extract STD data from any enriched draft in the group
+    const stdDraft = groupDrafts.find(d => {
+      try { return d.suggestedDetail && JSON.parse(d.suggestedDetail).dataSource === "std"; }
+      catch { return false; }
+    });
+    const std = stdDraft ? parseSTDDetail(stdDraft.suggestedDetail) : null;
+
     setGroupEditForm({
       title: bestTitle,
       memorandumNumber: bestMemo,
       requestingUnit: bestUnit,
       priority: bestPriority,
       dashboardType: bestDashboard,
-      categoriaProyecto: bestCategory,
+      categoriaProyecto: std?.categoriaProyecto || bestCategory,
       sector: bestSector,
+      // New STD-enriched fields
+      budget: std?.budget || "",
+      tipoLicitacion: std?.tipoLicitacion || "",
+      recinto: std?.recinto || "",
+      tipoDesarrollo: std?.tipoDesarrollo || "",
+      disciplinaLider: std?.disciplinaLider || "",
+      tipoFinanciamiento: "",
     });
   };
 
@@ -411,6 +454,13 @@ export default function EmailSyncPanel() {
         contactName: first.fromName || "",
         contactEmail: first.from || "",
         suggestedDetail: stdDraft?.suggestedDetail || "",
+        // New enrichment fields
+        budget: form.budget || "",
+        tipoLicitacion: form.tipoLicitacion || "",
+        recinto: form.recinto || "",
+        tipoDesarrollo: form.tipoDesarrollo || "",
+        disciplinaLider: form.disciplinaLider || "",
+        tipoFinanciamiento: form.tipoFinanciamiento || "",
       };
 
       const res = await fetch("/api/email-drafts", {
@@ -480,6 +530,11 @@ export default function EmailSyncPanel() {
         {std.budget && std.budget !== "0" && (
           <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-50 text-green-700">
             {std.budget}
+          </span>
+        )}
+        {std.recinto && (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700" title={`Recinto: ${std.recinto}`}>
+            📍 {std.recinto.length > 25 ? std.recinto.slice(0, 25) + "…" : std.recinto}
           </span>
         )}
       </>
@@ -805,8 +860,18 @@ export default function EmailSyncPanel() {
         {isEditing && (
           <div className="space-y-3">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Datos de la tarjeta (editables)</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
+
+            {/* STD enrichment indicator */}
+            {parseSTDDetail(draft.suggestedDetail) && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">STD</span>
+                <span className="text-xs text-emerald-700">Campos pre-llenados desde el Sistema de Trazabilidad Documental</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3">
+              {/* Row 1: Título full width */}
+              <div className="col-span-3">
                 <label className="text-xs font-semibold text-gray-600 block mb-1">Título</label>
                 <input
                   type="text"
@@ -815,6 +880,8 @@ export default function EmailSyncPanel() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
                 />
               </div>
+
+              {/* Row 2: Memo, Unidad, Dashboard */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">N° Memorándum</label>
                 <input
@@ -827,12 +894,16 @@ export default function EmailSyncPanel() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">Unidad Solicitante</label>
-                <input
-                  type="text"
+                <select
                   value={editForm.requestingUnit || ""}
                   onChange={(e) => setEditForm({ ...editForm, requestingUnit: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
-                />
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  <option value="">—</option>
+                  {REQUESTING_UNITS.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">Dashboard</label>
@@ -845,6 +916,41 @@ export default function EmailSyncPanel() {
                   <option value="obras">Obras</option>
                 </select>
               </div>
+
+              {/* Row 3: Presupuesto, Tipo Licitación, Prioridad */}
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">
+                  Presupuesto
+                  {editForm.budget && <span className="text-emerald-500 ml-1" title="Desde STD">●</span>}
+                </label>
+                <input
+                  type="text"
+                  value={editForm.budget || ""}
+                  onChange={(e) => setEditForm({ ...editForm, budget: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 ${
+                    editForm.budget ? "border-emerald-300 bg-emerald-50/30" : "border-gray-300"
+                  }`}
+                  placeholder="$0"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">
+                  Tipo Licitación
+                  {editForm.tipoLicitacion && <span className="text-emerald-500 ml-1" title="Desde STD">●</span>}
+                </label>
+                <select
+                  value={editForm.tipoLicitacion || ""}
+                  onChange={(e) => setEditForm({ ...editForm, tipoLicitacion: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white ${
+                    editForm.tipoLicitacion ? "border-emerald-300 bg-emerald-50/30" : "border-gray-300"
+                  }`}
+                >
+                  <option value="">—</option>
+                  {BIDDING_TYPES.map((bt) => (
+                    <option key={bt.value} value={bt.value}>{bt.label}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">Prioridad</label>
                 <select
@@ -854,6 +960,34 @@ export default function EmailSyncPanel() {
                 >
                   {Object.entries(PRIORITIES).map(([key, val]) => (
                     <option key={key} value={key}>{val.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Row 4: Tipo Desarrollo, Disciplina Líder, Categoría */}
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Tipo Desarrollo</label>
+                <select
+                  value={editForm.tipoDesarrollo || ""}
+                  onChange={(e) => setEditForm({ ...editForm, tipoDesarrollo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  <option value="">—</option>
+                  {WORK_TYPES.map((wt) => (
+                    <option key={wt.value} value={wt.value}>{wt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Disciplina Líder</label>
+                <select
+                  value={editForm.disciplinaLider || ""}
+                  onChange={(e) => setEditForm({ ...editForm, disciplinaLider: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  <option value="">—</option>
+                  {LEADING_DISCIPLINE.map((ld) => (
+                    <option key={ld.value} value={ld.value}>{ld.label}</option>
                   ))}
                 </select>
               </div>
@@ -870,13 +1004,48 @@ export default function EmailSyncPanel() {
                   ))}
                 </select>
               </div>
+
+              {/* Row 5: Sector, Financiamiento, Recinto */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">Sector</label>
-                <input
-                  type="text"
+                <select
                   value={editForm.sector || ""}
                   onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  <option value="">—</option>
+                  {SECTORS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Tipo Financiamiento</label>
+                <select
+                  value={editForm.tipoFinanciamiento || ""}
+                  onChange={(e) => setEditForm({ ...editForm, tipoFinanciamiento: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 bg-white"
+                >
+                  <option value="">—</option>
+                  <option value="presupuesto_regular">Presupuesto Regular</option>
+                  <option value="fondo_especial">Fondo Especial</option>
+                  <option value="convenio">Convenio</option>
+                  <option value="mixto">Mixto</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">
+                  Recinto
+                  {editForm.recinto && <span className="text-emerald-500 ml-1" title="Desde STD">●</span>}
+                </label>
+                <input
+                  type="text"
+                  value={editForm.recinto || ""}
+                  onChange={(e) => setEditForm({ ...editForm, recinto: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 ${
+                    editForm.recinto ? "border-emerald-300 bg-emerald-50/30" : "border-gray-300"
+                  }`}
+                  placeholder="Ej: Edificio FING, Campus principal"
                 />
               </div>
             </div>
@@ -1325,8 +1494,18 @@ export default function EmailSyncPanel() {
                                   <Layers className="w-3.5 h-3.5" />
                                   Tarjeta compilada — {group.drafts.length} correos → 1 tarjeta
                                 </p>
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div className="col-span-2">
+
+                                {/* STD enrichment indicator for group */}
+                                {groupEditForm.budget || groupEditForm.tipoLicitacion || groupEditForm.recinto ? (
+                                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">STD</span>
+                                    <span className="text-xs text-emerald-700">Campos pre-llenados desde el Sistema de Trazabilidad Documental</span>
+                                  </div>
+                                ) : null}
+
+                                <div className="grid grid-cols-3 gap-3">
+                                  {/* Row 1: Título full width */}
+                                  <div className="col-span-3">
                                     <label className="text-xs font-semibold text-gray-600 block mb-1">Título de la tarjeta</label>
                                     <input
                                       type="text"
@@ -1335,6 +1514,8 @@ export default function EmailSyncPanel() {
                                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40"
                                     />
                                   </div>
+
+                                  {/* Row 2: Memo, Unidad, Dashboard */}
                                   <div>
                                     <label className="text-xs font-semibold text-gray-600 block mb-1">N° Memorándum</label>
                                     <input
@@ -1347,12 +1528,16 @@ export default function EmailSyncPanel() {
                                   </div>
                                   <div>
                                     <label className="text-xs font-semibold text-gray-600 block mb-1">Unidad Solicitante</label>
-                                    <input
-                                      type="text"
+                                    <select
                                       value={groupEditForm.requestingUnit || ""}
                                       onChange={(e) => setGroupEditForm({ ...groupEditForm, requestingUnit: e.target.value })}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40"
-                                    />
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      <option value="">—</option>
+                                      {REQUESTING_UNITS.map((u) => (
+                                        <option key={u} value={u}>{u}</option>
+                                      ))}
+                                    </select>
                                   </div>
                                   <div>
                                     <label className="text-xs font-semibold text-gray-600 block mb-1">Dashboard</label>
@@ -1365,6 +1550,41 @@ export default function EmailSyncPanel() {
                                       <option value="obras">Obras</option>
                                     </select>
                                   </div>
+
+                                  {/* Row 3: Presupuesto, Tipo Licitación, Prioridad */}
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">
+                                      Presupuesto
+                                      {groupEditForm.budget && <span className="text-emerald-500 ml-1" title="Desde STD">●</span>}
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={groupEditForm.budget || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, budget: e.target.value })}
+                                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 ${
+                                        groupEditForm.budget ? "border-emerald-300 bg-emerald-50/30" : "border-gray-300"
+                                      }`}
+                                      placeholder="$0"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">
+                                      Tipo Licitación
+                                      {groupEditForm.tipoLicitacion && <span className="text-emerald-500 ml-1" title="Desde STD">●</span>}
+                                    </label>
+                                    <select
+                                      value={groupEditForm.tipoLicitacion || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, tipoLicitacion: e.target.value })}
+                                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white ${
+                                        groupEditForm.tipoLicitacion ? "border-emerald-300 bg-emerald-50/30" : "border-gray-300"
+                                      }`}
+                                    >
+                                      <option value="">—</option>
+                                      {BIDDING_TYPES.map((bt) => (
+                                        <option key={bt.value} value={bt.value}>{bt.label}</option>
+                                      ))}
+                                    </select>
+                                  </div>
                                   <div>
                                     <label className="text-xs font-semibold text-gray-600 block mb-1">Prioridad</label>
                                     <select
@@ -1374,6 +1594,34 @@ export default function EmailSyncPanel() {
                                     >
                                       {Object.entries(PRIORITIES).map(([key, val]) => (
                                         <option key={key} value={key}>{val.label}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* Row 4: Tipo Desarrollo, Disciplina Líder, Categoría */}
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Tipo Desarrollo</label>
+                                    <select
+                                      value={groupEditForm.tipoDesarrollo || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, tipoDesarrollo: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      <option value="">—</option>
+                                      {WORK_TYPES.map((wt) => (
+                                        <option key={wt.value} value={wt.value}>{wt.label}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Disciplina Líder</label>
+                                    <select
+                                      value={groupEditForm.disciplinaLider || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, disciplinaLider: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      <option value="">—</option>
+                                      {LEADING_DISCIPLINE.map((ld) => (
+                                        <option key={ld.value} value={ld.value}>{ld.label}</option>
                                       ))}
                                     </select>
                                   </div>
@@ -1390,13 +1638,48 @@ export default function EmailSyncPanel() {
                                       ))}
                                     </select>
                                   </div>
+
+                                  {/* Row 5: Sector, Financiamiento, Recinto */}
                                   <div>
                                     <label className="text-xs font-semibold text-gray-600 block mb-1">Sector</label>
-                                    <input
-                                      type="text"
+                                    <select
                                       value={groupEditForm.sector || ""}
                                       onChange={(e) => setGroupEditForm({ ...groupEditForm, sector: e.target.value })}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40"
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      <option value="">—</option>
+                                      {SECTORS.map((s) => (
+                                        <option key={s.value} value={s.value}>{s.label}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Tipo Financiamiento</label>
+                                    <select
+                                      value={groupEditForm.tipoFinanciamiento || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, tipoFinanciamiento: e.target.value })}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 bg-white"
+                                    >
+                                      <option value="">—</option>
+                                      <option value="presupuesto_regular">Presupuesto Regular</option>
+                                      <option value="fondo_especial">Fondo Especial</option>
+                                      <option value="convenio">Convenio</option>
+                                      <option value="mixto">Mixto</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">
+                                      Recinto
+                                      {groupEditForm.recinto && <span className="text-emerald-500 ml-1" title="Desde STD">●</span>}
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={groupEditForm.recinto || ""}
+                                      onChange={(e) => setGroupEditForm({ ...groupEditForm, recinto: e.target.value })}
+                                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400/40 ${
+                                        groupEditForm.recinto ? "border-emerald-300 bg-emerald-50/30" : "border-gray-300"
+                                      }`}
+                                      placeholder="Ej: Edificio FING, Campus principal"
                                     />
                                   </div>
                                 </div>

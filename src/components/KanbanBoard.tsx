@@ -177,6 +177,13 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
             </span>
           )}
 
+          {/* Recinto badge */}
+          {p.recinto && (
+            <span className={`inline-block px-1.5 py-0 text-[9px] font-medium rounded mb-1 ml-0.5 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
+              📍 {p.recinto.length > 30 ? p.recinto.slice(0, 30) + '…' : p.recinto}
+            </span>
+          )}
+
           {/* Cuadrilla badges (obras projects) */}
           {p.cuadrillas && p.cuadrillas.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-1">
