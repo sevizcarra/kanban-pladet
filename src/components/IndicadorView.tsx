@@ -72,6 +72,11 @@ const fmtFieldTs = (p: Project, field: string): string => {
 
 const fmtDateShort = (d: string | null | undefined): string => {
   if (!d) return "—";
+  // Parse YYYY-MM-DD directly to avoid timezone offset issues
+  const parts = d.split("T")[0].split("-");
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
   const date = new Date(d);
   const dd = date.getDate().toString().padStart(2, "0");
   const mm = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -90,9 +95,12 @@ const getSurveyUrl = (unidad?: string): string | null => {
 };
 
 // Auto-calculate: fechaRecProviso + plazoRecDef days = fechaProgramadaRecDef
+// Parse "YYYY-MM-DD" as local date (avoids UTC offset issues)
+const parseLocal = (s: string) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+
 const calcRecDefProg = (p: Project): string => {
   if (!p.fechaRecProviso || !p.plazoRecDef) return "—";
-  const d = new Date(p.fechaRecProviso);
+  const d = parseLocal(p.fechaRecProviso);
   d.setDate(d.getDate() + p.plazoRecDef);
   const dd = d.getDate().toString().padStart(2, "0");
   const mm = (d.getMonth() + 1).toString().padStart(2, "0");
@@ -103,9 +111,9 @@ const calcRecDefProg = (p: Project): string => {
 // Difference in days between programada and real rec. definitiva
 const calcDifRecDef = (p: Project): React.ReactNode => {
   if (!p.fechaRecProviso || !p.plazoRecDef || !p.fechaRecDefReal) return "—";
-  const progDate = new Date(p.fechaRecProviso);
+  const progDate = parseLocal(p.fechaRecProviso);
   progDate.setDate(progDate.getDate() + p.plazoRecDef);
-  const realDate = new Date(p.fechaRecDefReal);
+  const realDate = parseLocal(p.fechaRecDefReal);
   const diff = Math.ceil((realDate.getTime() - progDate.getTime()) / 86400000);
   const color = diff > 0 ? "text-red-600 font-bold" : diff < 0 ? "text-emerald-600 font-bold" : "text-gray-500";
   const label = diff > 0 ? `+${diff}d` : diff < 0 ? `${diff}d` : "0d";

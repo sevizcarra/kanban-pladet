@@ -190,20 +190,32 @@ export default function ProjectDetail({
   const [showFreezeModal, setShowFreezeModal] = useState(false);
   const [freezeJustification, setFreezeJustification] = useState("");
 
+  // Helper: parse "YYYY-MM-DD" as local date (avoids UTC offset issues)
+  const parseLocalDate = (s: string) => {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const toLocalIso = (date: Date) => {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, "0");
+    const d = date.getDate().toString().padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   // Computed values
   const fechaEstTermino = useMemo(() => {
     if (!fechaInicioObra || !plazoEjecucion) return null;
-    const date = new Date(fechaInicioObra);
+    const date = parseLocalDate(fechaInicioObra);
     date.setDate(date.getDate() + plazoEjecucion);
-    return date.toISOString().split("T")[0];
+    return toLocalIso(date);
   }, [fechaInicioObra, plazoEjecucion]);
 
   // Auto-calculated: Rec. Provisoria + plazoRecDef days = Rec. Definitiva Programada
   const fechaRecDefProgramada = useMemo(() => {
     if (!fechaRecProviso || !plazoRecDef) return null;
-    const date = new Date(fechaRecProviso);
+    const date = parseLocalDate(fechaRecProviso);
     date.setDate(date.getDate() + plazoRecDef);
-    return date.toISOString().split("T")[0];
+    return toLocalIso(date);
   }, [fechaRecProviso, plazoRecDef]);
 
   // Difference between programada and real rec. definitiva
@@ -262,7 +274,7 @@ export default function ProjectDetail({
       fechaRealTerminoObra: fechaRealTerminoObra || "",
       fechaProgramadaRecDef: fechaRecDefProgramada || "",
       fechaDerivacionMemoITO: fechaDerivacionMemoITO || "",
-      fechaInicioObra: fechaInicioObra || "", plazoEjecucion: plazoEjecucion.toString(),
+      fechaInicioObra: fechaInicioObra || "", plazoEjecucion: plazoEjecucion.toString(), fechaEstimadaTermino: fechaEstTermino || "",
       fechaVencGarantia: fechaVencGarantia || "", fechaRecProviso: fechaRecProviso || "",
       fechaRecDefinitiva: fechaRecDefinitiva || "",
       plazoRecDef: plazoRecDef || 0,
