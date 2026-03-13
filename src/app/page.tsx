@@ -18,6 +18,7 @@ import CreateObrasModal from '@/components/CreateObrasModal';
 import EmailConfirmDialog from '@/components/EmailConfirmDialog';
 import AdminPanel from '@/components/AdminPanel';
 import BacklogView from '@/components/BacklogView';
+import IndicadorView from '@/components/IndicadorView';
 
 import {
   subscribeProjects,
@@ -46,10 +47,11 @@ import {
   Snowflake,
   Hammer,
   ShoppingCart,
+  ClipboardList,
 } from 'lucide-react';
 import { STATUSES, OBRAS_STATUSES, PRIORITIES, REQUESTING_UNITS } from '@/lib/constants';
 
-type Tab = 'compras' | 'obras' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
+type Tab = 'compras' | 'obras' | 'indicador' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
 
 export default function Home() {
   // Auth state
@@ -383,6 +385,7 @@ export default function Home() {
   const tabs: { id: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
     { id: 'compras', label: 'Dashboard Compras', icon: <ShoppingCart size={18} /> },
     { id: 'obras', label: 'Dashboard Obras', icon: <Hammer size={18} /> },
+    { id: 'indicador', label: 'Indicador', icon: <ClipboardList size={18} /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
     { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
     { id: 'map', label: 'Mapa', icon: <MapPin size={18} /> },
@@ -462,7 +465,7 @@ export default function Home() {
           {/* Main content area */}
           <main className="flex-1 overflow-auto">
             {/* Filter Bar — hide on admin panel and backlog */}
-            {activeTab !== 'users' && activeTab !== 'backlog' && (
+            {activeTab !== 'users' && activeTab !== 'backlog' && activeTab !== 'indicador' && (
               <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
                 <div className="px-5 py-2.5">
                   <div className="flex flex-wrap gap-2.5 items-center">
@@ -612,6 +615,13 @@ export default function Home() {
                   onProjectClick={setSelectedProject}
                   onToggleFlag={handleToggleFlag}
                   onToggleFreeze={handleRequestFreeze}
+                />
+              )}
+
+              {activeTab === 'indicador' && (
+                <IndicadorView
+                  projects={projects}
+                  onProjectClick={setSelectedProject}
                 />
               )}
 
