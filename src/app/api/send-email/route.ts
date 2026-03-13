@@ -23,15 +23,12 @@ const STATUS_SHORT: Record<string, string> = {
   terminada: "Terminada",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  recepcion_requerimiento: "#0ea5e9",
-  asignacion_profesional: "#8b5cf6",
-  en_diseno: "#6B7280",
-  gestion_compra: "#F97316",
-  coordinacion_ejecucion: "#4B5563",
-  en_ejecucion: "#22c55e",
-  terminada: "#64748b",
-};
+// Unified PLADET palette: orange for completed/current, gray for pending
+const ORANGE = "#F97316";
+const ORANGE_LIGHT = "#fff7ed";
+const GRAY = "#d1d5db";
+const GRAY_DARK = "#6b7280";
+const GRAY_LIGHT = "#f3f4f6";
 
 // Status flows by project type
 const REGULAR_FLOW = [
@@ -67,71 +64,91 @@ function getFlow(tipoDesarrollo?: string, dashboardType?: string): string[] {
 
 const statusLabel = (id: string) => STATUS_LABELS[id] || id;
 
-// Build timeline HTML for email
+// Build timeline HTML for email — PLADET palette (orange/gray/white)
 function buildTimelineHtml(currentStatus: string, tipoDesarrollo?: string, dashboardType?: string): string {
   const flow = getFlow(tipoDesarrollo, dashboardType);
   const currentIdx = flow.indexOf(currentStatus);
+  const total = flow.length;
 
-  const steps = flow.map((statusId, idx) => {
+  // Each step is one table cell with: optional left connector + circle + optional right connector + label below
+  // We use a single-row table where each step is a <td> with fixed width and connectors use border-based approach
+  const stepCells = flow.map((statusId, idx) => {
     const shortLabel = STATUS_SHORT[statusId] || statusId;
-    const color = STATUS_COLORS[statusId] || "#9ca3af";
     const isPast = idx < currentIdx;
     const isCurrent = idx === currentIdx;
-    const isFuture = idx > currentIdx;
 
-    // Circle styling
-    let circleStyle: string;
-    let labelStyle: string;
-
+    // Circle
+    let circleBg: string, circleBorder: string, circleColor: string, shadow: string;
     if (isCurrent) {
-      circleStyle = `width:32px;height:32px;border-radius:50%;background:${color};border:3px solid ${color};display:inline-block;text-align:center;line-height:26px;color:#fff;font-size:13px;font-weight:700;box-shadow:0 0 0 4px ${color}33;`;
-      labelStyle = `font-size:10px;color:${color};font-weight:700;margin-top:6px;`;
+      circleBg = ORANGE;
+      circleBorder = `3px solid ${ORANGE}`;
+      circleColor = "#ffffff";
+      shadow = `box-shadow:0 0 0 4px ${ORANGE}40;`;
     } else if (isPast) {
-      circleStyle = `width:32px;height:32px;border-radius:50%;background:${color};border:2px solid ${color};display:inline-block;text-align:center;line-height:28px;color:#fff;font-size:13px;font-weight:600;`;
-      labelStyle = `font-size:10px;color:#6b7280;font-weight:500;margin-top:6px;`;
+      circleBg = ORANGE;
+      circleBorder = `2px solid ${ORANGE}`;
+      circleColor = "#ffffff";
+      shadow = "";
     } else {
-      circleStyle = `width:32px;height:32px;border-radius:50%;background:#f3f4f6;border:2px solid #d1d5db;display:inline-block;text-align:center;line-height:28px;color:#9ca3af;font-size:13px;font-weight:500;`;
-      labelStyle = `font-size:10px;color:#9ca3af;font-weight:400;margin-top:6px;`;
+      circleBg = "#ffffff";
+      circleBorder = `2px solid ${GRAY}`;
+      circleColor = GRAY;
+      shadow = "";
     }
 
-    const checkOrNumber = isPast
-      ? "&#10003;"
-      : `${idx + 1}`;
+    const content = isPast ? "&#10003;" : `${idx + 1}`;
+    const size = isCurrent ? 34 : 30;
+    const lineH = isCurrent ? "28px" : "26px";
+    const fontSize = isCurrent ? "14px" : "12px";
 
-    return { statusId, shortLabel, circleStyle, labelStyle, checkOrNumber, isPast, isCurrent, isFuture, color };
-  });
+    // Label
+    let labelColor: string, labelWeight: string;
+    if (isCurrent) {
+      labelColor = ORANGE;
+      labelWeight = "700";
+    } else if (isPast) {
+      labelColor = GRAY_DARK;
+      labelWeight = "600";
+    } else {
+      labelColor = GRAY;
+      labelWeight = "400";
+    }
 
-  // Build the HTML table-based timeline (email-safe, no flexbox)
-  const totalSteps = steps.length;
-  const circleRow = steps
-    .map((s, idx) => {
-      // Connector line before the circle (except first)
-      const connectorBefore = idx > 0
-        ? `<td style="padding:0;height:3px;background:${s.isPast || s.isCurrent ? steps[idx - 1].color : '#e5e7eb'};width:100%;"></td>`
-        : "";
-      // Connector line after the circle (except last)
-      const connectorAfter = idx < totalSteps - 1
-        ? `<td style="padding:0;height:3px;background:${s.isPast ? s.color : '#e5e7eb'};width:100%;"></td>`
-        : "";
+    // Connector lines: left half and right half inside each cell
+    const leftLineColor = (isPast || isCurrent) ? ORANGE : GRAY_LIGHT;
+    const rightLineColor = isPast ? ORANGE : GRAY_LIGHT;
+    const showLeftLine = idx > 0;
+    const showRightLine = idx < total - 1;
 
-      return `${connectorBefore}<td style="padding:0;text-align:center;width:32px;"><div style="${s.circleStyle}">${s.checkOrNumber}</div></td>${connectorAfter}`;
-    })
-    .join("");
-
-  const labelRow = steps
-    .map((s, idx) => {
-      const connectorBefore = idx > 0 ? `<td style="padding:0;"></td>` : "";
-      const connectorAfter = idx < totalSteps - 1 ? `<td style="padding:0;"></td>` : "";
-      return `${connectorBefore}<td style="padding:0;text-align:center;width:32px;"><div style="${s.labelStyle}">${s.shortLabel}</div></td>${connectorAfter}`;
-    })
-    .join("");
+    return `<td style="padding:0;text-align:center;vertical-align:top;width:${Math.floor(100 / total)}%;">
+      <table style="width:100%;border-collapse:collapse;" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width:50%;padding:0;vertical-align:middle;">
+            ${showLeftLine ? `<div style="height:3px;background:${leftLineColor};border-radius:2px;"></div>` : `<div style="height:3px;"></div>`}
+          </td>
+          <td style="padding:0;width:${size}px;text-align:center;vertical-align:middle;">
+            <div style="width:${size}px;height:${size}px;border-radius:50%;background:${circleBg};border:${circleBorder};display:inline-block;text-align:center;line-height:${lineH};color:${circleColor};font-size:${fontSize};font-weight:700;${shadow}margin:0 auto;">
+              ${content}
+            </div>
+          </td>
+          <td style="width:50%;padding:0;vertical-align:middle;">
+            ${showRightLine ? `<div style="height:3px;background:${rightLineColor};border-radius:2px;"></div>` : `<div style="height:3px;"></div>`}
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3" style="padding:5px 2px 0;text-align:center;">
+            <span style="font-size:10px;color:${labelColor};font-weight:${labelWeight};line-height:1.2;">${shortLabel}</span>
+          </td>
+        </tr>
+      </table>
+    </td>`;
+  }).join("");
 
   return `
-    <div style="margin:20px 0 4px; padding:16px 8px; background:#fafafa; border-radius:8px;">
-      <p style="margin:0 0 14px; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; text-align:center;">Progreso del proyecto</p>
-      <table style="width:100%;border-collapse:collapse;table-layout:auto;" cellpadding="0" cellspacing="0">
-        <tr style="vertical-align:middle;">${circleRow}</tr>
-        <tr style="vertical-align:top;">${labelRow}</tr>
+    <div style="margin:20px 0 4px;padding:18px 4px 12px;background:${GRAY_LIGHT};border-radius:10px;border:1px solid #e5e7eb;">
+      <p style="margin:0 0 16px;font-size:11px;color:${GRAY_DARK};text-transform:uppercase;letter-spacing:0.05em;font-weight:600;text-align:center;">Progreso del proyecto</p>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;" cellpadding="0" cellspacing="0">
+        <tr>${stepCells}</tr>
       </table>
     </div>
   `;
@@ -245,13 +262,13 @@ function buildStatusChangeHtml(data: {
         <tr>
           <td style="padding:12px 16px; font-size:13px; color:#6b7280; border-bottom:1px solid #f3f4f6; width:40%;">Estado anterior</td>
           <td style="padding:12px 16px; font-size:13px; color:#111827; font-weight:500; border-bottom:1px solid #f3f4f6;">
-            <span style="background:#fee2e2; color:#991b1b; padding:3px 10px; border-radius:9999px; font-size:12px;">${prevLabel}</span>
+            <span style="background:#f3f4f6; color:#6b7280; padding:3px 10px; border-radius:9999px; font-size:12px;">${prevLabel}</span>
           </td>
         </tr>
         <tr>
           <td style="padding:12px 16px; font-size:13px; color:#6b7280; width:40%;">Nuevo estado</td>
           <td style="padding:12px 16px; font-size:13px; color:#111827; font-weight:500;">
-            <span style="background:#dcfce7; color:#166534; padding:3px 10px; border-radius:9999px; font-size:12px;">${newLabel}</span>
+            <span style="background:#fff7ed; color:#c2410c; padding:3px 10px; border-radius:9999px; font-size:12px; font-weight:600;">${newLabel}</span>
           </td>
         </tr>
       </table>
