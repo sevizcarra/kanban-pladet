@@ -79,6 +79,16 @@ const fmtDateShort = (d: string | null | undefined): string => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
+// Survey URLs by unit
+const SURVEY_URL_UOM_UGO = "https://docs.google.com/forms/d/e/1FAIpQLSeIAmwpFnJELSZSUv7EaycReaZVwtPxdbnTduuEN-ZxA5b6fg/viewform";
+const SURVEY_URL_UPT = "https://docs.google.com/forms/d/e/1FAIpQLSeqDclW5P-Nw_be9WE0zrQLSFtzuHJE3mf8sXO9XlP0WTJdNQ/viewform";
+
+const getSurveyUrl = (unidad?: string): string | null => {
+  if (unidad === "UOM" || unidad === "UGO") return SURVEY_URL_UOM_UGO;
+  if (unidad === "UPT") return SURVEY_URL_UPT;
+  return null;
+};
+
 // Auto-calculate: fechaRecProviso + plazoRecDef days = fechaProgramadaRecDef
 const calcRecDefProg = (p: Project): string => {
   if (!p.fechaRecProviso || !p.plazoRecDef) return "—";
@@ -209,13 +219,22 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-purple-400",
     columns: [
-      { key: "encuesta", label: "Encuesta", width: 90, render: (p) => (
-        p.status === "terminada" ? (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200 transition-colors">
-            📋 Enviar
-          </span>
-        ) : <span className="text-gray-300">—</span>
-      )},
+      { key: "encuesta", label: "Encuesta", width: 90, render: (p) => {
+        const url = getSurveyUrl(p.unidadAsignada);
+        if (p.status === "terminada" && url) {
+          return (
+            <a href={url} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200 transition-colors"
+              onClick={(e) => e.stopPropagation()}>
+              📋 Enviar
+            </a>
+          );
+        }
+        if (p.status === "terminada" && !url) {
+          return <span className="text-[9px] text-amber-500" title="Asignar unidad para habilitar encuesta">Sin unidad</span>;
+        }
+        return <span className="text-gray-300">—</span>;
+      }},
     ],
   },
 ];

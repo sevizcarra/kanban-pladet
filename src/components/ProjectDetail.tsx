@@ -1054,17 +1054,45 @@ export default function ProjectDetail({
                 <p className="text-xs text-gray-500 mb-4">
                   Al cerrar el proyecto, envía una encuesta de satisfacción al usuario solicitante para evaluar los trabajos realizados.
                 </p>
-                <button
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={project.status !== "terminada"}
-                  title={project.status !== "terminada" ? "El proyecto debe estar terminado para enviar la encuesta" : "Enviar encuesta de satisfacción"}
-                >
-                  <ClipboardList className="w-4 h-4" />
-                  Enviar Encuesta de Satisfacción
-                </button>
-                {project.status !== "terminada" && (
-                  <p className="text-[10px] text-amber-600 mt-2">El proyecto debe estar en estado &quot;Terminada&quot; para enviar la encuesta.</p>
-                )}
+                {(() => {
+                  const surveyUrl =
+                    project.unidadAsignada === "UOM" || project.unidadAsignada === "UGO"
+                      ? "https://docs.google.com/forms/d/e/1FAIpQLSeIAmwpFnJELSZSUv7EaycReaZVwtPxdbnTduuEN-ZxA5b6fg/viewform"
+                      : project.unidadAsignada === "UPT"
+                      ? "https://docs.google.com/forms/d/e/1FAIpQLSeqDclW5P-Nw_be9WE0zrQLSFtzuHJE3mf8sXO9XlP0WTJdNQ/viewform"
+                      : null;
+                  const canSend = project.status === "terminada" && !!surveyUrl;
+                  return (
+                    <>
+                      {canSend ? (
+                        <a
+                          href={surveyUrl!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-colors"
+                        >
+                          <ClipboardList className="w-4 h-4" />
+                          Enviar Encuesta de Satisfacción
+                          {project.unidadAsignada === "UPT" ? " (UPT)" : ` (${project.unidadAsignada})`}
+                        </a>
+                      ) : (
+                        <button
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-semibold transition-colors opacity-50 cursor-not-allowed"
+                          disabled
+                        >
+                          <ClipboardList className="w-4 h-4" />
+                          Enviar Encuesta de Satisfacción
+                        </button>
+                      )}
+                      {project.status !== "terminada" && (
+                        <p className="text-[10px] text-amber-600 mt-2">El proyecto debe estar en estado &quot;Terminada&quot; para enviar la encuesta.</p>
+                      )}
+                      {project.status === "terminada" && !surveyUrl && (
+                        <p className="text-[10px] text-amber-600 mt-2">Debe asignar una unidad (UOM, UPT o UGO) en Antecedentes para habilitar la encuesta correspondiente.</p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
