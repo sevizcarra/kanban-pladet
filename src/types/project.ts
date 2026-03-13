@@ -56,6 +56,8 @@ export interface Project {
   fechaRecProviso?: string;
   fechaRecDefinitiva?: string;
   fechaProgramadaRecDef?: string;
+  plazoRecDef?: number; // Plazo recepción definitiva en días (desde rec. provisoria)
+  fechaRecDefReal?: string; // Fecha real de recepción definitiva
   // Ejecución — Memo solicitud asignación ITO
   fechaDerivacionMemoITO?: string;
   // Docs

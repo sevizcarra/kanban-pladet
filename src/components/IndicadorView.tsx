@@ -28,7 +28,7 @@ interface ColDef {
   key: string;
   label: string;
   width: number;
-  editable?: "date" | "text" | "select" | "fieldTs";
+  editable?: "date" | "text" | "select" | "fieldTs" | "number";
   editField?: string; // field name on Project to edit (or fieldTimestamps key for "fieldTs")
   selectOptions?: { value: string; label: string }[];
   render: (p: Project) => React.ReactNode;
@@ -77,6 +77,29 @@ const fmtDateShort = (d: string | null | undefined): string => {
   const mm = (date.getMonth() + 1).toString().padStart(2, "0");
   const yyyy = date.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
+};
+
+// Auto-calculate: fechaRecProviso + plazoRecDef days = fechaProgramadaRecDef
+const calcRecDefProg = (p: Project): string => {
+  if (!p.fechaRecProviso || !p.plazoRecDef) return "—";
+  const d = new Date(p.fechaRecProviso);
+  d.setDate(d.getDate() + p.plazoRecDef);
+  const dd = d.getDate().toString().padStart(2, "0");
+  const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
+// Difference in days between programada and real rec. definitiva
+const calcDifRecDef = (p: Project): React.ReactNode => {
+  if (!p.fechaRecProviso || !p.plazoRecDef || !p.fechaRecDefReal) return "—";
+  const progDate = new Date(p.fechaRecProviso);
+  progDate.setDate(progDate.getDate() + p.plazoRecDef);
+  const realDate = new Date(p.fechaRecDefReal);
+  const diff = Math.ceil((realDate.getTime() - progDate.getTime()) / 86400000);
+  const color = diff > 0 ? "text-red-600 font-bold" : diff < 0 ? "text-emerald-600 font-bold" : "text-gray-500";
+  const label = diff > 0 ? `+${diff}d` : diff < 0 ? `${diff}d` : "0d";
+  return <span className={color}>{label}</span>;
 };
 
 const UNIDAD_OPTIONS = [
@@ -173,8 +196,26 @@ const PHASES: PhaseGroup[] = [
       { key: "fechaTerminoEst", label: "Término Est.", width: 90, editable: "date", editField: "fechaEstimadaTermino", render: (p) => fmtDateShort(p.fechaEstimadaTermino) },
       { key: "fechaTerminoReal", label: "Término Real", width: 90, editable: "date", editField: "fechaRealTerminoObra", render: (p) => fmtDateShort(p.fechaRealTerminoObra) },
       { key: "recProv", label: "Rec. Prov.", width: 90, editable: "date", editField: "fechaRecProviso", render: (p) => fmtDateShort(p.fechaRecProviso) },
-      { key: "recDef", label: "Rec. Def.", width: 90, editable: "date", editField: "fechaRecDefinitiva", render: (p) => fmtDateShort(p.fechaRecDefinitiva) },
-      { key: "recDefProg", label: "Rec. Def. Prog.", width: 90, editable: "date", editField: "fechaProgramadaRecDef", render: (p) => fmtDateShort(p.fechaProgramadaRecDef) },
+      { key: "plazoRecDef", label: "Plazo Rec.Def.", width: 70, editable: "number", editField: "plazoRecDef", render: (p) => p.plazoRecDef ? `${p.plazoRecDef}d` : "—" },
+      { key: "recDefProg", label: "Rec.Def. Prog.", width: 90, render: (p) => calcRecDefProg(p) },
+      { key: "recDefReal", label: "Rec.Def. Real", width: 90, editable: "date", editField: "fechaRecDefReal", render: (p) => fmtDateShort(p.fechaRecDefReal) },
+      { key: "difRecDef", label: "Dif. Días", width: 60, render: (p) => calcDifRecDef(p) },
+    ],
+  },
+  {
+    id: "cierre",
+    label: "Cierre",
+    color: "bg-purple-600",
+    textColor: "text-white",
+    borderColor: "border-purple-400",
+    columns: [
+      { key: "encuesta", label: "Encuesta", width: 90, render: (p) => (
+        p.status === "terminada" ? (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200 transition-colors">
+            📋 Enviar
+          </span>
+        ) : <span className="text-gray-300">—</span>
+      )},
     ],
   },
 ];
@@ -233,6 +274,20 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
         }
       } catch (e) {
         console.error("Error updating fieldTimestamp inline:", e);
+      }
+    } else if (colType === "number") {
+      // Save as number
+      const numVal = newVal ? parseInt(newVal) : 0;
+      const oldVal = ((p as unknown) as Record<string, unknown>)[field] as number || 0;
+      if (numVal === oldVal) return;
+      try {
+        const partial: Partial<Project> = { [field]: numVal } as Partial<Project>;
+        await updateProject(p.id, partial);
+        if (onUpdateProject) {
+          onUpdateProject({ ...p, [field]: numVal });
+        }
+      } catch (e) {
+        console.error("Error updating number field inline:", e);
       }
     } else {
       // Regular field save
@@ -519,6 +574,20 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
                                 }}
                                 className="w-full text-[10px] border border-[#F97316] rounded px-1 py-0.5 outline-none bg-orange-50"
                                 autoFocus
+                              />
+                            ) : isEditing && col.editable === "number" ? (
+                              <input
+                                type="number"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={() => handleInlineSave(p)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleInlineSave(p);
+                                  if (e.key === "Escape") handleInlineCancel();
+                                }}
+                                className="w-full text-[10px] border border-[#F97316] rounded px-1 py-0.5 outline-none bg-orange-50"
+                                autoFocus
+                                min={0}
                               />
                             ) : isEditing && col.editable === "select" ? (
                               <select

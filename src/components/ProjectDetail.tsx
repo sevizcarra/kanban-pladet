@@ -71,6 +71,7 @@ const TABS_REGULAR = [
   { id: "diseno", label: "Diseño", icon: FolderOpen },
   { id: "compras", label: "Compras", icon: Package },
   { id: "ejecucion", label: "Ejecución", icon: Hammer },
+  { id: "cierre", label: "Cierre", icon: ClipboardList },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ] as const;
 
@@ -84,10 +85,11 @@ const TABS_OBRAS = [
   { id: "general", label: "Antecedentes", icon: Calendar },
   { id: "equipo", label: "Equipo", icon: Users },
   { id: "ejecucion", label: "Ejecución", icon: Hammer },
+  { id: "cierre", label: "Cierre", icon: ClipboardList },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ] as const;
 
-type TabId = "general" | "equipo" | "diseno" | "compras" | "ejecucion" | "comentarios";
+type TabId = "general" | "equipo" | "diseno" | "compras" | "ejecucion" | "cierre" | "comentarios";
 
 export default function ProjectDetail({
   project,
@@ -136,7 +138,6 @@ export default function ProjectDetail({
   const [fechaAsignacionUnidad, setFechaAsignacionUnidad] = useState(project.fechaAsignacionUnidad || "");
   const [fechaEnvioTramitados, setFechaEnvioTramitados] = useState(project.fechaEnvioTramitados || "");
   const [fechaRealTerminoObra, setFechaRealTerminoObra] = useState(project.fechaRealTerminoObra || "");
-  const [fechaProgramadaRecDef, setFechaProgramadaRecDef] = useState(project.fechaProgramadaRecDef || "");
   const [fechaDerivacionMemoITO, setFechaDerivacionMemoITO] = useState(project.fechaDerivacionMemoITO || "");
   const [tipoLicitacion, setTipoLicitacion] = useState(normalizeTipoLicitacion(project.tipoLicitacion || ""));
   const [edpCount, setEdpCount] = useState(project.edpCount || 1);
@@ -147,6 +148,8 @@ export default function ProjectDetail({
   const [fechaVencGarantia, setFechaVencGarantia] = useState(project.fechaVencGarantia || "");
   const [fechaRecProviso, setFechaRecProviso] = useState(project.fechaRecProviso || "");
   const [fechaRecDefinitiva, setFechaRecDefinitiva] = useState(project.fechaRecDefinitiva || "");
+  const [plazoRecDef, setPlazoRecDef] = useState(project.plazoRecDef || 0);
+  const [fechaRecDefReal, setFechaRecDefReal] = useState(project.fechaRecDefReal || "");
 
   // Location
   const [ubicacionLat, setUbicacionLat] = useState(project.ubicacionLat || 0);
@@ -193,6 +196,22 @@ export default function ProjectDetail({
     return date.toISOString().split("T")[0];
   }, [fechaInicioObra, plazoEjecucion]);
 
+  // Auto-calculated: Rec. Provisoria + plazoRecDef days = Rec. Definitiva Programada
+  const fechaRecDefProgramada = useMemo(() => {
+    if (!fechaRecProviso || !plazoRecDef) return null;
+    const date = new Date(fechaRecProviso);
+    date.setDate(date.getDate() + plazoRecDef);
+    return date.toISOString().split("T")[0];
+  }, [fechaRecProviso, plazoRecDef]);
+
+  // Difference between programada and real rec. definitiva
+  const difRecDef = useMemo(() => {
+    if (!fechaRecDefProgramada || !fechaRecDefReal) return null;
+    const prog = new Date(fechaRecDefProgramada).getTime();
+    const real = new Date(fechaRecDefReal).getTime();
+    return Math.ceil((real - prog) / 86400000);
+  }, [fechaRecDefProgramada, fechaRecDefReal]);
+
   const showDCI = useMemo(() => tipoFinanciamiento === "DCI" || tipoFinanciamiento === "VRIIC", [tipoFinanciamiento]);
   const canDelete = useMemo(() => deleteReason.trim().length >= 10, [deleteReason]);
 
@@ -237,11 +256,13 @@ export default function ProjectDetail({
       fechaAsignacionUnidad: fechaAsignacionUnidad || "",
       fechaEnvioTramitados: fechaEnvioTramitados || "",
       fechaRealTerminoObra: fechaRealTerminoObra || "",
-      fechaProgramadaRecDef: fechaProgramadaRecDef || "",
+      fechaProgramadaRecDef: fechaRecDefProgramada || "",
       fechaDerivacionMemoITO: fechaDerivacionMemoITO || "",
       fechaInicioObra: fechaInicioObra || "", plazoEjecucion: plazoEjecucion.toString(),
       fechaVencGarantia: fechaVencGarantia || "", fechaRecProviso: fechaRecProviso || "",
       fechaRecDefinitiva: fechaRecDefinitiva || "",
+      plazoRecDef: plazoRecDef || 0,
+      fechaRecDefReal: fechaRecDefReal || "",
       ubicacionLat, ubicacionLng, ubicacionNombre,
       cuadrillas,
       recinto: recinto || undefined,
@@ -919,8 +940,16 @@ export default function ProjectDetail({
                   <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Real Término Obra</label><input type="date" value={fechaRealTerminoObra} onChange={(e) => setFechaRealTerminoObra(e.target.value)} className={inputCls} /></div>
                   {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Venc. Garantía</label><input type="date" value={fechaVencGarantia} onChange={(e) => setFechaVencGarantia(e.target.value)} className={inputCls} /></div>}
                   {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Provisoria</label><input type="date" value={fechaRecProviso} onChange={(e) => setFechaRecProviso(e.target.value)} className={inputCls} /></div>}
-                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Definitiva</label><input type="date" value={fechaRecDefinitiva} onChange={(e) => setFechaRecDefinitiva(e.target.value)} className={inputCls} /></div>}
-                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Programada Rec. Definitiva</label><input type="date" value={fechaProgramadaRecDef} onChange={(e) => setFechaProgramadaRecDef(e.target.value)} className={inputCls} /><p className="text-[10px] text-gray-400 mt-0.5">Plazo programado para la recepción definitiva.</p></div>}
+                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Plazo Rec. Definitiva (días)</label><input type="number" value={plazoRecDef} onChange={(e) => setPlazoRecDef(parseInt(e.target.value) || 0)} className={inputCls} min={0} placeholder="0" /><p className="text-[10px] text-gray-400 mt-0.5">Días desde la Rec. Provisoria. Se calcula automáticamente la fecha programada.</p></div>}
+                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Rec. Definitiva Programada</label><input type="text" disabled value={fechaRecDefProgramada ? fmtDate(fechaRecDefProgramada) : "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600" /><p className="text-[10px] text-gray-400 mt-0.5">Calculada automáticamente: Rec. Provisoria + plazo.</p></div>}
+                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Rec. Definitiva Real</label><input type="date" value={fechaRecDefReal} onChange={(e) => setFechaRecDefReal(e.target.value)} className={inputCls} /></div>}
+                  {!projectIsObras && difRecDef !== null && (
+                    <div><label className="block text-xs text-gray-800 font-semibold mb-1">Diferencia Rec. Def.</label>
+                      <div className={`w-full px-3 py-2 rounded-lg border text-sm font-bold ${difRecDef > 0 ? "border-red-300 bg-red-50 text-red-600" : difRecDef < 0 ? "border-emerald-300 bg-emerald-50 text-emerald-600" : "border-gray-300 bg-gray-50 text-gray-600"}`}>
+                        {difRecDef > 0 ? `+${difRecDef} días (atraso)` : difRecDef < 0 ? `${difRecDef} días (adelanto)` : "0 días (en fecha)"}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -989,6 +1018,55 @@ export default function ProjectDetail({
                 </div>
               )}
             </>
+          )}
+
+          {/* ── TAB: Cierre ── */}
+          {activeTab === "cierre" && (
+            <div className={cardCls}>
+              <div className="flex items-center gap-2 mb-4">
+                <ClipboardList className="w-5 h-5 text-purple-600" />
+                <h2 className="text-base font-bold text-gray-900">Cierre de Proyecto</h2>
+              </div>
+
+              {/* Resumen de fechas clave */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide mb-1">Rec. Definitiva Programada</p>
+                  <p className="text-sm font-semibold text-gray-800">{fechaRecDefProgramada ? fmtDate(fechaRecDefProgramada) : "—"}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide mb-1">Rec. Definitiva Real</p>
+                  <p className="text-sm font-semibold text-gray-800">{fechaRecDefReal ? fmtDate(fechaRecDefReal) : "—"}</p>
+                </div>
+                {difRecDef !== null && (
+                  <div className={`rounded-lg p-3 ${difRecDef > 0 ? "bg-red-50" : difRecDef < 0 ? "bg-emerald-50" : "bg-gray-50"}`}>
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide mb-1">Diferencia</p>
+                    <p className={`text-sm font-bold ${difRecDef > 0 ? "text-red-600" : difRecDef < 0 ? "text-emerald-600" : "text-gray-600"}`}>
+                      {difRecDef > 0 ? `+${difRecDef} días (atraso)` : difRecDef < 0 ? `${difRecDef} días (adelanto)` : "0 días (en fecha)"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Encuesta de satisfacción */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Encuesta de Satisfacción</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Al cerrar el proyecto, envía una encuesta de satisfacción al usuario solicitante para evaluar los trabajos realizados.
+                </p>
+                <button
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={project.status !== "terminada"}
+                  title={project.status !== "terminada" ? "El proyecto debe estar terminado para enviar la encuesta" : "Enviar encuesta de satisfacción"}
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  Enviar Encuesta de Satisfacción
+                </button>
+                {project.status !== "terminada" && (
+                  <p className="text-[10px] text-amber-600 mt-2">El proyecto debe estar en estado &quot;Terminada&quot; para enviar la encuesta.</p>
+                )}
+              </div>
+            </div>
           )}
 
           {/* ── TAB: Comentarios ── */}
