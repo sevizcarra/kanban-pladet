@@ -614,8 +614,8 @@ export default function ProjectDetail({
                       <FileText className="w-5 h-5 text-[#22c55e]" />
                       <h2 className="text-base font-bold text-gray-900">Descripción del Proyecto</h2>
                     </div>
-                    <label className="block text-xs text-gray-800 font-semibold mb-1">Descripción ({descripcion.length}/200)</label>
-                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value.slice(0, 200))} maxLength={200}
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Descripción ({descripcion.length}/1000)</label>
+                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value.slice(0, 1000))} maxLength={1000}
                       className={inputCls + " resize-none h-20"} placeholder="Ingrese la descripción del proyecto..." />
                   </div>
 
@@ -726,8 +726,8 @@ export default function ProjectDetail({
                       <FileText className="w-5 h-5 text-[#F97316]" />
                       <h2 className="text-base font-bold text-gray-900">Descripción del Proyecto</h2>
                     </div>
-                    <label className="block text-xs text-gray-800 font-semibold mb-1">Descripción ({descripcion.length}/200)</label>
-                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value.slice(0, 200))} maxLength={200}
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Descripción ({descripcion.length}/1000)</label>
+                    <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value.slice(0, 1000))} maxLength={1000}
                       className={inputCls + " resize-none h-20"} placeholder="Ingrese la descripción del proyecto..." />
                   </div>
 
