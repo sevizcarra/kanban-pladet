@@ -319,7 +319,7 @@ export default function ProjectDetail({
     const toEmail = editedEmail || project.contactEmail;
     const toName = editedName || project.contactName;
     if (sendEmail && toEmail && toEmail !== "—" && toEmail.includes("@")) {
-      const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "status_change", to: toEmail, contactName: toName || "Estimado/a", projectName: project.title, projectCode: project.codigoProyectoUsa || "—", previousStatus: project.status, newStatus: newStatusId }) });
+      const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "status_change", to: toEmail, contactName: toName || "Estimado/a", projectName: project.title, projectCode: project.codigoProyectoUsa || "—", previousStatus: project.status, newStatus: newStatusId, tipoDesarrollo: project.tipoDesarrollo || "", dashboardType: project.dashboardType || "" }) });
       if (!res.ok) throw new Error("Email send failed");
     }
   };
