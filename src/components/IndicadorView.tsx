@@ -98,6 +98,16 @@ const getSurveyUrl = (unidad?: string): string | null => {
 // Parse "YYYY-MM-DD" as local date (avoids UTC offset issues)
 const parseLocal = (s: string) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
 
+const calcTerminoEst = (p: Project): string => {
+  if (!p.fechaInicioObra || !p.plazoEjecucion) return fmtDateShort(p.fechaEstimadaTermino);
+  const d = parseLocal(p.fechaInicioObra);
+  d.setDate(d.getDate() + parseInt(String(p.plazoEjecucion)));
+  const dd = d.getDate().toString().padStart(2, "0");
+  const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
 const calcRecDefProg = (p: Project): string => {
   if (!p.fechaRecProviso || !p.plazoRecDef) return "—";
   const d = parseLocal(p.fechaRecProviso);
@@ -211,7 +221,7 @@ const PHASES: PhaseGroup[] = [
       { key: "itoAsignacion", label: "F. Asig. ITO", width: 90, editable: "fieldTs", editField: "inspectorId", render: (p) => fmtFieldTs(p, "inspectorId") },
       { key: "fechaInicio", label: "Inicio Obra", width: 90, editable: "date", editField: "fechaInicioObra", render: (p) => fmtDateShort(p.fechaInicioObra) },
       { key: "plazo", label: "Plazo", width: 60, render: (p) => p.plazoEjecucion ? `${p.plazoEjecucion}d` : "—" },
-      { key: "fechaTerminoEst", label: "Término Est.", width: 90, editable: "date", editField: "fechaEstimadaTermino", render: (p) => fmtDateShort(p.fechaEstimadaTermino) },
+      { key: "fechaTerminoEst", label: "Término Est.", width: 90, render: (p) => calcTerminoEst(p) },
       { key: "fechaTerminoReal", label: "Término Real", width: 90, editable: "date", editField: "fechaRealTerminoObra", render: (p) => fmtDateShort(p.fechaRealTerminoObra) },
       { key: "recProv", label: "Rec. Prov.", width: 90, editable: "date", editField: "fechaRecProviso", render: (p) => fmtDateShort(p.fechaRecProviso) },
       { key: "plazoRecDef", label: "Plazo Rec.Def.", width: 70, editable: "number", editField: "plazoRecDef", render: (p) => p.plazoRecDef ? `${p.plazoRecDef}d` : "—" },
