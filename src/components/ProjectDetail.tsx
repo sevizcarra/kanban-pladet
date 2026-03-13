@@ -108,6 +108,8 @@ export default function ProjectDetail({
   const [descripcion, setDescripcion] = useState(project.description || "");
   const [fechaLicitacion, setFechaLicitacion] = useState(project.fechaLicitacion || "");
   const [fechaPublicacion, setFechaPublicacion] = useState(project.fechaPublicacion || "");
+  const [fechaSolicitudCDP, setFechaSolicitudCDP] = useState(project.fechaSolicitudCDP || "");
+  const [fechaEmisionCDP, setFechaEmisionCDP] = useState(project.fechaEmisionCDP || "");
   const [montoAsignado, setMontoAsignado] = useState(project.budget || "");
   const [tipoFinanciamiento, setTipoFinanciamiento] = useState(project.tipoFinanciamiento || "Capital");
   const [idLicitacion, setIdLicitacion] = useState(project.idLicitacion || "");
@@ -243,7 +245,9 @@ export default function ProjectDetail({
       memorandumNumber: memorandumNumber || "", requestingUnit: infoUnit || "", contactName: infoContactName || "", contactEmail: infoContactEmail || "", categoriaProyecto,
       fechaRecepcionMemo: fechaRecepcionMemo || "", dueDate: fechaEstEntrega || "",
       description: descripcion, fechaLicitacion: fechaLicitacion || "",
-      fechaPublicacion: fechaPublicacion || "", budget: montoAsignado,
+      fechaPublicacion: fechaPublicacion || "",
+      fechaSolicitudCDP: fechaSolicitudCDP || "", fechaEmisionCDP: fechaEmisionCDP || "",
+      budget: montoAsignado,
       tipoFinanciamiento, tipoLicitacion: tipoLicitacion || "",
       codigoProyectoUsa: generatedCode, idLicitacion: idLicitacion || "",
       codigoProyectoDCI: codigoProyectoDCI || "", fechaVencimientoRecursos: fechaVencimientoRecursos || "",
@@ -655,6 +659,14 @@ export default function ProjectDetail({
                         <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Creación</label>
                         <p className="text-sm font-medium text-gray-900 py-2">{fmtDate(project.createdAt)}</p>
                       </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Solicitud CDP</label>
+                        <input type="date" value={fechaSolicitudCDP} onChange={(e) => setFechaSolicitudCDP(e.target.value)} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Emisión CDP</label>
+                        <input type="date" value={fechaEmisionCDP} onChange={(e) => setFechaEmisionCDP(e.target.value)} className={inputCls} />
+                      </div>
                     </div>
                   </div>
 
@@ -743,6 +755,14 @@ export default function ProjectDetail({
                         <select value={tipoFinanciamiento} onChange={(e) => setTipoFinanciamiento(e.target.value)} className={inputCls}>
                           <option value="Capital">Capital</option><option value="Corriente">Corriente</option><option value="Corriente USACH">Corriente USACH</option><option value="DCI">DCI</option><option value="VRIIC">VRIIC</option>
                         </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Solicitud CDP</label>
+                        <input type="date" value={fechaSolicitudCDP} onChange={(e) => setFechaSolicitudCDP(e.target.value)} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Emisión CDP</label>
+                        <input type="date" value={fechaEmisionCDP} onChange={(e) => setFechaEmisionCDP(e.target.value)} className={inputCls} />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-800 font-semibold mb-1">Tipo de Licitación</label>

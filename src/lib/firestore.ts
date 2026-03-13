@@ -63,6 +63,7 @@ const TRACKED_FIELDS = new Set([
   "unidadAsignada", "fechaAsignacionUnidad", "fechaInicioDis", "fechaEnvioTramitados",
   "fechaRealTerminoObra", "fechaProgramadaRecDef", "fechaDerivacionMemoITO",
   "plazoRecDef", "fechaRecDefReal",
+  "fechaSolicitudCDP", "fechaEmisionCDP",
 ]);
 
 // Check if a value is "empty" (null, undefined, empty string, 0, -1 for IDs)

@@ -17,7 +17,9 @@ export interface Project {
   sector: string;
   categoriaProyecto?: string;
   fechaRecepcionMemo?: string;
-  // Antecedentes Generales
+  // Antecedentes Generales — CDP
+  fechaSolicitudCDP?: string;
+  fechaEmisionCDP?: string;
   fechaLicitacion?: string;
   fechaPublicacion?: string;
   idLicitacion?: string;
