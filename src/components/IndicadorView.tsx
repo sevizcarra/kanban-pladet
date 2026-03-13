@@ -22,6 +22,7 @@ interface ColDef {
   key: string;
   label: string;
   width: number;
+  trackedField?: string; // field name to look up in fieldTimestamps (if different from key)
   render: (p: Project) => React.ReactNode;
 }
 
@@ -92,21 +93,21 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-slate-400",
     columns: [
-      { key: "title", label: "Proyecto", width: 220, render: (p) => (
+      { key: "title", label: "Proyecto", width: 220, trackedField: "title", render: (p) => (
         <span className="font-semibold text-gray-900 leading-tight" title={p.title}>
           {p.title.length > 40 ? p.title.slice(0, 40) + "…" : p.title}
         </span>
       )},
       { key: "year", label: "Año", width: 50, render: (p) => p.createdAt ? new Date(p.createdAt).getFullYear() : "—" },
-      { key: "memo", label: "Memorándum", width: 120, render: (p) => {
+      { key: "memo", label: "Memorándum", width: 120, trackedField: "memorandumNumber", render: (p) => {
         if (p.memos && p.memos.length > 0) return p.memos.map(m => m.key).join(", ");
         return p.memorandumNumber || "—";
       }},
       { key: "fechaIngreso", label: "Fecha Ingreso", width: 95, render: (p) => fmtDate(p.createdAt) },
-      { key: "unit", label: "Unidad", width: 100, render: (p) => p.requestingUnit || "—" },
-      { key: "tipo", label: "Tipo", width: 80, render: (p) => p.tipoLicitacion || "—" },
-      { key: "recinto", label: "Recinto", width: 110, render: (p) => p.recinto || "—" },
-      { key: "status", label: "Estado", width: 130, render: (p) => {
+      { key: "unit", label: "Unidad", width: 100, trackedField: "requestingUnit", render: (p) => p.requestingUnit || "—" },
+      { key: "tipo", label: "Tipo", width: 80, trackedField: "tipoLicitacion", render: (p) => p.tipoLicitacion || "—" },
+      { key: "recinto", label: "Recinto", width: 110, trackedField: "recinto", render: (p) => p.recinto || "—" },
+      { key: "status", label: "Estado", width: 130, trackedField: "status", render: (p) => {
         const s = getStatusObj(p.status, p.tipoDesarrollo, p.dashboardType);
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${s.color}22`, color: s.color }}>
@@ -124,15 +125,15 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-blue-400",
     columns: [
-      { key: "jefe", label: "Jefe Proyecto", width: 120, render: (p) => getJefeNombre(p.jefeProyectoId) },
-      { key: "disciplina", label: "Disciplina Líder", width: 90, render: (p) => p.disciplinaLider || "—" },
-      { key: "subetapas", label: "Sub-Etapas", width: 100, render: renderSubEtapas },
+      { key: "jefe", label: "Jefe Proyecto", width: 120, trackedField: "jefeProyectoId", render: (p) => getJefeNombre(p.jefeProyectoId) },
+      { key: "disciplina", label: "Disciplina Líder", width: 90, trackedField: "disciplinaLider", render: (p) => p.disciplinaLider || "—" },
+      { key: "subetapas", label: "Sub-Etapas", width: 100, trackedField: "subEtapas", render: renderSubEtapas },
       { key: "avance", label: "Avance", width: 70, render: (p) => {
         const pct = getProgress(p.status, p.subEtapas, p.tipoDesarrollo, p.dashboardType);
         const color = pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-gray-500";
         return <span className={`font-bold ${color}`}>{pct}%</span>;
       }},
-      { key: "dueDate", label: "Fecha Entrega", width: 95, render: (p) => fmtDate(p.dueDate) },
+      { key: "dueDate", label: "Fecha Entrega", width: 95, trackedField: "dueDate", render: (p) => fmtDate(p.dueDate) },
     ],
   },
   {
@@ -142,11 +143,11 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-amber-400",
     columns: [
-      { key: "budget", label: "Presupuesto", width: 100, render: (p) => p.budget && Number(p.budget) > 0 ? fmt(Number(p.budget)) : "—" },
-      { key: "tipoFin", label: "Financiamiento", width: 95, render: (p) => p.tipoFinanciamiento || "—" },
-      { key: "tipoLic", label: "Licitación", width: 80, render: (p) => p.tipoLicitacion || "—" },
-      { key: "fechaLic", label: "Fecha Licitación", width: 95, render: (p) => fmtDate(p.fechaLicitacion) },
-      { key: "idLic", label: "ID Licitación", width: 95, render: (p) => p.idLicitacion || "—" },
+      { key: "budget", label: "Presupuesto", width: 100, trackedField: "budget", render: (p) => p.budget && Number(p.budget) > 0 ? fmt(Number(p.budget)) : "—" },
+      { key: "tipoFin", label: "Financiamiento", width: 95, trackedField: "tipoFinanciamiento", render: (p) => p.tipoFinanciamiento || "—" },
+      { key: "tipoLic", label: "Licitación", width: 80, trackedField: "tipoLicitacion", render: (p) => p.tipoLicitacion || "—" },
+      { key: "fechaLic", label: "Fecha Licitación", width: 95, trackedField: "fechaLicitacion", render: (p) => fmtDate(p.fechaLicitacion) },
+      { key: "idLic", label: "ID Licitación", width: 95, trackedField: "idLicitacion", render: (p) => p.idLicitacion || "—" },
     ],
   },
   {
@@ -156,12 +157,12 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-emerald-400",
     columns: [
-      { key: "inspector", label: "ITO", width: 120, render: (p) => getInspectorNombre(p.inspectorId) },
-      { key: "fechaInicio", label: "Inicio Obra", width: 95, render: (p) => fmtDate(p.fechaInicioObra) },
-      { key: "plazo", label: "Plazo Ejec.", width: 75, render: (p) => p.plazoEjecucion ? `${p.plazoEjecucion} días` : "—" },
-      { key: "fechaTermino", label: "Término Est.", width: 95, render: (p) => fmtDate(p.fechaEstimadaTermino) },
-      { key: "recProv", label: "Rec. Provisoria", width: 95, render: (p) => fmtDate(p.fechaRecProviso) },
-      { key: "recDef", label: "Rec. Definitiva", width: 95, render: (p) => fmtDate(p.fechaRecDefinitiva) },
+      { key: "inspector", label: "ITO", width: 120, trackedField: "inspectorId", render: (p) => getInspectorNombre(p.inspectorId) },
+      { key: "fechaInicio", label: "Inicio Obra", width: 95, trackedField: "fechaInicioObra", render: (p) => fmtDate(p.fechaInicioObra) },
+      { key: "plazo", label: "Plazo Ejec.", width: 75, trackedField: "plazoEjecucion", render: (p) => p.plazoEjecucion ? `${p.plazoEjecucion} días` : "—" },
+      { key: "fechaTermino", label: "Término Est.", width: 95, trackedField: "fechaEstimadaTermino", render: (p) => fmtDate(p.fechaEstimadaTermino) },
+      { key: "recProv", label: "Rec. Provisoria", width: 95, trackedField: "fechaRecProviso", render: (p) => fmtDate(p.fechaRecProviso) },
+      { key: "recDef", label: "Rec. Definitiva", width: 95, trackedField: "fechaRecDefinitiva", render: (p) => fmtDate(p.fechaRecDefinitiva) },
     ],
   },
 ];
@@ -205,9 +206,23 @@ export default function IndicadorView({ projects, onProjectClick }: IndicadorVie
   }, [filtered]);
 
   const allCols = PHASES.flatMap((ph) => ph.columns);
-  const ROW_HEIGHT = 42;
+  const ROW_HEIGHT = 52;
   const HEADER_HEIGHT = 28;
   const PHASE_HEADER_HEIGHT = 28;
+
+  // Helper to get field timestamp for a project
+  const getFieldTs = (p: Project, fieldName?: string): string | null => {
+    if (!fieldName || !p.fieldTimestamps) return null;
+    return p.fieldTimestamps[fieldName] || null;
+  };
+
+  const fmtShortDate = (iso: string) => {
+    const d = new Date(iso);
+    const dd = d.getDate().toString().padStart(2, "0");
+    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+    const yy = d.getFullYear().toString().slice(-2);
+    return `${dd}/${mm}/${yy}`;
+  };
 
   // Row number column
   const ROW_NUM_WIDTH = 32;
@@ -337,17 +352,25 @@ export default function IndicadorView({ projects, onProjectClick }: IndicadorVie
                       {idx + 1}
                     </td>
                     {PHASES.map((ph) =>
-                      ph.columns.map((col) => (
-                        <td
-                          key={`${p.id}-${col.key}`}
-                          className={`px-2 text-[11px] text-gray-700 border-r border-gray-100 ${
-                            isDone ? "text-gray-400" : ""
-                          }`}
-                          style={{ maxWidth: col.width }}
-                        >
-                          <div className="truncate">{col.render(p)}</div>
-                        </td>
-                      ))
+                      ph.columns.map((col) => {
+                        const ts = getFieldTs(p, col.trackedField);
+                        return (
+                          <td
+                            key={`${p.id}-${col.key}`}
+                            className={`px-2 text-[11px] text-gray-700 border-r border-gray-100 ${
+                              isDone ? "text-gray-400" : ""
+                            }`}
+                            style={{ maxWidth: col.width }}
+                          >
+                            <div className="truncate leading-tight">{col.render(p)}</div>
+                            {ts && (
+                              <div className="text-[8px] text-gray-400 leading-none mt-0.5" title={`Registrado: ${new Date(ts).toLocaleString("es-CL")}`}>
+                                {fmtShortDate(ts)}
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })
                     )}
                   </tr>
                 );

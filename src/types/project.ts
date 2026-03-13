@@ -75,6 +75,8 @@ export interface Project {
   dataSource?: "manual" | "std" | "mixed"; // Origen de los datos
   stdAsunto?: string;                   // Título original del STD
   stdCuerpoDoc?: string;               // Cuerpo del documento STD (referencia)
+  // Field-level timestamps: tracks when each field was last set/modified
+  fieldTimestamps?: Record<string, string>; // { fieldName: ISO date string }
 }
 
 export interface MemoLink {

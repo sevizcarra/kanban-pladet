@@ -35,13 +35,48 @@ export async function createProject(project: Omit<Project, "id">): Promise<strin
       cleanData[key] = value;
     }
   }
-  cleanData.createdAt = new Date().toISOString();
+  const now = new Date().toISOString();
+  cleanData.createdAt = now;
+
+  // Record initial fieldTimestamps for all tracked fields that have values
+  const initialTimestamps: Record<string, string> = {};
+  for (const key of Object.keys(cleanData)) {
+    if (TRACKED_FIELDS.has(key) && !isEmptyValue(cleanData[key])) {
+      initialTimestamps[key] = now;
+    }
+  }
+  if (Object.keys(initialTimestamps).length > 0) {
+    cleanData.fieldTimestamps = initialTimestamps;
+  }
+
   const docRef = await addDoc(collection(db, COLLECTION), cleanData);
   return docRef.id;
 }
 
+// Fields to track timestamps for in the Indicador
+const TRACKED_FIELDS = new Set([
+  "title", "memorandumNumber", "requestingUnit", "tipoLicitacion", "recinto", "status",
+  "jefeProyectoId", "disciplinaLider", "dueDate", "subEtapas",
+  "budget", "tipoFinanciamiento", "fechaLicitacion", "idLicitacion",
+  "inspectorId", "fechaInicioObra", "plazoEjecucion", "fechaEstimadaTermino",
+  "fechaRecProviso", "fechaRecDefinitiva",
+]);
+
+// Check if a value is "empty" (null, undefined, empty string, 0, -1 for IDs)
+function isEmptyValue(val: unknown): boolean {
+  if (val === undefined || val === null || val === "" || val === -1) return true;
+  if (typeof val === "number" && val < 0) return true;
+  return false;
+}
+
 export async function updateProject(id: string, data: Partial<Project>): Promise<void> {
   const ref = doc(db, COLLECTION, id);
+
+  // Get current doc to detect newly-filled fields
+  const currentSnap = await getDoc(ref);
+  const currentData = currentSnap.exists() ? currentSnap.data() : {};
+  const existingTimestamps: Record<string, string> = currentData?.fieldTimestamps || {};
+
   // Strip undefined values and 'id' field — Firestore rejects undefined
   const cleanData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
@@ -49,6 +84,33 @@ export async function updateProject(id: string, data: Partial<Project>): Promise
       cleanData[key] = value;
     }
   }
+
+  // Detect fields that are being set/changed and record timestamps
+  const now = new Date().toISOString();
+  const newTimestamps: Record<string, string> = { ...existingTimestamps };
+  let tsChanged = false;
+
+  for (const key of Object.keys(cleanData)) {
+    if (!TRACKED_FIELDS.has(key)) continue;
+    if (key === "fieldTimestamps") continue;
+
+    const oldVal = currentData?.[key];
+    const newVal = cleanData[key];
+
+    // Record timestamp if: field was empty and now has a value, or value changed
+    if (isEmptyValue(oldVal) && !isEmptyValue(newVal)) {
+      newTimestamps[key] = now;
+      tsChanged = true;
+    } else if (!isEmptyValue(newVal) && JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+      newTimestamps[key] = now;
+      tsChanged = true;
+    }
+  }
+
+  if (tsChanged) {
+    cleanData.fieldTimestamps = newTimestamps;
+  }
+
   await updateDoc(ref, cleanData);
 }
 
