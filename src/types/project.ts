@@ -38,6 +38,8 @@ export interface Project {
     compraEvaluacionAdj?: boolean;
     compraAceptacionOC?: boolean;
   };
+  // Diseño — Visita a terreno (reunión del especialista con el usuario interno)
+  fechaVisitaTerreno?: string;
   // Ejecución
   fechaInicioObra?: string;
   plazoEjecucion?: string;

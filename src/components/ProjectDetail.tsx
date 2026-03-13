@@ -130,6 +130,7 @@ export default function ProjectDetail({
       compraCDP: false, compraEnProceso: false, compraEvaluacionAdj: false, compraAceptacionOC: false,
     }
   );
+  const [fechaVisitaTerreno, setFechaVisitaTerreno] = useState(project.fechaVisitaTerreno || "");
   const [tipoLicitacion, setTipoLicitacion] = useState(normalizeTipoLicitacion(project.tipoLicitacion || ""));
   const [edpCount, setEdpCount] = useState(project.edpCount || 1);
   const [retCount, setRetCount] = useState(project.retCount || 0);
@@ -223,6 +224,7 @@ export default function ProjectDetail({
       jefeProyectoId: jefeProyectoId === -1 ? 0 : jefeProyectoId,
       inspectorId: inspectorId === -1 ? 0 : inspectorId,
       profesionalAsignado: "", especialidades, subEtapas, edpCount, retCount, ndcCount,
+      fechaVisitaTerreno: fechaVisitaTerreno || "",
       fechaInicioObra: fechaInicioObra || "", plazoEjecucion: plazoEjecucion.toString(),
       fechaVencGarantia: fechaVencGarantia || "", fechaRecProviso: fechaRecProviso || "",
       fechaRecDefinitiva: fechaRecDefinitiva || "",
@@ -815,6 +817,21 @@ export default function ProjectDetail({
           {/* ── TAB: Diseño ── */}
           {activeTab === "diseno" && !projectIsFTE && !projectIsObras && (
             <div className={cardCls}>
+              {/* Visita a Terreno */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin className="w-5 h-5 text-[#F97316]" />
+                  <h2 className="text-base font-bold text-gray-900">Visita a Terreno</h2>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">Reunión del especialista con el usuario interno para conocer los requerimientos.</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Fecha Visita a Terreno</label>
+                    <input type="date" value={fechaVisitaTerreno} onChange={(e) => setFechaVisitaTerreno(e.target.value)} className={inputCls} />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2 mb-4">
                 <FolderOpen className="w-5 h-5 text-[#F97316]" />
                 <h2 className="text-base font-bold text-gray-900">Documentación de Diseño</h2>

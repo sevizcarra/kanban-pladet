@@ -56,7 +56,7 @@ export async function createProject(project: Omit<Project, "id">): Promise<strin
 // Fields to track timestamps for in the Indicador
 const TRACKED_FIELDS = new Set([
   "title", "memorandumNumber", "requestingUnit", "tipoLicitacion", "recinto", "status",
-  "jefeProyectoId", "disciplinaLider", "dueDate", "subEtapas",
+  "jefeProyectoId", "disciplinaLider", "dueDate", "subEtapas", "fechaVisitaTerreno",
   "budget", "tipoFinanciamiento", "fechaLicitacion", "idLicitacion",
   "inspectorId", "fechaInicioObra", "plazoEjecucion", "fechaEstimadaTermino",
   "fechaRecProviso", "fechaRecDefinitiva",

@@ -125,6 +125,7 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-blue-400",
     columns: [
+      { key: "visitaTerreno", label: "Visita Terreno", width: 95, trackedField: "fechaVisitaTerreno", render: (p) => fmtDate(p.fechaVisitaTerreno) },
       { key: "jefe", label: "Jefe Proyecto", width: 120, trackedField: "jefeProyectoId", render: (p) => getJefeNombre(p.jefeProyectoId) },
       { key: "disciplina", label: "Disciplina Líder", width: 90, trackedField: "disciplinaLider", render: (p) => p.disciplinaLider || "—" },
       { key: "subetapas", label: "Sub-Etapas", width: 100, trackedField: "subEtapas", render: renderSubEtapas },
