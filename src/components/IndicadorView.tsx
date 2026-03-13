@@ -28,7 +28,6 @@ interface ColDef {
   key: string;
   label: string;
   width: number;
-  trackedField?: string;
   editable?: "date" | "text" | "select" | "fieldTs";
   editField?: string; // field name on Project to edit (or fieldTimestamps key for "fieldTs")
   selectOptions?: { value: string; label: string }[];
@@ -95,7 +94,7 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-slate-400",
     columns: [
-      { key: "title", label: "Proyecto", width: 220, trackedField: "title", render: (p) => (
+      { key: "title", label: "Proyecto", width: 220, render: (p) => (
         <span className="font-semibold text-gray-900 leading-tight" title={p.title}>
           {p.title.length > 40 ? p.title.slice(0, 40) + "…" : p.title}
         </span>
@@ -104,18 +103,18 @@ const PHASES: PhaseGroup[] = [
         <span title="Congelado" className="text-blue-500 font-bold"><Snowflake className="w-3.5 h-3.5" /></span>
       ) : null },
       { key: "year", label: "Año", width: 50, render: (p) => p.createdAt ? new Date(p.createdAt).getFullYear() : "—" },
-      { key: "memo", label: "Memorándum", width: 120, trackedField: "memorandumNumber", render: (p) => {
+      { key: "memo", label: "Memorándum", width: 120, render: (p) => {
         if (p.memos && p.memos.length > 0) return p.memos.map(m => m.key).join(", ");
         return p.memorandumNumber || "—";
       }},
       { key: "fechaIngreso", label: "Fecha Ingreso", width: 95, editable: "date", editField: "fechaRecepcionMemo", render: (p) => fmtDateShort(p.fechaRecepcionMemo || p.createdAt) },
-      { key: "unit", label: "Unidad Req.", width: 90, trackedField: "requestingUnit", render: (p) => p.requestingUnit || "—" },
+      { key: "unit", label: "Unidad Req.", width: 90, render: (p) => p.requestingUnit || "—" },
       { key: "unidadAsig", label: "Unidad Asig.", width: 65, editable: "select", editField: "unidadAsignada", selectOptions: UNIDAD_OPTIONS, render: (p) => p.unidadAsignada || "—" },
       { key: "fechaAsigUnidad", label: "F. Asig. Unidad", width: 95, editable: "date", editField: "fechaAsignacionUnidad", render: (p) => fmtDateShort(p.fechaAsignacionUnidad) },
-      { key: "disciplina", label: "Disc. Líder", width: 90, trackedField: "disciplinaLider", render: (p) => p.disciplinaLider || "—" },
-      { key: "tipo", label: "Tipo", width: 70, trackedField: "tipoLicitacion", render: (p) => p.tipoLicitacion || "—" },
-      { key: "recinto", label: "Recinto", width: 100, trackedField: "recinto", render: (p) => p.recinto || "—" },
-      { key: "status", label: "Estado", width: 130, trackedField: "status", render: (p) => {
+      { key: "disciplina", label: "Disc. Líder", width: 90, render: (p) => p.disciplinaLider || "—" },
+      { key: "tipo", label: "Tipo", width: 70, render: (p) => p.tipoLicitacion || "—" },
+      { key: "recinto", label: "Recinto", width: 100, render: (p) => p.recinto || "—" },
+      { key: "status", label: "Estado", width: 130, render: (p) => {
         const s = getStatusObj(p.status, p.tipoDesarrollo, p.dashboardType);
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${s.color}22`, color: s.color }}>
@@ -133,16 +132,16 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-blue-400",
     columns: [
-      { key: "jefe", label: "Jefe Proyecto", width: 110, trackedField: "jefeProyectoId", render: (p) => getJefeNombre(p.jefeProyectoId) },
+      { key: "jefe", label: "Jefe Proyecto", width: 110, render: (p) => getJefeNombre(p.jefeProyectoId) },
       { key: "jefeAsignacion", label: "F. Asig. Prof.", width: 90, editable: "fieldTs", editField: "jefeProyectoId", render: (p) => fmtFieldTs(p, "jefeProyectoId") },
-      { key: "visitaTerreno", label: "Visita Terreno", width: 90, editable: "date", editField: "fechaVisitaTerreno", trackedField: "fechaVisitaTerreno", render: (p) => fmtDateShort(p.fechaVisitaTerreno) },
-      { key: "fechaInicioDis", label: "Inicio Diseño", width: 90, editable: "date", editField: "fechaInicioDis", trackedField: "fechaInicioDis", render: (p) => fmtDateShort(p.fechaInicioDis) },
+      { key: "visitaTerreno", label: "Visita Terreno", width: 90, editable: "date", editField: "fechaVisitaTerreno", render: (p) => fmtDateShort(p.fechaVisitaTerreno) },
+      { key: "fechaInicioDis", label: "Inicio Diseño", width: 90, editable: "date", editField: "fechaInicioDis", render: (p) => fmtDateShort(p.fechaInicioDis) },
       { key: "avance", label: "Avance", width: 60, render: (p) => {
         const pct = getProgress(p.status, p.subEtapas, p.tipoDesarrollo, p.dashboardType);
         const color = pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-gray-500";
         return <span className={`font-bold ${color}`}>{pct}%</span>;
       }},
-      { key: "dueDate", label: "F. Entrega", width: 90, editable: "date", editField: "dueDate", trackedField: "dueDate", render: (p) => fmtDateShort(p.dueDate) },
+      { key: "dueDate", label: "F. Entrega", width: 90, editable: "date", editField: "dueDate", render: (p) => fmtDateShort(p.dueDate) },
     ],
   },
   {
@@ -152,11 +151,11 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-amber-400",
     columns: [
-      { key: "budget", label: "Presupuesto", width: 95, trackedField: "budget", render: (p) => p.budget && Number(p.budget) > 0 ? fmt(Number(p.budget)) : "—" },
-      { key: "envioDOCL", label: "Envío DOCL", width: 90, editable: "date", editField: "fechaLicitacion", trackedField: "fechaLicitacion", render: (p) => fmtDateShort(p.fechaLicitacion) },
-      { key: "tipoLic", label: "Licitación", width: 75, trackedField: "tipoLicitacion", render: (p) => p.tipoLicitacion || "—" },
-      { key: "idLic", label: "ID Licit.", width: 85, trackedField: "idLicitacion", render: (p) => p.idLicitacion || "—" },
-      { key: "envioTramitados", label: "Envío Tramit.", width: 90, editable: "date", editField: "fechaEnvioTramitados", trackedField: "fechaEnvioTramitados", render: (p) => fmtDateShort(p.fechaEnvioTramitados) },
+      { key: "budget", label: "Presupuesto", width: 95, render: (p) => p.budget && Number(p.budget) > 0 ? fmt(Number(p.budget)) : "—" },
+      { key: "envioDOCL", label: "Envío DOCL", width: 90, editable: "date", editField: "fechaLicitacion", render: (p) => fmtDateShort(p.fechaLicitacion) },
+      { key: "tipoLic", label: "Licitación", width: 75, render: (p) => p.tipoLicitacion || "—" },
+      { key: "idLic", label: "ID Licit.", width: 85, render: (p) => p.idLicitacion || "—" },
+      { key: "envioTramitados", label: "Envío Tramit.", width: 90, editable: "date", editField: "fechaEnvioTramitados", render: (p) => fmtDateShort(p.fechaEnvioTramitados) },
     ],
   },
   {
@@ -166,16 +165,16 @@ const PHASES: PhaseGroup[] = [
     textColor: "text-white",
     borderColor: "border-emerald-400",
     columns: [
-      { key: "memoITO", label: "Memo ITO", width: 90, editable: "date", editField: "fechaDerivacionMemoITO", trackedField: "fechaDerivacionMemoITO", render: (p) => fmtDateShort(p.fechaDerivacionMemoITO) },
-      { key: "inspector", label: "ITO", width: 110, trackedField: "inspectorId", render: (p) => getInspectorNombre(p.inspectorId) },
+      { key: "memoITO", label: "Memo ITO", width: 90, editable: "date", editField: "fechaDerivacionMemoITO", render: (p) => fmtDateShort(p.fechaDerivacionMemoITO) },
+      { key: "inspector", label: "ITO", width: 110, render: (p) => getInspectorNombre(p.inspectorId) },
       { key: "itoAsignacion", label: "F. Asig. ITO", width: 90, editable: "fieldTs", editField: "inspectorId", render: (p) => fmtFieldTs(p, "inspectorId") },
-      { key: "fechaInicio", label: "Inicio Obra", width: 90, editable: "date", editField: "fechaInicioObra", trackedField: "fechaInicioObra", render: (p) => fmtDateShort(p.fechaInicioObra) },
-      { key: "plazo", label: "Plazo", width: 60, trackedField: "plazoEjecucion", render: (p) => p.plazoEjecucion ? `${p.plazoEjecucion}d` : "—" },
-      { key: "fechaTerminoEst", label: "Término Est.", width: 90, editable: "date", editField: "fechaEstimadaTermino", trackedField: "fechaEstimadaTermino", render: (p) => fmtDateShort(p.fechaEstimadaTermino) },
-      { key: "fechaTerminoReal", label: "Término Real", width: 90, editable: "date", editField: "fechaRealTerminoObra", trackedField: "fechaRealTerminoObra", render: (p) => fmtDateShort(p.fechaRealTerminoObra) },
-      { key: "recProv", label: "Rec. Prov.", width: 90, editable: "date", editField: "fechaRecProviso", trackedField: "fechaRecProviso", render: (p) => fmtDateShort(p.fechaRecProviso) },
-      { key: "recDef", label: "Rec. Def.", width: 90, editable: "date", editField: "fechaRecDefinitiva", trackedField: "fechaRecDefinitiva", render: (p) => fmtDateShort(p.fechaRecDefinitiva) },
-      { key: "recDefProg", label: "Rec. Def. Prog.", width: 90, editable: "date", editField: "fechaProgramadaRecDef", trackedField: "fechaProgramadaRecDef", render: (p) => fmtDateShort(p.fechaProgramadaRecDef) },
+      { key: "fechaInicio", label: "Inicio Obra", width: 90, editable: "date", editField: "fechaInicioObra", render: (p) => fmtDateShort(p.fechaInicioObra) },
+      { key: "plazo", label: "Plazo", width: 60, render: (p) => p.plazoEjecucion ? `${p.plazoEjecucion}d` : "—" },
+      { key: "fechaTerminoEst", label: "Término Est.", width: 90, editable: "date", editField: "fechaEstimadaTermino", render: (p) => fmtDateShort(p.fechaEstimadaTermino) },
+      { key: "fechaTerminoReal", label: "Término Real", width: 90, editable: "date", editField: "fechaRealTerminoObra", render: (p) => fmtDateShort(p.fechaRealTerminoObra) },
+      { key: "recProv", label: "Rec. Prov.", width: 90, editable: "date", editField: "fechaRecProviso", render: (p) => fmtDateShort(p.fechaRecProviso) },
+      { key: "recDef", label: "Rec. Def.", width: 90, editable: "date", editField: "fechaRecDefinitiva", render: (p) => fmtDateShort(p.fechaRecDefinitiva) },
+      { key: "recDefProg", label: "Rec. Def. Prog.", width: 90, editable: "date", editField: "fechaProgramadaRecDef", render: (p) => fmtDateShort(p.fechaProgramadaRecDef) },
     ],
   },
 ];
@@ -298,20 +297,6 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
   const HEADER_HEIGHT = 26;
   const PHASE_HEADER_HEIGHT = 26;
 
-  // Helper to get field timestamp for a project
-  const getFieldTs = (p: Project, fieldName?: string): string | null => {
-    if (!fieldName || !p.fieldTimestamps) return null;
-    return p.fieldTimestamps[fieldName] || null;
-  };
-
-  const fmtShortDate = (iso: string) => {
-    const d = new Date(iso);
-    const dd = d.getDate().toString().padStart(2, "0");
-    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
-    const yy = d.getFullYear().toString().slice(-2);
-    return `${dd}/${mm}/${yy}`;
-  };
-
   const ROW_NUM_WIDTH = 30;
 
   const hasActiveFilters = filterStatus !== "all" || filterUnit !== "all" || filterPriority !== "all";
@@ -332,7 +317,7 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
             Indicador de Proyectos 2026
           </h3>
           <p className="text-[10px] text-gray-500 mt-0.5">
-            Consolidado automático — Haz doble clic en celdas de fecha para editar
+            Consolidado automático — Haz clic en celdas de fecha para editar
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -498,7 +483,6 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
                     </td>
                     {PHASES.map((ph) =>
                       ph.columns.map((col) => {
-                        const ts = getFieldTs(p, col.trackedField);
                         const isEditing = editingCell?.projectId === p.id && editingCell?.field === col.editField;
                         return (
                           <td
@@ -549,14 +533,7 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
                                 ))}
                               </select>
                             ) : (
-                              <>
-                                <div className="truncate leading-tight">{col.render(p)}</div>
-                                {ts && (
-                                  <div className="text-[8px] text-gray-400 leading-none mt-0.5" title={`Registrado: ${new Date(ts).toLocaleString("es-CL")}`}>
-                                    {fmtShortDate(ts)}
-                                  </div>
-                                )}
-                              </>
+                              <div className="truncate leading-tight">{col.render(p)}</div>
                             )}
                           </td>
                         );
@@ -579,7 +556,7 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
             <span>{ph.label} ({ph.columns.length})</span>
           </span>
         ))}
-        <span className="ml-auto text-gray-400">Doble clic en fechas para editar inline • Los datos se sincronizan automáticamente</span>
+        <span className="ml-auto text-gray-400">Clic en fechas para editar inline • Los datos se sincronizan automáticamente</span>
       </div>
     </div>
   );
