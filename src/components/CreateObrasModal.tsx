@@ -100,7 +100,7 @@ export default function CreateObrasModal({
         <div className="sticky top-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] rounded-t-2xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Hammer className="w-6 h-6 text-white" />
-            <h2 className="text-lg font-bold text-white">Nuevo Proyecto Obras</h2>
+            <h2 className="text-lg font-bold text-white">Nuevo Proyecto Cuadrilla</h2>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition">
             <X className="w-5 h-5 text-white" />
@@ -384,7 +384,7 @@ export default function CreateObrasModal({
                   : "bg-gray-300 cursor-not-allowed"
               }`}
             >
-              Crear Proyecto Obras
+              Crear Proyecto Cuadrilla
             </button>
           </div>
         </form>

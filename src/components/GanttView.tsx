@@ -62,7 +62,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
     }
 
     if (obras.length > 0) {
-      rows.push({ type: "header", label: "Obras Internas", icon: "obras", count: obras.length });
+      rows.push({ type: "header", label: "Cuadrilla", icon: "obras", count: obras.length });
       obras.forEach((p) => rows.push({ type: "project", project: p }));
     }
 
@@ -484,7 +484,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
           <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
             <span className="text-gray-500">Tipo:</span>
             <span className="font-medium text-gray-800">
-              {tooltip.project.dashboardType === "obras" ? "Obras Internas" : "Compras"}
+              {tooltip.project.dashboardType === "obras" ? "Cuadrilla" : "Compras"}
             </span>
             <span className="text-gray-500">Estado:</span>
             <span className="font-medium text-gray-800">

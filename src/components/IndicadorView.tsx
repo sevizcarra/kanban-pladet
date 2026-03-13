@@ -425,7 +425,7 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                {opt === "all" ? "Todos" : opt === "compras" ? "Compras" : "Obras"}
+                {opt === "all" ? "Todos" : opt === "compras" ? "Compras" : "Cuadrilla"}
               </button>
             ))}
           </div>

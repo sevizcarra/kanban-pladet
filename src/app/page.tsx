@@ -396,7 +396,7 @@ export default function Home() {
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
     { id: 'compras', label: 'Dashboard Compras', icon: <ShoppingCart size={18} /> },
-    { id: 'obras', label: 'Dashboard Obras', icon: <Hammer size={18} /> },
+    { id: 'obras', label: 'Dashboard Cuadrilla', icon: <Hammer size={18} /> },
     { id: 'indicador', label: 'Indicador', icon: <ClipboardList size={18} /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
     { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
@@ -461,14 +461,14 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setShowCreateObrasModal(true)}
-                title="Nuevo Proyecto Obras"
+                title="Nuevo Proyecto Cuadrilla"
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-md shadow-green-500/15 hover:shadow-lg hover:shadow-green-500/25 active:scale-[0.97] transition-all"
               >
                 <span className="flex-shrink-0 w-5 flex justify-center">
                   <Hammer size={16} strokeWidth={2.5} />
                 </span>
                 <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 text-xs">
-                  Nuevo Obras
+                  Nuevo Cuadrilla
                 </span>
               </button>
             </div>
