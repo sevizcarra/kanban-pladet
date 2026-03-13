@@ -47,12 +47,12 @@ const shortName = (fullName: string) => {
 };
 
 const getJefeNombre = (id?: number) => {
-  if (id === undefined || id < 0 || !PROFESSIONALS[id]) return "—";
+  if (id === undefined || id <= 0 || !PROFESSIONALS[id]) return "—";
   return shortName(PROFESSIONALS[id].name);
 };
 
 const getInspectorNombre = (id?: number) => {
-  if (id === undefined || id < 0 || !INSPECTORS[id]) return "—";
+  if (id === undefined || id <= 0 || !INSPECTORS[id]) return "—";
   return shortName(INSPECTORS[id]);
 };
 
