@@ -54,9 +54,11 @@ export const SPECIALISTS = [
 
 // Colaboradores del sistema (usuarios que pueden ser mencionados con @)
 export const COLLABORATORS = [
-  { name: "Sebastián", role: "Administrador" },
-  { name: "Rodimar", role: "Colaborador" },
-  { name: "Daniela", role: "Colaboradora" },
+  { name: "Sebastián Vizcarra", role: "Administrador" },
+  { name: "Carla Arriagada", role: "Colaboradora" },
+  { name: "Loreto Castro", role: "Colaboradora" },
+  { name: "Daniela Machado", role: "Colaboradora" },
+  { name: "Rodrimar Henríquez", role: "Colaborador" },
 ];
 
 export const WORK_TYPES = [

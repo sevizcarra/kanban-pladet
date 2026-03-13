@@ -36,8 +36,8 @@ export default function CommentsSection({
         (p) =>
           p.name.toLowerCase().includes(mentionQuery.toLowerCase()) ||
           p.role.toLowerCase().includes(mentionQuery.toLowerCase())
-      ).slice(0, 5)
-    : ALL_PEOPLE.slice(0, 5);
+      )
+    : ALL_PEOPLE;
 
   const insertMention = useCallback(
     (personName: string) => {
