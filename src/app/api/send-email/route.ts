@@ -97,9 +97,9 @@ function buildTimelineHtml(currentStatus: string, tipoDesarrollo?: string, dashb
     }
 
     const content = isPast ? "&#10003;" : `${idx + 1}`;
-    const size = isCurrent ? 34 : 30;
-    const lineH = isCurrent ? "28px" : "26px";
-    const fontSize = isCurrent ? "14px" : "12px";
+    const size = 28;
+    const lineH = "24px";
+    const fontSize = "12px";
 
     // Label
     let labelColor: string, labelWeight: string;
@@ -122,17 +122,17 @@ function buildTimelineHtml(currentStatus: string, tipoDesarrollo?: string, dashb
 
     return `<td style="padding:0;text-align:center;vertical-align:top;width:${Math.floor(100 / total)}%;">
       <table style="width:100%;border-collapse:collapse;" cellpadding="0" cellspacing="0">
-        <tr>
-          <td style="width:50%;padding:0;vertical-align:middle;">
-            ${showLeftLine ? `<div style="height:3px;background:${leftLineColor};border-radius:2px;"></div>` : `<div style="height:3px;"></div>`}
+        <tr style="height:${size}px;">
+          <td style="padding:0;vertical-align:middle;height:${size}px;">
+            ${showLeftLine ? `<div style="height:3px;background:${leftLineColor};"></div>` : ``}
           </td>
-          <td style="padding:0;width:${size}px;text-align:center;vertical-align:middle;">
-            <div style="width:${size}px;height:${size}px;border-radius:50%;background:${circleBg};border:${circleBorder};display:inline-block;text-align:center;line-height:${lineH};color:${circleColor};font-size:${fontSize};font-weight:700;${shadow}margin:0 auto;">
+          <td style="padding:0;width:${size}px;height:${size}px;text-align:center;vertical-align:middle;">
+            <div style="width:${size}px;height:${size}px;border-radius:50%;background:${circleBg};border:${circleBorder};text-align:center;line-height:${lineH};color:${circleColor};font-size:${fontSize};font-weight:700;${shadow}">
               ${content}
             </div>
           </td>
-          <td style="width:50%;padding:0;vertical-align:middle;">
-            ${showRightLine ? `<div style="height:3px;background:${rightLineColor};border-radius:2px;"></div>` : `<div style="height:3px;"></div>`}
+          <td style="padding:0;vertical-align:middle;height:${size}px;">
+            ${showRightLine ? `<div style="height:3px;background:${rightLineColor};"></div>` : ``}
           </td>
         </tr>
         <tr>
