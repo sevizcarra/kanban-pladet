@@ -37,9 +37,6 @@ export default function CreateProjectModal({
     fechaEntrega: "",
     nombreContacto: "",
     emailContacto: "",
-    budget: "",
-    tipoFinanciamiento: "",
-    recinto: "",
   });
 
   const generatedCode = useMemo(() => {
@@ -84,10 +81,10 @@ export default function CreateProjectModal({
       requestingUnit: form.unidadRequirente || "—",
       contactName: form.nombreContacto || "—",
       contactEmail: form.emailContacto || "—",
-      budget: form.budget || "0",
+      budget: "0",
       dueDate: form.fechaEntrega || null,
-      tipoFinanciamiento: form.tipoFinanciamiento || null,
-      recinto: form.recinto || "",
+      tipoFinanciamiento: null,
+      recinto: "",
       codigoProyectoUsa: generatedCode,
       tipoDesarrollo: form.tipoDesarrollo,
       disciplinaLider: form.disciplinaLider,
