@@ -29,8 +29,8 @@ interface ColDef {
   label: string;
   width: number;
   trackedField?: string;
-  editable?: "date" | "text" | "select";
-  editField?: string; // field name on Project to edit
+  editable?: "date" | "text" | "select" | "fieldTs";
+  editField?: string; // field name on Project to edit (or fieldTimestamps key for "fieldTs")
   selectOptions?: { value: string; label: string }[];
   render: (p: Project) => React.ReactNode;
 }
@@ -134,7 +134,7 @@ const PHASES: PhaseGroup[] = [
     borderColor: "border-blue-400",
     columns: [
       { key: "jefe", label: "Jefe Proyecto", width: 110, trackedField: "jefeProyectoId", render: (p) => getJefeNombre(p.jefeProyectoId) },
-      { key: "jefeAsignacion", label: "F. Asig. Prof.", width: 90, render: (p) => fmtFieldTs(p, "jefeProyectoId") },
+      { key: "jefeAsignacion", label: "F. Asig. Prof.", width: 90, editable: "fieldTs", editField: "jefeProyectoId", render: (p) => fmtFieldTs(p, "jefeProyectoId") },
       { key: "visitaTerreno", label: "Visita Terreno", width: 90, editable: "date", editField: "fechaVisitaTerreno", trackedField: "fechaVisitaTerreno", render: (p) => fmtDateShort(p.fechaVisitaTerreno) },
       { key: "fechaInicioDis", label: "Inicio Diseño", width: 90, editable: "date", editField: "fechaInicioDis", trackedField: "fechaInicioDis", render: (p) => fmtDateShort(p.fechaInicioDis) },
       { key: "avance", label: "Avance", width: 60, render: (p) => {
@@ -168,10 +168,10 @@ const PHASES: PhaseGroup[] = [
     columns: [
       { key: "memoITO", label: "Memo ITO", width: 90, editable: "date", editField: "fechaDerivacionMemoITO", trackedField: "fechaDerivacionMemoITO", render: (p) => fmtDateShort(p.fechaDerivacionMemoITO) },
       { key: "inspector", label: "ITO", width: 110, trackedField: "inspectorId", render: (p) => getInspectorNombre(p.inspectorId) },
-      { key: "itoAsignacion", label: "F. Asig. ITO", width: 90, render: (p) => fmtFieldTs(p, "inspectorId") },
+      { key: "itoAsignacion", label: "F. Asig. ITO", width: 90, editable: "fieldTs", editField: "inspectorId", render: (p) => fmtFieldTs(p, "inspectorId") },
       { key: "fechaInicio", label: "Inicio Obra", width: 90, editable: "date", editField: "fechaInicioObra", trackedField: "fechaInicioObra", render: (p) => fmtDateShort(p.fechaInicioObra) },
       { key: "plazo", label: "Plazo", width: 60, trackedField: "plazoEjecucion", render: (p) => p.plazoEjecucion ? `${p.plazoEjecucion}d` : "—" },
-      { key: "fechaTerminoEst", label: "Término Est.", width: 90, trackedField: "fechaEstimadaTermino", render: (p) => fmtDateShort(p.fechaEstimadaTermino) },
+      { key: "fechaTerminoEst", label: "Término Est.", width: 90, editable: "date", editField: "fechaEstimadaTermino", trackedField: "fechaEstimadaTermino", render: (p) => fmtDateShort(p.fechaEstimadaTermino) },
       { key: "fechaTerminoReal", label: "Término Real", width: 90, editable: "date", editField: "fechaRealTerminoObra", trackedField: "fechaRealTerminoObra", render: (p) => fmtDateShort(p.fechaRealTerminoObra) },
       { key: "recProv", label: "Rec. Prov.", width: 90, editable: "date", editField: "fechaRecProviso", trackedField: "fechaRecProviso", render: (p) => fmtDateShort(p.fechaRecProviso) },
       { key: "recDef", label: "Rec. Def.", width: 90, editable: "date", editField: "fechaRecDefinitiva", trackedField: "fechaRecDefinitiva", render: (p) => fmtDateShort(p.fechaRecDefinitiva) },
@@ -195,8 +195,20 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
   const [editingCell, setEditingCell] = useState<{ projectId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
 
-  const handleInlineEdit = useCallback((p: Project, field: string, currentValue: string) => {
+  // Track the column type for editing
+  const [editingColType, setEditingColType] = useState<string>("");
+
+  const handleInlineEdit = useCallback((p: Project, field: string, currentValue: string, colType: string) => {
     setEditingCell({ projectId: p.id, field });
+    setEditingColType(colType);
+    // For fieldTs type, convert ISO to YYYY-MM-DD for date input
+    if (colType === "fieldTs" && currentValue) {
+      const d = new Date(currentValue);
+      if (!isNaN(d.getTime())) {
+        setEditValue(d.toISOString().split("T")[0]);
+        return;
+      }
+    }
     setEditValue(currentValue || "");
   }, []);
 
@@ -204,20 +216,40 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
     if (!editingCell) return;
     const field = editingCell.field;
     const newVal = editValue;
+    const colType = editingColType;
     setEditingCell(null);
-    // Only save if value actually changed
-    const oldVal = ((p as unknown) as Record<string, unknown>)[field] as string || "";
-    if (newVal === oldVal) return;
-    try {
-      const partial: Partial<Project> = { [field]: newVal };
-      await updateProject(p.id, partial as Partial<Project>);
-      if (onUpdateProject) {
-        onUpdateProject({ ...p, [field]: newVal });
+    setEditingColType("");
+
+    if (colType === "fieldTs") {
+      // Save to fieldTimestamps[field] as ISO date
+      const existingTs = p.fieldTimestamps || {};
+      const oldIso = existingTs[field] || "";
+      const newIso = newVal ? new Date(newVal + "T12:00:00").toISOString() : "";
+      if (newIso === oldIso) return;
+      try {
+        const updatedTs = { ...existingTs, [field]: newIso };
+        await updateProject(p.id, { fieldTimestamps: updatedTs } as Partial<Project>);
+        if (onUpdateProject) {
+          onUpdateProject({ ...p, fieldTimestamps: updatedTs });
+        }
+      } catch (e) {
+        console.error("Error updating fieldTimestamp inline:", e);
       }
-    } catch (e) {
-      console.error("Error updating field inline:", e);
+    } else {
+      // Regular field save
+      const oldVal = ((p as unknown) as Record<string, unknown>)[field] as string || "";
+      if (newVal === oldVal) return;
+      try {
+        const partial: Partial<Project> = { [field]: newVal };
+        await updateProject(p.id, partial as Partial<Project>);
+        if (onUpdateProject) {
+          onUpdateProject({ ...p, [field]: newVal });
+        }
+      } catch (e) {
+        console.error("Error updating field inline:", e);
+      }
     }
-  }, [editingCell, editValue, onUpdateProject]);
+  }, [editingCell, editValue, editingColType, onUpdateProject]);
 
   const handleInlineCancel = useCallback(() => {
     setEditingCell(null);
@@ -473,19 +505,25 @@ export default function IndicadorView({ projects, onProjectClick, onUpdateProjec
                             key={`${p.id}-${col.key}`}
                             className={`px-1.5 text-[10px] text-gray-700 border-r border-gray-100 ${
                               isDone ? "text-gray-400" : ""
-                            } ${col.editable ? "cursor-cell" : ""}`}
+                            } ${col.editable ? "cursor-cell hover:bg-orange-50/60" : "cursor-pointer"}`}
                             style={{ maxWidth: col.width }}
-                            onDoubleClick={() => {
+                            onClick={(e) => {
                               if (col.editable && col.editField) {
-                                const currentVal = ((p as unknown) as Record<string, unknown>)[col.editField] as string || "";
-                                handleInlineEdit(p, col.editField, currentVal);
+                                e.stopPropagation();
+                                let currentVal = "";
+                                if (col.editable === "fieldTs") {
+                                  // Get value from fieldTimestamps
+                                  currentVal = p.fieldTimestamps?.[col.editField] || "";
+                                } else {
+                                  currentVal = ((p as unknown) as Record<string, unknown>)[col.editField] as string || "";
+                                }
+                                handleInlineEdit(p, col.editField, currentVal, col.editable);
+                              } else {
+                                onProjectClick(p);
                               }
                             }}
-                            onClick={() => {
-                              if (!col.editable) onProjectClick(p);
-                            }}
                           >
-                            {isEditing && col.editable === "date" ? (
+                            {isEditing && (col.editable === "date" || col.editable === "fieldTs") ? (
                               <input
                                 type="date"
                                 value={editValue}
