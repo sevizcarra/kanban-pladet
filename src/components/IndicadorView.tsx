@@ -5,12 +5,16 @@ import { Project } from "@/types/project";
 import {
   PROFESSIONALS,
   INSPECTORS,
+  STATUSES,
+  OBRAS_STATUSES,
+  PRIORITIES,
+  REQUESTING_UNITS,
   getStatusObj,
   getProgress,
   fmtDate,
   fmt,
 } from "@/lib/constants";
-import { ChevronLeft, ChevronRight, Download, Filter, Search } from "lucide-react";
+import { Filter, Search, X } from "lucide-react";
 
 interface IndicadorViewProps {
   projects: Project[];
@@ -22,7 +26,7 @@ interface ColDef {
   key: string;
   label: string;
   width: number;
-  trackedField?: string; // field name to look up in fieldTimestamps (if different from key)
+  trackedField?: string;
   render: (p: Project) => React.ReactNode;
 }
 
@@ -30,8 +34,8 @@ interface ColDef {
 interface PhaseGroup {
   id: string;
   label: string;
-  color: string;    // header bg
-  textColor: string; // header text
+  color: string;
+  textColor: string;
   borderColor: string;
   columns: ColDef[];
 }
@@ -52,37 +56,14 @@ const getInspectorNombre = (id?: number) => {
   return shortName(INSPECTORS[id]);
 };
 
-const subEtapaLabels: Record<string, string> = {
-  disenoArquitectura: "Diseño Arq.",
-  disenoEspecialidades: "Diseño Esp.",
-  compraCDP: "CDP",
-  compraEnProceso: "Compra",
-  compraEvaluacionAdj: "Evaluación",
-  compraAceptacionOC: "OC Aceptada",
-};
-
-const renderSubEtapas = (p: Project) => {
-  if (!p.subEtapas) return "—";
-  const entries = Object.entries(p.subEtapas);
-  if (entries.length === 0) return "—";
-  const done = entries.filter(([, v]) => v).length;
-  const total = entries.length;
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex gap-0.5">
-        {entries.map(([key, val]) => (
-          <div
-            key={key}
-            title={subEtapaLabels[key] || key}
-            className={`w-2.5 h-2.5 rounded-sm ${
-              val ? "bg-emerald-500" : "bg-gray-200"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="text-[10px] text-gray-500 ml-1">{done}/{total}</span>
-    </div>
-  );
+// Helper: get field timestamp as formatted date
+const fmtFieldTs = (p: Project, field: string): string => {
+  if (!p.fieldTimestamps || !p.fieldTimestamps[field]) return "—";
+  const d = new Date(p.fieldTimestamps[field]);
+  const dd = d.getDate().toString().padStart(2, "0");
+  const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 };
 
 const PHASES: PhaseGroup[] = [
@@ -127,8 +108,8 @@ const PHASES: PhaseGroup[] = [
     columns: [
       { key: "visitaTerreno", label: "Visita Terreno", width: 95, trackedField: "fechaVisitaTerreno", render: (p) => fmtDate(p.fechaVisitaTerreno) },
       { key: "jefe", label: "Jefe Proyecto", width: 120, trackedField: "jefeProyectoId", render: (p) => getJefeNombre(p.jefeProyectoId) },
+      { key: "jefeAsignacion", label: "Fecha Asignación", width: 95, render: (p) => fmtFieldTs(p, "jefeProyectoId") },
       { key: "disciplina", label: "Disciplina Líder", width: 90, trackedField: "disciplinaLider", render: (p) => p.disciplinaLider || "—" },
-      { key: "subetapas", label: "Sub-Etapas", width: 100, trackedField: "subEtapas", render: renderSubEtapas },
       { key: "avance", label: "Avance", width: 70, render: (p) => {
         const pct = getProgress(p.status, p.subEtapas, p.tipoDesarrollo, p.dashboardType);
         const color = pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-gray-500";
@@ -145,9 +126,8 @@ const PHASES: PhaseGroup[] = [
     borderColor: "border-amber-400",
     columns: [
       { key: "budget", label: "Presupuesto", width: 100, trackedField: "budget", render: (p) => p.budget && Number(p.budget) > 0 ? fmt(Number(p.budget)) : "—" },
-      { key: "tipoFin", label: "Financiamiento", width: 95, trackedField: "tipoFinanciamiento", render: (p) => p.tipoFinanciamiento || "—" },
+      { key: "envioDOCL", label: "Envío DOCL", width: 95, trackedField: "fechaLicitacion", render: (p) => fmtDate(p.fechaLicitacion) },
       { key: "tipoLic", label: "Licitación", width: 80, trackedField: "tipoLicitacion", render: (p) => p.tipoLicitacion || "—" },
-      { key: "fechaLic", label: "Fecha Licitación", width: 95, trackedField: "fechaLicitacion", render: (p) => fmtDate(p.fechaLicitacion) },
       { key: "idLic", label: "ID Licitación", width: 95, trackedField: "idLicitacion", render: (p) => p.idLicitacion || "—" },
     ],
   },
@@ -159,6 +139,7 @@ const PHASES: PhaseGroup[] = [
     borderColor: "border-emerald-400",
     columns: [
       { key: "inspector", label: "ITO", width: 120, trackedField: "inspectorId", render: (p) => getInspectorNombre(p.inspectorId) },
+      { key: "itoAsignacion", label: "Fecha Asignación", width: 95, render: (p) => fmtFieldTs(p, "inspectorId") },
       { key: "fechaInicio", label: "Inicio Obra", width: 95, trackedField: "fechaInicioObra", render: (p) => fmtDate(p.fechaInicioObra) },
       { key: "plazo", label: "Plazo Ejec.", width: 75, trackedField: "plazoEjecucion", render: (p) => p.plazoEjecucion ? `${p.plazoEjecucion} días` : "—" },
       { key: "fechaTermino", label: "Término Est.", width: 95, trackedField: "fechaEstimadaTermino", render: (p) => fmtDate(p.fechaEstimadaTermino) },
@@ -168,15 +149,24 @@ const PHASES: PhaseGroup[] = [
   },
 ];
 
+// Build unique status list from both dashboards
+const ALL_STATUSES = [...STATUSES, ...OBRAS_STATUSES.filter(os => !STATUSES.find(s => s.id === os.id))];
+
 export default function IndicadorView({ projects, onProjectClick }: IndicadorViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
   const [filterDashboard, setFilterDashboard] = useState<"all" | "compras" | "obras">("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterUnit, setFilterUnit] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
 
   const filtered = useMemo(() => {
     return projects.filter((p) => {
       if (filterDashboard === "compras" && p.dashboardType === "obras") return false;
       if (filterDashboard === "obras" && p.dashboardType !== "obras") return false;
+      if (filterStatus !== "all" && p.status !== filterStatus) return false;
+      if (filterUnit !== "all" && p.requestingUnit !== filterUnit) return false;
+      if (filterPriority !== "all" && p.priority !== filterPriority) return false;
       if (search) {
         const s = search.toLowerCase();
         return (
@@ -188,7 +178,7 @@ export default function IndicadorView({ projects, onProjectClick }: IndicadorVie
       }
       return true;
     });
-  }, [projects, search, filterDashboard]);
+  }, [projects, search, filterDashboard, filterStatus, filterUnit, filterPriority]);
 
   // Stats
   const stats = useMemo(() => {
@@ -225,8 +215,16 @@ export default function IndicadorView({ projects, onProjectClick }: IndicadorVie
     return `${dd}/${mm}/${yy}`;
   };
 
-  // Row number column
   const ROW_NUM_WIDTH = 32;
+
+  const hasActiveFilters = filterStatus !== "all" || filterUnit !== "all" || filterPriority !== "all";
+
+  const clearFilters = () => {
+    setFilterStatus("all");
+    setFilterUnit("all");
+    setFilterPriority("all");
+    setSearch("");
+  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -241,7 +239,7 @@ export default function IndicadorView({ projects, onProjectClick }: IndicadorVie
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Filter */}
+          {/* Dashboard type */}
           <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
             {(["all", "compras", "obras"] as const).map((opt) => (
               <button
@@ -257,18 +255,67 @@ export default function IndicadorView({ projects, onProjectClick }: IndicadorVie
               </button>
             ))}
           </div>
-          {/* Search */}
-          <div className="relative">
-            <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar..."
-              className="pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-1 focus:ring-[#F97316] focus:border-[#F97316] outline-none w-40"
-            />
-          </div>
           <span className="text-[10px] text-gray-400">{filtered.length} proyectos</span>
         </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/30">
+        <Filter size={13} className="text-gray-400 flex-shrink-0" />
+
+        {/* Status */}
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="px-2 py-1 text-[11px] border border-gray-200 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#F97316]"
+        >
+          <option value="all">Todos los Estados</option>
+          {ALL_STATUSES.map((s) => (
+            <option key={s.id} value={s.id}>{s.label}</option>
+          ))}
+        </select>
+
+        {/* Unit */}
+        <select
+          value={filterUnit}
+          onChange={(e) => setFilterUnit(e.target.value)}
+          className="px-2 py-1 text-[11px] border border-gray-200 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#F97316]"
+        >
+          <option value="all">Todas las Unidades</option>
+          {REQUESTING_UNITS.map((u) => (
+            <option key={u} value={u}>{u}</option>
+          ))}
+        </select>
+
+        {/* Priority */}
+        <select
+          value={filterPriority}
+          onChange={(e) => setFilterPriority(e.target.value)}
+          className="px-2 py-1 text-[11px] border border-gray-200 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#F97316]"
+        >
+          <option value="all">Todas las Prioridades</option>
+          {Object.entries(PRIORITIES).map(([id, p]) => (
+            <option key={id} value={id}>{p.label}</option>
+          ))}
+        </select>
+
+        {/* Search */}
+        <div className="relative ml-auto">
+          <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar..."
+            className="pl-7 pr-3 py-1 text-[11px] border border-gray-200 rounded-md bg-white focus:ring-1 focus:ring-[#F97316] focus:border-[#F97316] outline-none w-44"
+          />
+        </div>
+
+        {/* Clear */}
+        {hasActiveFilters && (
+          <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 rounded-md transition-colors">
+            <X size={11} /> Limpiar
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -279,12 +326,10 @@ export default function IndicadorView({ projects, onProjectClick }: IndicadorVie
           { label: "En Compra", value: stats.enCompra, color: "text-amber-700", bg: "bg-amber-50" },
           { label: "En Ejecución", value: stats.enEjecucion, color: "text-emerald-700", bg: "bg-emerald-50" },
           { label: "Terminados", value: stats.terminados, color: "text-gray-500", bg: "bg-gray-50" },
-          { label: "Inversión", value: stats.totalBudget > 0 ? fmt(stats.totalBudget) : "—", color: "text-indigo-700", bg: "bg-indigo-50", isText: true },
+          { label: "Inversión", value: stats.totalBudget > 0 ? fmt(stats.totalBudget) : "—", color: "text-indigo-700", bg: "bg-indigo-50" },
         ].map((s, i) => (
           <div key={i} className={`${s.bg} rounded-lg px-3 py-2`}>
-            <div className={`text-lg font-bold ${s.color}`}>
-              {'isText' in s ? s.value : s.value}
-            </div>
+            <div className={`text-lg font-bold ${s.color}`}>{s.value}</div>
             <div className="text-[10px] text-gray-500 font-medium">{s.label}</div>
           </div>
         ))}
