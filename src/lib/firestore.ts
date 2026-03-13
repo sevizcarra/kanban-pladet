@@ -60,6 +60,8 @@ const TRACKED_FIELDS = new Set([
   "budget", "tipoFinanciamiento", "fechaLicitacion", "idLicitacion",
   "inspectorId", "fechaInicioObra", "plazoEjecucion", "fechaEstimadaTermino",
   "fechaRecProviso", "fechaRecDefinitiva",
+  "unidadAsignada", "fechaAsignacionUnidad", "fechaInicioDis", "fechaEnvioTramitados",
+  "fechaRealTerminoObra", "fechaProgramadaRecDef", "fechaDerivacionMemoITO",
 ]);
 
 // Check if a value is "empty" (null, undefined, empty string, 0, -1 for IDs)

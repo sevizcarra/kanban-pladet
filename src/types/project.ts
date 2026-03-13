@@ -23,6 +23,9 @@ export interface Project {
   idLicitacion?: string;
   codigoProyectoDCI?: string;
   fechaVencimientoRecursos?: string;
+  // Unidad asignada (UOM / UPT / UGO)
+  unidadAsignada?: string;
+  fechaAsignacionUnidad?: string;
   // Equipo
   jefeProyectoId?: number;
   inspectorId?: number;
@@ -40,13 +43,21 @@ export interface Project {
   };
   // Diseño — Visita a terreno (reunión del especialista con el usuario interno)
   fechaVisitaTerreno?: string;
+  // Diseño — Fecha de inicio de diseño (puede diferir de la asignación)
+  fechaInicioDis?: string;
+  // Compra — Fecha envío antecedentes tramitados a la unidad
+  fechaEnvioTramitados?: string;
   // Ejecución
   fechaInicioObra?: string;
   plazoEjecucion?: string;
   fechaEstimadaTermino?: string;
+  fechaRealTerminoObra?: string;
   fechaVencGarantia?: string;
   fechaRecProviso?: string;
   fechaRecDefinitiva?: string;
+  fechaProgramadaRecDef?: string;
+  // Ejecución — Memo solicitud asignación ITO
+  fechaDerivacionMemoITO?: string;
   // Docs
   edpCount?: number;
   retCount?: number;
@@ -67,6 +78,8 @@ export interface Project {
   commentCount?: number;
   flagged?: boolean; // Baliza de alerta visual
   frozen?: boolean;  // Proyecto congelado
+  frozenAt?: string; // ISO date when project was frozen
+  frozenDaysAccum?: number; // Total accumulated frozen days (for daysLeft calculation)
   sortOrder?: number; // Orden dentro de la columna
   dashboardType?: "compras" | "obras"; // Tipo de dashboard
   cuadrillas?: string[]; // Cuadrillas asignadas (obras)

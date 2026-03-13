@@ -81,7 +81,7 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
   isOverlay?: boolean;
 }) {
   const prio = PRIORITIES[p.priority];
-  const dl = p.status !== "terminada" ? daysLeft(p.dueDate) : null;
+  const dl = p.status !== "terminada" ? daysLeft(p.dueDate, p.frozen, p.frozenAt, p.frozenDaysAccum) : null;
   const isOverdue = dl !== null && dl < 0;
   const isDueSoon = dl !== null && dl >= 0 && dl <= 7;
   const antecedentes = getAntecedentesIncompletos(p);

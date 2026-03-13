@@ -131,6 +131,13 @@ export default function ProjectDetail({
     }
   );
   const [fechaVisitaTerreno, setFechaVisitaTerreno] = useState(project.fechaVisitaTerreno || "");
+  const [fechaInicioDis, setFechaInicioDis] = useState(project.fechaInicioDis || "");
+  const [unidadAsignada, setUnidadAsignada] = useState(project.unidadAsignada || "");
+  const [fechaAsignacionUnidad, setFechaAsignacionUnidad] = useState(project.fechaAsignacionUnidad || "");
+  const [fechaEnvioTramitados, setFechaEnvioTramitados] = useState(project.fechaEnvioTramitados || "");
+  const [fechaRealTerminoObra, setFechaRealTerminoObra] = useState(project.fechaRealTerminoObra || "");
+  const [fechaProgramadaRecDef, setFechaProgramadaRecDef] = useState(project.fechaProgramadaRecDef || "");
+  const [fechaDerivacionMemoITO, setFechaDerivacionMemoITO] = useState(project.fechaDerivacionMemoITO || "");
   const [tipoLicitacion, setTipoLicitacion] = useState(normalizeTipoLicitacion(project.tipoLicitacion || ""));
   const [edpCount, setEdpCount] = useState(project.edpCount || 1);
   const [retCount, setRetCount] = useState(project.retCount || 0);
@@ -225,6 +232,13 @@ export default function ProjectDetail({
       inspectorId,
       profesionalAsignado: "", especialidades, subEtapas, edpCount, retCount, ndcCount,
       fechaVisitaTerreno: fechaVisitaTerreno || "",
+      fechaInicioDis: fechaInicioDis || "",
+      unidadAsignada: unidadAsignada || "",
+      fechaAsignacionUnidad: fechaAsignacionUnidad || "",
+      fechaEnvioTramitados: fechaEnvioTramitados || "",
+      fechaRealTerminoObra: fechaRealTerminoObra || "",
+      fechaProgramadaRecDef: fechaProgramadaRecDef || "",
+      fechaDerivacionMemoITO: fechaDerivacionMemoITO || "",
       fechaInicioObra: fechaInicioObra || "", plazoEjecucion: plazoEjecucion.toString(),
       fechaVencGarantia: fechaVencGarantia || "", fechaRecProviso: fechaRecProviso || "",
       fechaRecDefinitiva: fechaRecDefinitiva || "",
@@ -461,8 +475,23 @@ export default function ProjectDetail({
                     <input type="email" value={infoContactEmail === "—" ? "" : infoContactEmail} onChange={(e) => setInfoContactEmail(e.target.value)} placeholder="correo@ejemplo.cl" className={inputCls} />
                   </div>
                 </div>
-                {/* Recinto field */}
+                {/* Unidad Asignada + Recinto */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs text-gray-800 font-semibold mb-1">Unidad Asignada</label>
+                      <select value={unidadAsignada} onChange={(e) => setUnidadAsignada(e.target.value)} className={inputCls}>
+                        <option value="">Seleccionar...</option>
+                        <option value="UOM">UOM — Obras Menores</option>
+                        <option value="UPT">UPT — Planificación Territorial</option>
+                        <option value="UGO">UGO — Grandes Obras</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Asignación Unidad</label>
+                      <input type="date" value={fechaAsignacionUnidad} onChange={(e) => setFechaAsignacionUnidad(e.target.value)} className={inputCls} />
+                    </div>
+                  </div>
                   <div className="grid grid-cols-4 gap-4">
                     <div className="col-span-2">
                       <label className="block text-xs text-gray-800 font-semibold mb-1 flex items-center gap-1">
@@ -829,6 +858,10 @@ export default function ProjectDetail({
                     <label className="block text-xs font-semibold text-gray-600 mb-1">Fecha Visita a Terreno</label>
                     <input type="date" value={fechaVisitaTerreno} onChange={(e) => setFechaVisitaTerreno(e.target.value)} className={inputCls} />
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Fecha Inicio de Diseño</label>
+                    <input type="date" value={fechaInicioDis} onChange={(e) => setFechaInicioDis(e.target.value)} className={inputCls} />
+                  </div>
                 </div>
               </div>
 
@@ -853,6 +886,13 @@ export default function ProjectDetail({
                 <Package className="w-5 h-5 text-[#F97316]" />
                 <h2 className="text-base font-bold text-gray-900">Antecedentes de Compra</h2>
               </div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Envío Antecedentes Tramitados</label>
+                  <input type="date" value={fechaEnvioTramitados} onChange={(e) => setFechaEnvioTramitados(e.target.value)} className={inputCls} />
+                  <p className="text-[10px] text-gray-400 mt-1">Fecha en que se envían los antecedentes totalmente tramitados de vuelta a la unidad.</p>
+                </div>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 {["Formulario compra / BT", "CDP", "OC / CTTO", "Oferta", "Acta de visita", "Cuadro ADJ / Informe"].map((doc) => (
                   <button key={doc} className="border-2 border-dashed border-gray-300 hover:border-[#F97316] rounded-lg p-6 text-center transition flex flex-col items-center justify-center gap-2 text-gray-600 hover:text-[#F97316]">
@@ -872,12 +912,15 @@ export default function ProjectDetail({
                   <h2 className="text-base font-bold text-gray-900">Antecedentes de Ejecución</h2>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Derivación Memo ITO</label><input type="date" value={fechaDerivacionMemoITO} onChange={(e) => setFechaDerivacionMemoITO(e.target.value)} className={inputCls} /><p className="text-[10px] text-gray-400 mt-0.5">Fecha del memo donde se solicita asignación de ITO.</p></div>
                   <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Inicio Obra</label><input type="date" value={fechaInicioObra} onChange={(e) => setFechaInicioObra(e.target.value)} className={inputCls} /></div>
                   <div><label className="block text-xs text-gray-800 font-semibold mb-1">Plazo Ejecución (días corridos)</label><input type="number" value={plazoEjecucion} onChange={(e) => setPlazoEjecucion(parseInt(e.target.value) || 0)} className={inputCls} placeholder="0" /></div>
                   <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Est. Término</label><input type="text" disabled value={fechaEstTermino ? fmtDate(fechaEstTermino) : "—"} className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-gray-50 text-gray-600" /></div>
+                  <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Real Término Obra</label><input type="date" value={fechaRealTerminoObra} onChange={(e) => setFechaRealTerminoObra(e.target.value)} className={inputCls} /></div>
                   {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Venc. Garantía</label><input type="date" value={fechaVencGarantia} onChange={(e) => setFechaVencGarantia(e.target.value)} className={inputCls} /></div>}
                   {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Provisoria</label><input type="date" value={fechaRecProviso} onChange={(e) => setFechaRecProviso(e.target.value)} className={inputCls} /></div>}
                   {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Rec. Definitiva</label><input type="date" value={fechaRecDefinitiva} onChange={(e) => setFechaRecDefinitiva(e.target.value)} className={inputCls} /></div>}
+                  {!projectIsObras && <div><label className="block text-xs text-gray-800 font-semibold mb-1">Fecha Programada Rec. Definitiva</label><input type="date" value={fechaProgramadaRecDef} onChange={(e) => setFechaProgramadaRecDef(e.target.value)} className={inputCls} /><p className="text-[10px] text-gray-400 mt-0.5">Plazo programado para la recepción definitiva.</p></div>}
                 </div>
               </div>
 

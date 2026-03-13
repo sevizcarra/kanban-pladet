@@ -241,7 +241,19 @@ export default function Home() {
     async (project: Project, justification: string) => {
       try {
         const wasFrozen = !!project.frozen;
-        const updated = { ...project, frozen: !wasFrozen };
+        const now = new Date().toISOString();
+        // Calculate accumulated frozen days when unfreezing
+        let frozenDaysAccum = project.frozenDaysAccum || 0;
+        if (wasFrozen && project.frozenAt) {
+          const frozenSince = new Date(project.frozenAt).getTime();
+          frozenDaysAccum += Math.ceil((Date.now() - frozenSince) / 86400000);
+        }
+        const updated = {
+          ...project,
+          frozen: !wasFrozen,
+          frozenAt: wasFrozen ? undefined : now,   // set when freezing, clear when unfreezing
+          frozenDaysAccum,
+        };
         await updateProject(project.id, updated);
         // Add justification as a system comment
         const action = wasFrozen ? 'DESCONGELADO' : 'CONGELADO';
@@ -622,6 +634,7 @@ export default function Home() {
                 <IndicadorView
                   projects={projects}
                   onProjectClick={setSelectedProject}
+                  onUpdateProject={handleUpdate}
                 />
               )}
 

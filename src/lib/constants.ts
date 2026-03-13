@@ -161,9 +161,33 @@ export const fmt = (n: number | string) =>
 export const fmtDate = (d: string | Date | null | undefined) =>
   d ? new Date(d).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-export const daysLeft = (d: string | null | undefined) => {
+/**
+ * Calculate days left until due date.
+ * If the project is frozen or has accumulated frozen days, those days are excluded
+ * from the count so frozen periods don't trigger false overdue alerts.
+ */
+export const daysLeft = (
+  d: string | null | undefined,
+  frozen?: boolean,
+  frozenAt?: string | null,
+  frozenDaysAccum?: number,
+) => {
   if (!d) return null;
-  return Math.ceil((new Date(d).getTime() - new Date().getTime()) / 86400000);
+  const now = new Date().getTime();
+  const due = new Date(d).getTime();
+  let rawDays = Math.ceil((due - now) / 86400000);
+
+  // Add back accumulated frozen days (these shouldn't count against the project)
+  if (frozenDaysAccum && frozenDaysAccum > 0) {
+    rawDays += frozenDaysAccum;
+  }
+  // If currently frozen, also add the days since it was frozen
+  if (frozen && frozenAt) {
+    const frozenSince = new Date(frozenAt).getTime();
+    const frozenCurrentDays = Math.ceil((now - frozenSince) / 86400000);
+    rawDays += frozenCurrentDays;
+  }
+  return rawDays;
 };
 
 export const getStatusObj = (id: string, tipoDesarrollo?: string, dashboardType?: string) => {
