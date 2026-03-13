@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { Project } from "@/types/project";
 import {
   STATUSES,
+  OBRAS_STATUSES,
   PROFESSIONALS,
   PRIORITIES,
   getStatusObj,
@@ -12,7 +13,7 @@ import {
   fmt,
   getProgress,
 } from "@/lib/constants";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Eye, EyeOff, ShoppingCart, Hammer } from "lucide-react";
 
 interface GanttViewProps {
   projects: Project[];
@@ -21,29 +22,64 @@ interface GanttViewProps {
 
 type ZoomLevel = "months" | "weeks";
 
+type GanttRow =
+  | { type: "header"; label: string; icon: "compras" | "obras"; count: number }
+  | { type: "project"; project: Project };
+
 export default function GanttView({ projects, onProjectClick }: GanttViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<ZoomLevel>("months");
+  const [showTerminadas, setShowTerminadas] = useState(false);
   const [tooltip, setTooltip] = useState<{
     project: Project;
     x: number;
     y: number;
   } | null>(null);
 
-  // Only show projects with at least a due date or created date
-  const ganttProjects = useMemo(() => {
-    return projects
-      .filter((p) => p.dueDate || p.createdAt)
-      .sort((a, b) => {
-        // Sort by status order, then by due date
-        const sA = STATUSES.findIndex((s) => s.id === a.status);
-        const sB = STATUSES.findIndex((s) => s.id === b.status);
-        if (sA !== sB) return sA - sB;
-        const dA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
-        const dB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
-        return dA - dB;
-      });
-  }, [projects]);
+  // Split and sort projects by type, filter terminadas
+  const ganttRows = useMemo(() => {
+    const sortProjects = (list: Project[]) =>
+      list
+        .filter((p) => p.dueDate || p.createdAt)
+        .filter((p) => showTerminadas || p.status !== "terminada")
+        .sort((a, b) => {
+          const sA = STATUSES.findIndex((s) => s.id === a.status);
+          const sB = STATUSES.findIndex((s) => s.id === b.status);
+          if (sA !== sB) return sA - sB;
+          const dA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+          const dB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+          return dA - dB;
+        });
+
+    const compras = sortProjects(projects.filter((p) => p.dashboardType !== "obras"));
+    const obras = sortProjects(projects.filter((p) => p.dashboardType === "obras"));
+
+    const rows: GanttRow[] = [];
+
+    if (compras.length > 0) {
+      rows.push({ type: "header", label: "Compras", icon: "compras", count: compras.length });
+      compras.forEach((p) => rows.push({ type: "project", project: p }));
+    }
+
+    if (obras.length > 0) {
+      rows.push({ type: "header", label: "Obras Internas", icon: "obras", count: obras.length });
+      obras.forEach((p) => rows.push({ type: "project", project: p }));
+    }
+
+    return rows;
+  }, [projects, showTerminadas]);
+
+  // Extract just the projects for timeline calculations
+  const ganttProjects = useMemo(
+    () => ganttRows.filter((r): r is { type: "project"; project: Project } => r.type === "project").map((r) => r.project),
+    [ganttRows]
+  );
+
+  // Count terminadas hidden
+  const terminadasCount = useMemo(
+    () => projects.filter((p) => p.status === "terminada" && (p.dueDate || p.createdAt)).length,
+    [projects]
+  );
 
   // Calculate timeline range
   const { startDate, endDate, months, totalDays } = useMemo(() => {
@@ -95,6 +131,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
   const dayWidth = zoom === "months" ? 3 : 10;
   const chartWidth = totalDays * dayWidth;
   const ROW_HEIGHT = 36;
+  const SECTION_HEIGHT = 32;
   const HEADER_HEIGHT = 52;
   const LABEL_WIDTH = 280;
 
@@ -126,6 +163,20 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
           Carta Gantt — Plazos de Proyectos
         </h3>
         <div className="flex items-center gap-2">
+          {/* Toggle terminadas */}
+          {terminadasCount > 0 && (
+            <button
+              onClick={() => setShowTerminadas(!showTerminadas)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                showTerminadas
+                  ? "bg-gray-200 text-gray-700"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              {showTerminadas ? <EyeOff size={13} /> : <Eye size={13} />}
+              {showTerminadas ? "Ocultar" : "Mostrar"} terminados ({terminadasCount})
+            </button>
+          )}
           <button
             onClick={scrollToToday}
             className="px-3 py-1.5 text-xs font-medium bg-[#F97316] text-white rounded-md hover:bg-[#008F85] transition-colors"
@@ -179,15 +230,39 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
               <span className="pb-2">Proyecto</span>
             </div>
             {/* Rows */}
-            {ganttProjects.map((p) => {
+            {ganttRows.map((row, idx) => {
+              if (row.type === "header") {
+                return (
+                  <div
+                    key={`section-${row.label}`}
+                    className="flex items-center gap-2 px-3 border-b-2 border-gray-300 bg-gray-100"
+                    style={{ height: SECTION_HEIGHT }}
+                  >
+                    {row.icon === "compras" ? (
+                      <ShoppingCart size={13} className="text-[#F97316]" />
+                    ) : (
+                      <Hammer size={13} className="text-emerald-600" />
+                    )}
+                    <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
+                      {row.label}
+                    </span>
+                    <span className="text-[10px] font-medium text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full">
+                      {row.count}
+                    </span>
+                  </div>
+                );
+              }
+
+              const p = row.project;
               const statusObj = getStatusObj(p.status, p.tipoDesarrollo);
               const dl = daysLeft(p.dueDate);
               const isOverdue = p.status !== "terminada" && dl !== null && dl < 0;
+              const isDone = p.status === "terminada";
               return (
                 <div
                   key={p.id}
                   className={`flex items-center gap-2 px-3 border-b border-gray-100 cursor-pointer hover:bg-orange-50/40 transition-colors ${
-                    isOverdue ? "bg-red-50/30" : ""
+                    isOverdue ? "bg-red-50/30" : isDone ? "bg-gray-50/50" : ""
                   }`}
                   style={{ height: ROW_HEIGHT }}
                   onClick={() => onProjectClick(p)}
@@ -196,12 +271,17 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ backgroundColor: statusObj.color }}
                   />
-                  <span className="text-xs text-gray-800 truncate flex-1 font-medium">
+                  <span className={`text-xs truncate flex-1 font-medium ${isDone ? "text-gray-400 line-through" : "text-gray-800"}`}>
                     {p.title}
                   </span>
                   {isOverdue && (
                     <span className="text-[9px] font-bold text-red-500 bg-red-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
                       {Math.abs(dl!)}d
+                    </span>
+                  )}
+                  {isDone && (
+                    <span className="text-[9px] font-medium text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                      OK
                     </span>
                   )}
                 </div>
@@ -248,7 +328,18 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
               </div>
 
               {/* Grid Rows + Bars */}
-              {ganttProjects.map((p) => {
+              {ganttRows.map((row, idx) => {
+                if (row.type === "header") {
+                  return (
+                    <div
+                      key={`chart-section-${row.label}`}
+                      className="border-b-2 border-gray-300 bg-gray-100"
+                      style={{ height: SECTION_HEIGHT }}
+                    />
+                  );
+                }
+
+                const p = row.project;
                 const statusObj = getStatusObj(p.status, p.tipoDesarrollo);
                 const progress = getProgress(
                   p.status,
@@ -285,7 +376,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
                 return (
                   <div
                     key={p.id}
-                    className="border-b border-gray-100 relative"
+                    className={`border-b border-gray-100 relative ${isDone ? "bg-gray-50/30" : ""}`}
                     style={{ height: ROW_HEIGHT }}
                   >
                     {/* Month grid lines */}
@@ -315,6 +406,7 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
                         border: `1.5px solid ${
                           isOverdue ? "#ef4444" : isDone ? "#94a3b8" : statusObj.color
                         }`,
+                        opacity: isDone ? 0.6 : 1,
                       }}
                       onClick={() => onProjectClick(p)}
                       onMouseEnter={(e) => {
@@ -390,6 +482,10 @@ export default function GanttView({ projects, onProjectClick }: GanttViewProps) 
             {tooltip.project.title}
           </p>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+            <span className="text-gray-500">Tipo:</span>
+            <span className="font-medium text-gray-800">
+              {tooltip.project.dashboardType === "obras" ? "Obras Internas" : "Compras"}
+            </span>
             <span className="text-gray-500">Estado:</span>
             <span className="font-medium text-gray-800">
               {getStatusObj(tooltip.project.status, tooltip.project.tipoDesarrollo).label}
