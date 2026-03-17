@@ -110,6 +110,18 @@ export default function StatsView({ projects }: StatsViewProps) {
       .filter((d) => d.budget > 0);
   }, [projects]);
 
+  // ── Projects count by Work Type ──
+  const projectsByWorkType = useMemo(() => {
+    const map = new Map<string, number>();
+    projects.forEach((p) => {
+      const type = WORK_TYPES.find((w) => w.value === p.tipoDesarrollo)?.label || p.tipoDesarrollo || "Sin tipo";
+      map.set(type, (map.get(type) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([name, count]) => ({ name: name.split(" - ")[0], fullName: name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [projects]);
+
   // ── Budget by Work Type ──
   const budgetByWorkType = useMemo(() => {
     const map = new Map<string, { count: number; budget: number }>();
@@ -121,6 +133,18 @@ export default function StatsView({ projects }: StatsViewProps) {
     return Array.from(map.entries())
       .map(([name, data]) => ({ name: name.split(" - ")[0], fullName: name, ...data, budgetM: Math.round(data.budget / 1000000 * 10) / 10 }))
       .sort((a, b) => b.budget - a.budget);
+  }, [projects]);
+
+  // ── Projects count by Category ──
+  const projectsByCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    projects.forEach((p) => {
+      const cat = PROJECT_CATEGORIES.find((c) => c.value === p.categoriaProyecto)?.label || "Sin categoría";
+      map.set(cat, (map.get(cat) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   }, [projects]);
 
   // ── Budget by Category ──
@@ -230,6 +254,33 @@ export default function StatsView({ projects }: StatsViewProps) {
     <div className="flex items-center gap-2 mb-4">
       <Icon className="w-5 h-5 text-[#F97316]" />
       <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">{title}</h3>
+    </div>
+  );
+
+  const CountBarChart = ({ data, title, icon }: { data: { name: string; count: number; fullName?: string }[]; title: string; icon: React.ElementType }) => (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <SectionTitle icon={icon} title={title} />
+      {data.length > 0 ? (
+        <ResponsiveContainer width="100%" height={Math.max(200, data.length * 36)}>
+          <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 5, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+            <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={tooltipStyle}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={((value: any, _name: any, props: any) => [
+                `${value} proyectos`, props?.payload?.fullName || "Cantidad"
+              ]) as any} />
+            <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+              {data.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="text-sm text-gray-400 text-center py-8">Sin datos</p>
+      )}
     </div>
   );
 
@@ -382,43 +433,26 @@ export default function StatsView({ projects }: StatsViewProps) {
         </div>
       </div>
 
-      {/* ── Row 2: Projects by Unit ── */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <SectionTitle icon={Building2} title="Proyectos por Unidad Requirente" />
-        {projectsByUnit.length > 0 ? (
-          <ResponsiveContainer width="100%" height={Math.max(250, projectsByUnit.length * 36)}>
-            <BarChart data={projectsByUnit} layout="vertical" margin={{ top: 5, right: 20, left: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
-              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
-              <Tooltip contentStyle={tooltipStyle}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={((value: any) => [`${value} proyectos`, "Cantidad"]) as any} />
-              <Bar dataKey="count" radius={[0, 6, 6, 0]}>
-                {projectsByUnit.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-sm text-gray-400 text-center py-8">Sin datos</p>
-        )}
+      {/* ── Cantidad de Proyectos: Unidad + Tipo Desarrollo + Categoría ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <CountBarChart data={projectsByUnit} title="Proyectos por Unidad Requirente" icon={Building2} />
+        <CountBarChart data={projectsByWorkType} title="Proyectos por Tipo de Desarrollo" icon={Layers} />
+        <CountBarChart data={projectsByCategory} title="Proyectos por Categoría" icon={Tag} />
       </div>
 
-      {/* ── Row 3: Budget by Unit + Budget by Category ── */}
+      {/* ── Inversión: Unidad + Categoría ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BudgetBarChart data={budgetByUnit} title="Inversión por Unidad Requirente (M$)" icon={Building2} />
         <BudgetBarChart data={budgetByCategory} title="Inversión por Categoría (M$)" icon={Tag} />
       </div>
 
-      {/* ── Row 3: Budget by Work Type + Budget by Sector ── */}
+      {/* ── Inversión: Tipo Desarrollo + Sector ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BudgetBarChart data={budgetByWorkType} title="Inversión por Tipo de Desarrollo (M$)" icon={Layers} />
         <BudgetBarChart data={budgetBySector} title="Inversión por Sector (M$)" icon={MapPin} />
       </div>
 
-      {/* ── Row 4: Budget by Financing + Budget by Bidding ── */}
+      {/* ── Inversión: Financiamiento + Licitación ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BudgetBarChart data={budgetByFinancing} title="Inversión por Tipo Financiamiento (M$)" icon={Wallet} />
         <BudgetBarChart data={budgetByBidding} title="Inversión por Tipo Licitación (M$)" icon={Gavel} />
