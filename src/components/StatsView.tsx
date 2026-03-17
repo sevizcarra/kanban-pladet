@@ -84,6 +84,18 @@ export default function StatsView({ projects }: StatsViewProps) {
     ? Math.round(projects.reduce((sum, p) => sum + getProgress(p.status, p.subEtapas, p.tipoDesarrollo), 0) / total)
     : 0;
 
+  // ── Projects count by Requesting Unit ──
+  const projectsByUnit = useMemo(() => {
+    const map = new Map<string, number>();
+    projects.forEach((p) => {
+      const unit = p.requestingUnit || "Sin asignar";
+      map.set(unit, (map.get(unit) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [projects]);
+
   // ── Budget by Requesting Unit ──
   const budgetByUnit = useMemo(() => {
     const map = new Map<string, { count: number; budget: number }>();
@@ -370,7 +382,31 @@ export default function StatsView({ projects }: StatsViewProps) {
         </div>
       </div>
 
-      {/* ── Row 2: Budget by Unit + Budget by Category ── */}
+      {/* ── Row 2: Projects by Unit ── */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <SectionTitle icon={Building2} title="Proyectos por Unidad Requirente" />
+        {projectsByUnit.length > 0 ? (
+          <ResponsiveContainer width="100%" height={Math.max(250, projectsByUnit.length * 36)}>
+            <BarChart data={projectsByUnit} layout="vertical" margin={{ top: 5, right: 20, left: 5, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
+              <Tooltip contentStyle={tooltipStyle}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={((value: any) => [`${value} proyectos`, "Cantidad"]) as any} />
+              <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                {projectsByUnit.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-8">Sin datos</p>
+        )}
+      </div>
+
+      {/* ── Row 3: Budget by Unit + Budget by Category ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BudgetBarChart data={budgetByUnit} title="Inversión por Unidad Requirente (M$)" icon={Building2} />
         <BudgetBarChart data={budgetByCategory} title="Inversión por Categoría (M$)" icon={Tag} />
