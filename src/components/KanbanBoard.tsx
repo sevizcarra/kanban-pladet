@@ -446,9 +446,9 @@ export default function KanbanBoard({ projects, statuses: statusesProp, onProjec
         {activeStatuses.map((s) => {
           const cols = sortedByColumn[s.id] || [];
           return (
-            <div key={s.id} className="min-w-[240px] max-w-[280px] flex-shrink-0">
+            <div key={s.id} className="min-w-[240px] max-w-[280px] flex-shrink-0 flex flex-col" style={{ maxHeight: 'calc(100vh - 220px)' }}>
               {/* Column header */}
-              <div className="flex items-center gap-2 mb-3 py-2 px-1">
+              <div className="flex items-center gap-2 mb-3 py-2 px-1 flex-shrink-0">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color, boxShadow: `0 0 0 2px white, 0 0 0 3.5px ${s.color}40` }} />
                 <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">{s.label}</span>
                 <span
@@ -459,9 +459,9 @@ export default function KanbanBoard({ projects, statuses: statusesProp, onProjec
                 </span>
               </div>
 
-              {/* Column body */}
+              {/* Column body — scrollable */}
               <SortableContext items={cols.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2.5 min-h-[100px] p-2 bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200/50">
+                <div className="flex flex-col gap-2.5 min-h-[100px] p-2 bg-white/40 backdrop-blur-sm rounded-xl border border-gray-200/50 overflow-y-auto flex-1 kanban-column-scroll">
                   {cols.map((p) => (
                     <SortableCard
                       key={p.id}
