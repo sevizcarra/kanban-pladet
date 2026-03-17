@@ -315,31 +315,45 @@ export default function ProjectDetail({
     }
   };
 
-  const commitStatusChange = async (sendEmail: boolean, editedName?: string, editedEmail?: string) => {
+  // Helper: send email to a single recipient
+  const sendEmailTo = async (toEmail: string, toName: string, prevStatus: string, newStatus: string) => {
+    if (!toEmail || toEmail === "—" || !toEmail.includes("@")) return;
+    const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "status_change", to: toEmail, contactName: toName || "Estimado/a", projectName: project.title, projectCode: project.codigoProyectoUsa || "—", previousStatus: prevStatus, newStatus, tipoDesarrollo: project.tipoDesarrollo || "", dashboardType: project.dashboardType || "" }) });
+    if (!res.ok) throw new Error("Email send failed");
+  };
+
+  const commitStatusChange = async (sendEmail: boolean, editedName?: string, editedEmail?: string, editedName2?: string, editedEmail2?: string) => {
     const newStatusId = emailDialog.pendingStatusId;
-    const updatedProject = { ...project, status: newStatusId, ...(editedName !== undefined ? { contactName: editedName } : {}), ...(editedEmail !== undefined ? { contactEmail: editedEmail } : {}) };
+    const updatedProject = {
+      ...project, status: newStatusId,
+      ...(editedName !== undefined ? { contactName: editedName } : {}),
+      ...(editedEmail !== undefined ? { contactEmail: editedEmail } : {}),
+      ...(editedName2 !== undefined ? { contactoDirectoName: editedName2 } : {}),
+      ...(editedEmail2 !== undefined ? { contactoDirectoEmail: editedEmail2 } : {}),
+    };
     onUpdate(updatedProject);
-    const toEmail = editedEmail || project.contactEmail;
-    const toName = editedName || project.contactName;
-    if (sendEmail && toEmail && toEmail !== "—" && toEmail.includes("@")) {
-      const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "status_change", to: toEmail, contactName: toName || "Estimado/a", projectName: project.title, projectCode: project.codigoProyectoUsa || "—", previousStatus: project.status, newStatus: newStatusId, tipoDesarrollo: project.tipoDesarrollo || "", dashboardType: project.dashboardType || "" }) });
-      if (!res.ok) throw new Error("Email send failed");
+    if (sendEmail) {
+      await Promise.all([
+        sendEmailTo(editedEmail || project.contactEmail, editedName || project.contactName, project.status, newStatusId),
+        sendEmailTo(editedEmail2 || project.contactoDirectoEmail || "", editedName2 || project.contactoDirectoName || "", project.status, newStatusId),
+      ]);
     }
   };
 
   // Manual email send — opens the same dialog but for current status
   const [manualEmailDialog, setManualEmailDialog] = useState(false);
-  const handleManualEmailSend = async (editedName: string, editedEmail: string) => {
-    const toEmail = editedEmail || project.contactEmail;
-    const toName = editedName || project.contactName;
-    if (toEmail && toEmail !== "—" && toEmail.includes("@")) {
-      // Update contact info if edited
-      if (editedName !== undefined || editedEmail !== undefined) {
-        onUpdate({ ...project, ...(editedName !== undefined ? { contactName: editedName } : {}), ...(editedEmail !== undefined ? { contactEmail: editedEmail } : {}) });
-      }
-      const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "status_change", to: toEmail, contactName: toName || "Estimado/a", projectName: project.title, projectCode: project.codigoProyectoUsa || "—", previousStatus: project.status, newStatus: project.status, tipoDesarrollo: project.tipoDesarrollo || "", dashboardType: project.dashboardType || "" }) });
-      if (!res.ok) throw new Error("Email send failed");
-    }
+  const handleManualEmailSend = async (editedName: string, editedEmail: string, editedName2?: string, editedEmail2?: string) => {
+    // Update contact info if edited
+    const updates: Partial<typeof project> = {};
+    if (editedName !== undefined) updates.contactName = editedName;
+    if (editedEmail !== undefined) updates.contactEmail = editedEmail;
+    if (editedName2 !== undefined) updates.contactoDirectoName = editedName2;
+    if (editedEmail2 !== undefined) updates.contactoDirectoEmail = editedEmail2;
+    if (Object.keys(updates).length > 0) onUpdate({ ...project, ...updates });
+    await Promise.all([
+      sendEmailTo(editedEmail || project.contactEmail, editedName || project.contactName, project.status, project.status),
+      sendEmailTo(editedEmail2 || project.contactoDirectoEmail || "", editedName2 || project.contactoDirectoName || "", project.status, project.status),
+    ]);
     setManualEmailDialog(false);
   };
 
@@ -1208,18 +1222,20 @@ export default function ProjectDetail({
       {/* Email notification dialog */}
       <EmailConfirmDialog isOpen={emailDialog.open}
         onClose={() => { commitStatusChange(false); setEmailDialog((prev) => ({ ...prev, open: false })); }}
-        onConfirm={async (editedName: string, editedEmail: string) => { await commitStatusChange(true, editedName, editedEmail); }}
+        onConfirm={async (n1, e1, n2, e2) => { await commitStatusChange(true, n1, e1, n2, e2); }}
         onSkip={() => { commitStatusChange(false); setEmailDialog((prev) => ({ ...prev, open: false })); }}
         contactName={project.contactName || "—"} contactEmail={project.contactEmail || "—"}
+        contactoDirectoName={project.contactoDirectoName || ""} contactoDirectoEmail={project.contactoDirectoEmail || ""}
         projectName={project.title} projectCode={project.codigoProyectoUsa || "—"}
         type="status_change" previousStatus={emailDialog.previousStatusLabel} newStatus={emailDialog.newStatusLabel} />
 
       {/* Manual email notification dialog */}
       <EmailConfirmDialog isOpen={manualEmailDialog}
         onClose={() => setManualEmailDialog(false)}
-        onConfirm={async (editedName: string, editedEmail: string) => { await handleManualEmailSend(editedName, editedEmail); }}
+        onConfirm={async (n1, e1, n2, e2) => { await handleManualEmailSend(n1, e1, n2, e2); }}
         onSkip={() => setManualEmailDialog(false)}
         contactName={project.contactName || "—"} contactEmail={project.contactEmail || "—"}
+        contactoDirectoName={project.contactoDirectoName || ""} contactoDirectoEmail={project.contactoDirectoEmail || ""}
         projectName={project.title} projectCode={project.codigoProyectoUsa || "—"}
         type="status_change" previousStatus={statusObj?.label || project.status} newStatus={statusObj?.label || project.status} />
 

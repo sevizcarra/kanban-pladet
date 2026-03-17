@@ -6,10 +6,12 @@ import { Mail, X, Send, Loader2, CheckCircle2, AlertCircle, Pencil } from "lucid
 interface EmailConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (editedName: string, editedEmail: string) => Promise<void>;
+  onConfirm: (editedName: string, editedEmail: string, editedName2?: string, editedEmail2?: string) => Promise<void>;
   onSkip: () => void;
   contactName: string;
   contactEmail: string;
+  contactoDirectoName?: string;
+  contactoDirectoEmail?: string;
   projectName: string;
   projectCode: string;
   type: "creation" | "status_change";
@@ -24,6 +26,8 @@ export default function EmailConfirmDialog({
   onSkip,
   contactName,
   contactEmail,
+  contactoDirectoName,
+  contactoDirectoEmail,
   projectName,
   projectCode,
   type,
@@ -32,31 +36,41 @@ export default function EmailConfirmDialog({
 }: EmailConfirmDialogProps) {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<"success" | "error" | null>(null);
+  // Jefe Unidad Mayor
   const [editName, setEditName] = useState(contactName);
   const [editEmail, setEditEmail] = useState(contactEmail);
   const [editing, setEditing] = useState(false);
+  // Contacto Directo
+  const [editName2, setEditName2] = useState(contactoDirectoName || "");
+  const [editEmail2, setEditEmail2] = useState(contactoDirectoEmail || "");
+  const [editing2, setEditing2] = useState(false);
 
   // Sync with props when dialog opens
   useEffect(() => {
     if (isOpen) {
       setEditName(contactName);
       setEditEmail(contactEmail);
+      setEditName2(contactoDirectoName || "");
+      setEditEmail2(contactoDirectoEmail || "");
       setEditing(false);
+      setEditing2(false);
       setResult(null);
       setSending(false);
     }
-  }, [isOpen, contactName, contactEmail]);
+  }, [isOpen, contactName, contactEmail, contactoDirectoName, contactoDirectoEmail]);
 
   if (!isOpen) return null;
 
-  const hasValidEmail = editEmail && editEmail !== "—" && editEmail.includes("@");
+  const hasValidEmail1 = editEmail && editEmail !== "—" && editEmail.includes("@");
+  const hasValidEmail2 = editEmail2 && editEmail2 !== "—" && editEmail2.includes("@");
+  const hasAnyValidEmail = hasValidEmail1 || hasValidEmail2;
 
   const handleSend = async () => {
-    if (!hasValidEmail) return;
+    if (!hasAnyValidEmail) return;
     setSending(true);
     setResult(null);
     try {
-      await onConfirm(editName, editEmail);
+      await onConfirm(editName, editEmail, editName2, editEmail2);
       setResult("success");
       setTimeout(() => {
         setResult(null);
@@ -97,8 +111,8 @@ export default function EmailConfirmDialog({
         <div className="px-6 py-5">
           <p className="text-sm text-gray-600 mb-4">
             {type === "creation"
-              ? "¿Deseas notificar al contacto sobre la creación del proyecto?"
-              : "¿Deseas notificar al contacto sobre el cambio de etapa?"}
+              ? "¿Deseas notificar a los contactos sobre la creación del proyecto?"
+              : "¿Deseas notificar a los contactos sobre el cambio de etapa?"}
           </p>
 
           {/* Project info */}
@@ -119,10 +133,10 @@ export default function EmailConfirmDialog({
             )}
           </div>
 
-          {/* Recipient — editable */}
-          <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+          {/* Recipient 1 — Jefe Unidad Mayor */}
+          <div className="bg-blue-50 rounded-lg p-3 border border-blue-100 mb-3">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-blue-400 font-medium">DESTINATARIO</p>
+              <p className="text-xs text-blue-400 font-medium">JEFE UNIDAD MAYOR</p>
               {!editing && (
                 <button
                   onClick={() => setEditing(true)}
@@ -139,7 +153,7 @@ export default function EmailConfirmDialog({
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Nombre del contacto"
+                  placeholder="Nombre (ej: Decano)"
                   className="w-full text-sm border border-blue-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300 bg-white"
                 />
                 <input
@@ -158,12 +172,51 @@ export default function EmailConfirmDialog({
             )}
           </div>
 
-          {!hasValidEmail && (
+          {/* Recipient 2 — Contacto Directo */}
+          <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-orange-400 font-medium">CONTACTO DIRECTO</p>
+              {!editing2 && (
+                <button
+                  onClick={() => setEditing2(true)}
+                  className="flex items-center gap-1 text-[10px] text-orange-500 hover:text-orange-700 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Editar
+                </button>
+              )}
+            </div>
+            {editing2 ? (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={editName2}
+                  onChange={(e) => setEditName2(e.target.value)}
+                  placeholder="Nombre (ej: Jefe de Departamento)"
+                  className="w-full text-sm border border-orange-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300 bg-white"
+                />
+                <input
+                  type="email"
+                  value={editEmail2}
+                  onChange={(e) => setEditEmail2(e.target.value)}
+                  placeholder="correo@ejemplo.cl"
+                  className="w-full text-sm border border-orange-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-300 bg-white"
+                />
+              </div>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-gray-800">{editName2 || "Sin asignar"}</p>
+                <p className="text-xs text-gray-500">{editEmail2 || "—"}</p>
+              </>
+            )}
+          </div>
+
+          {!hasAnyValidEmail && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-700">
-                  Ingresa un correo válido para poder enviar la notificación.
+                  Ingresa al menos un correo válido para poder enviar la notificación.
                 </p>
               </div>
             </div>
@@ -173,7 +226,7 @@ export default function EmailConfirmDialog({
           {result === "success" && (
             <div className="mt-4 flex items-center gap-2 text-green-600 bg-green-50 rounded-lg p-3">
               <CheckCircle2 className="w-5 h-5" />
-              <span className="text-sm font-medium">Correo enviado correctamente</span>
+              <span className="text-sm font-medium">Correo(s) enviado(s) correctamente</span>
             </div>
           )}
           {result === "error" && (
@@ -196,7 +249,7 @@ export default function EmailConfirmDialog({
           {!result && (
             <button
               onClick={handleSend}
-              disabled={sending || !hasValidEmail}
+              disabled={sending || !hasAnyValidEmail}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#F97316] to-[#ea580c] rounded-lg hover:from-[#ea580c] hover:to-[#c2410c] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {sending ? (
