@@ -123,10 +123,10 @@ export default function Home() {
     // Set presence immediately
     setPresence(email);
 
-    // Heartbeat every 60s
+    // Heartbeat every 30s
     const heartbeat = setInterval(() => {
       setPresence(email);
-    }, 60_000);
+    }, 30_000);
 
     // Subscribe to all online users
     const unsubPresence = subscribePresence(setOnlineUsers);

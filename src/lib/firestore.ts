@@ -474,7 +474,7 @@ export async function getSTDDocuments(): Promise<STDDocumentRecord[]> {
 
 // ── Online Presence (collection: presence) ──
 const PRESENCE_COLLECTION = "presence";
-const PRESENCE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+const PRESENCE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export interface PresenceRecord {
   email: string;
