@@ -565,8 +565,8 @@ export default function ProjectDetail({
           </div>
         )}
 
-        {/* External execution panel — shown when status is en_ejecucion or beyond and not obras */}
-        {!projectIsFTE && !projectIsObras && (currentStatusId === "en_ejecucion" || currentStatusId === "coordinacion_ejecucion" || currentStatusId === "gestion_compra" || currentStatusId === "en_diseno") && (
+        {/* External execution panel — all statuses except FTE and obras */}
+        {!projectIsFTE && !projectIsObras && (
           <div className={`flex items-center gap-4 mt-2.5 pl-2 border-t pt-2 ${isExternalExecution ? "border-purple-200 bg-purple-50/50 -mx-6 px-8 pb-2" : "border-gray-100"}`}>
             <span className="text-[10px] uppercase font-bold text-gray-600 tracking-wide flex-shrink-0">Ejecución externa:</span>
             <label className={`flex items-center gap-1.5 text-xs cursor-pointer px-2.5 py-1.5 rounded-lg transition font-medium ${ejecucionExterna === "mantencion_campus" ? "bg-purple-100 text-purple-800 ring-1 ring-purple-300" : "hover:bg-purple-50 text-gray-600"}`}>
