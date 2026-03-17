@@ -142,6 +142,7 @@ export default function TableView({ projects, onProjectClick, onToggleFlag, onTo
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-200">
+              <th className="px-3 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-10 text-center">#</th>
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -158,7 +159,7 @@ export default function TableView({ projects, onProjectClick, onToggleFlag, onTo
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {sorted.map((p) => {
+            {sorted.map((p, rowIndex) => {
               const statusObj = getStatusObj(p.status, p.tipoDesarrollo);
               const prio = PRIORITIES[p.priority];
               const progress = getProgress(
@@ -186,6 +187,10 @@ export default function TableView({ projects, onProjectClick, onToggleFlag, onTo
                     p.frozen ? "bg-blue-50 hover:bg-blue-100/80" : isFlagged ? "bg-red-50 hover:bg-red-100/80" : isOverdue ? "bg-red-50/60 hover:bg-red-50" : isDueSoon ? "bg-amber-50/40 hover:bg-amber-50" : "hover:bg-orange-50/40"
                   }`}
                 >
+                  {/* Nº */}
+                  <td className="px-3 py-3 text-center">
+                    <span className="text-xs font-medium text-gray-400">{rowIndex + 1}</span>
+                  </td>
                   {/* Proyecto */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">

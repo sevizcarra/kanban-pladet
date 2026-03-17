@@ -42,6 +42,7 @@ import {
   Search,
   Users,
   Columns3,
+  LayoutList,
   List,
   Lightbulb,
   Snowflake,
@@ -70,7 +71,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'compact' | 'table'>('kanban');
   const [creationEmailDialog, setCreationEmailDialog] = useState<{
     open: boolean;
     projectData: Omit<Project, 'id'> | null;
@@ -557,6 +558,17 @@ export default function Home() {
                           <Columns3 size={16} />
                         </button>
                         <button
+                          onClick={() => setViewMode('compact')}
+                          className={`p-2 rounded-md transition-all ${
+                            viewMode === 'compact'
+                              ? 'bg-white text-[#F97316] shadow-sm'
+                              : 'text-gray-400 hover:text-gray-600'
+                          }`}
+                          title="Vista Compacta"
+                        >
+                          <LayoutList size={16} />
+                        </button>
+                        <button
                           onClick={() => setViewMode('table')}
                           className={`p-2 rounded-md transition-all ${
                             viewMode === 'table'
@@ -595,6 +607,18 @@ export default function Home() {
                 />
               )}
 
+              {activeTab === 'compras' && viewMode === 'compact' && (
+                <KanbanBoard
+                  projects={filteredProjects}
+                  onProjectClick={setSelectedProject}
+                  onToggleFlag={handleToggleFlag}
+                  onToggleFreeze={handleRequestFreeze}
+                  onDuplicate={handleDuplicate}
+                  onReorder={handleReorder}
+                  compact
+                />
+              )}
+
               {activeTab === 'compras' && viewMode === 'table' && (
                 <TableView
                   projects={filteredProjects}
@@ -618,6 +642,19 @@ export default function Home() {
                   onToggleFreeze={handleRequestFreeze}
                   onDuplicate={handleDuplicate}
                   onReorder={handleReorder}
+                />
+              )}
+
+              {activeTab === 'obras' && viewMode === 'compact' && (
+                <KanbanBoard
+                  projects={filteredProjects}
+                  statuses={OBRAS_STATUSES}
+                  onProjectClick={setSelectedProject}
+                  onToggleFlag={handleToggleFlag}
+                  onToggleFreeze={handleRequestFreeze}
+                  onDuplicate={handleDuplicate}
+                  onReorder={handleReorder}
+                  compact
                 />
               )}
 
