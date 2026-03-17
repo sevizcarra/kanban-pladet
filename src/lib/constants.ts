@@ -67,6 +67,8 @@ export const WORK_TYPES = [
   { value: "NOR", label: "NOR - Normalización" },
   { value: "FTE", label: "FTE - Factibilidad Técnica" },
   { value: "PAI", label: "PAI - Paisajismo" },
+  { value: "RET", label: "RET - Retiro" },
+  { value: "SERV", label: "SERV - Servicios" },
 ];
 
 export const LEADING_DISCIPLINE = [
@@ -92,9 +94,7 @@ export const PROJECT_CATEGORIES = [
   { value: "paisajismo", label: "Paisajismo y Espacio Público" },
   { value: "patrimonio", label: "Patrimonio" },
   { value: "piso", label: "Piso y Pavimentos" },
-  { value: "retiro", label: "Retiro" },
   { value: "salas", label: "Salas de Clase" },
-  { value: "servicio", label: "Servicio" },
   { value: "techumbre", label: "Techumbre y/o Cubierta" },
 ];
 
