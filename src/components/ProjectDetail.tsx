@@ -51,7 +51,7 @@ import ProgressBar from "./ProgressBar";
 import CommentsSection from "./CommentsSection";
 import LocationPicker from "./LocationPicker";
 import EmailConfirmDialog from "./EmailConfirmDialog";
-import { Project } from "@/types/project";
+import { Project, NotificationEntry } from "@/types/project";
 
 interface ProjectDetailProps {
   project: Project;
@@ -315,11 +315,21 @@ export default function ProjectDetail({
     }
   };
 
-  // Helper: send email to a single recipient
-  const sendEmailTo = async (toEmail: string, toName: string, prevStatus: string, newStatus: string) => {
-    if (!toEmail || toEmail === "—" || !toEmail.includes("@")) return;
+  // Helper: send email to a single recipient, returns the email if sent
+  const sendEmailTo = async (toEmail: string, toName: string, prevStatus: string, newStatus: string): Promise<string | null> => {
+    if (!toEmail || toEmail === "—" || !toEmail.includes("@")) return null;
     const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "status_change", to: toEmail, contactName: toName || "Estimado/a", projectName: project.title, projectCode: project.codigoProyectoUsa || "—", previousStatus: prevStatus, newStatus, tipoDesarrollo: project.tipoDesarrollo || "", dashboardType: project.dashboardType || "" }) });
     if (!res.ok) throw new Error("Email send failed");
+    return toEmail;
+  };
+
+  // Helper: record notification in log
+  const recordNotification = (statusId: string, sentEmails: (string | null)[]) => {
+    const recipients = sentEmails.filter((e): e is string => !!e);
+    if (recipients.length === 0) return;
+    const entry: NotificationEntry = { status: statusId, sentAt: new Date().toISOString(), recipients };
+    const log = [...(project.notificationLog || []), entry];
+    onUpdate({ ...project, notificationLog: log });
   };
 
   const commitStatusChange = async (sendEmail: boolean, editedName?: string, editedEmail?: string, editedName2?: string, editedEmail2?: string) => {
@@ -333,10 +343,16 @@ export default function ProjectDetail({
     };
     onUpdate(updatedProject);
     if (sendEmail) {
-      await Promise.all([
+      const results = await Promise.all([
         sendEmailTo(editedEmail || project.contactEmail, editedName || project.contactName, project.status, newStatusId),
         sendEmailTo(editedEmail2 || project.contactoDirectoEmail || "", editedName2 || project.contactoDirectoName || "", project.status, newStatusId),
       ]);
+      // Record in notification log
+      const recipients = results.filter((e): e is string => !!e);
+      if (recipients.length > 0) {
+        const entry: NotificationEntry = { status: newStatusId, sentAt: new Date().toISOString(), recipients };
+        onUpdate({ ...updatedProject, notificationLog: [...(project.notificationLog || []), entry] });
+      }
     }
   };
 
@@ -344,16 +360,18 @@ export default function ProjectDetail({
   const [manualEmailDialog, setManualEmailDialog] = useState(false);
   const handleManualEmailSend = async (editedName: string, editedEmail: string, editedName2?: string, editedEmail2?: string) => {
     // Update contact info if edited
-    const updates: Partial<typeof project> = {};
-    if (editedName !== undefined) updates.contactName = editedName;
-    if (editedEmail !== undefined) updates.contactEmail = editedEmail;
-    if (editedName2 !== undefined) updates.contactoDirectoName = editedName2;
-    if (editedEmail2 !== undefined) updates.contactoDirectoEmail = editedEmail2;
-    if (Object.keys(updates).length > 0) onUpdate({ ...project, ...updates });
-    await Promise.all([
+    const contactUpdates: Partial<Project> = {};
+    if (editedName !== undefined) contactUpdates.contactName = editedName;
+    if (editedEmail !== undefined) contactUpdates.contactEmail = editedEmail;
+    if (editedName2 !== undefined) contactUpdates.contactoDirectoName = editedName2;
+    if (editedEmail2 !== undefined) contactUpdates.contactoDirectoEmail = editedEmail2;
+    const results = await Promise.all([
       sendEmailTo(editedEmail || project.contactEmail, editedName || project.contactName, project.status, project.status),
       sendEmailTo(editedEmail2 || project.contactoDirectoEmail || "", editedName2 || project.contactoDirectoName || "", project.status, project.status),
     ]);
+    const recipients = results.filter((e): e is string => !!e);
+    const logEntry = recipients.length > 0 ? { status: project.status, sentAt: new Date().toISOString(), recipients } as NotificationEntry : null;
+    onUpdate({ ...project, ...contactUpdates, ...(logEntry ? { notificationLog: [...(project.notificationLog || []), logEntry] } : {}) });
     setManualEmailDialog(false);
   };
 
@@ -441,6 +459,9 @@ export default function ProjectDetail({
             const isCompleted = idx < statusIndex;
             const isCurrent = idx === statusIndex;
             const isFuture = idx > statusIndex;
+            const wasNotified = (project.notificationLog || []).some(n => n.status === status.id);
+            const notifEntry = (project.notificationLog || []).filter(n => n.status === status.id);
+            const lastNotif = notifEntry.length > 0 ? notifEntry[notifEntry.length - 1] : null;
             return (
               <div key={status.id} className="flex items-center flex-1 last:flex-initial">
                 {/* Step circle + label */}
@@ -449,12 +470,20 @@ export default function ProjectDetail({
                   className="flex flex-col items-center gap-1 group relative"
                   title={status.label}
                 >
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
-                    isCompleted ? "bg-green-500 border-green-500 text-white" :
-                    isCurrent ? "bg-[#F97316] border-[#F97316] text-white ring-4 ring-[#F97316]/20" :
-                    "bg-white border-gray-400 text-gray-500 group-hover:border-gray-500"
-                  }`}>
-                    {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                  <div className="relative">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
+                      isCompleted ? "bg-green-500 border-green-500 text-white" :
+                      isCurrent ? "bg-[#F97316] border-[#F97316] text-white ring-4 ring-[#F97316]/20" :
+                      "bg-white border-gray-400 text-gray-500 group-hover:border-gray-500"
+                    }`}>
+                      {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                    </div>
+                    {/* Notification indicator */}
+                    {wasNotified && (
+                      <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center" title={`Notificado el ${lastNotif ? new Date(lastNotif.sentAt).toLocaleDateString("es-CL") : ""} a ${lastNotif?.recipients.join(", ")}`}>
+                        <Mail className="w-2 h-2 text-white" />
+                      </div>
+                    )}
                   </div>
                   <span className={`text-[10px] leading-tight text-center max-w-[80px] ${
                     isCurrent ? "font-bold text-[#F97316]" : isCompleted ? "font-medium text-green-700" : "font-medium text-gray-500"

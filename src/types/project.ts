@@ -100,6 +100,14 @@ export interface Project {
   stdCuerpoDoc?: string;               // Cuerpo del documento STD (referencia)
   // Field-level timestamps: tracks when each field was last set/modified
   fieldTimestamps?: Record<string, string>; // { fieldName: ISO date string }
+  // Notification log: tracks when emails were sent per status
+  notificationLog?: NotificationEntry[];
+}
+
+export interface NotificationEntry {
+  status: string;       // status id at time of notification
+  sentAt: string;       // ISO date
+  recipients: string[]; // email addresses notified
 }
 
 export interface MemoLink {
