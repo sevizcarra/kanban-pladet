@@ -94,7 +94,9 @@ export const PROJECT_CATEGORIES = [
   { value: "paisajismo", label: "Paisajismo y Espacio Público" },
   { value: "patrimonio", label: "Patrimonio" },
   { value: "piso", label: "Piso y Pavimentos" },
+  { value: "retiro", label: "Retiro" },
   { value: "salas", label: "Salas de Clase" },
+  { value: "servicio", label: "Servicio" },
   { value: "techumbre", label: "Techumbre y/o Cubierta" },
 ];
 
