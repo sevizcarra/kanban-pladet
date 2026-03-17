@@ -130,6 +130,11 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
           {p.tipoLicitacion && (
             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-700'}`}>{p.tipoLicitacion}</span>
           )}
+          {p.ejecucionExterna && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700" title={p.ejecucionExterna === "mantencion_campus" ? "Depto. Mantención Campus" : "Depto. Gestión Campus"}>
+              {p.ejecucionExterna === "mantencion_campus" ? "MANT" : "GEST"}
+            </span>
+          )}
           {jefe && (
             <span className={`text-[10px] ${isFrozen || isFlagged ? 'text-white/70' : 'text-gray-400'}`}>{jefe.split(" ")[0]}</span>
           )}
@@ -239,6 +244,13 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
           {p.tipoDesarrollo === "FTE" && (
             <span className={`inline-block px-1.5 py-0 text-[9px] font-bold rounded mb-1 ml-0.5 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'}`}>
               FTE
+            </span>
+          )}
+
+          {/* External execution badge */}
+          {p.ejecucionExterna && (
+            <span className="inline-block px-1.5 py-0 text-[9px] font-bold rounded mb-1 ml-0.5 bg-purple-100 text-purple-700" title={p.ejecucionExterna === "mantencion_campus" ? "Ejecución: Depto. Mantención Campus" : "Ejecución: Depto. Gestión Campus"}>
+              {p.ejecucionExterna === "mantencion_campus" ? "MANT" : "GEST"}
             </span>
           )}
 

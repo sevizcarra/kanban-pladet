@@ -100,6 +100,8 @@ export interface Project {
   stdCuerpoDoc?: string;               // Cuerpo del documento STD (referencia)
   // Field-level timestamps: tracks when each field was last set/modified
   fieldTimestamps?: Record<string, string>; // { fieldName: ISO date string }
+  // Ejecución externa (mutuamente excluyente)
+  ejecucionExterna?: "mantencion_campus" | "gestion_campus" | null;
   // Notification log: tracks when emails were sent per status
   notificationLog?: NotificationEntry[];
 }

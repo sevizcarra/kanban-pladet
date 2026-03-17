@@ -247,6 +247,10 @@ export default function ProjectDetail({
   const progress = getProgress(project.status, project.subEtapas, project.tipoDesarrollo, project.dashboardType);
   const tabs = projectIsObras ? TABS_OBRAS : projectIsFTE ? TABS_FTE : TABS_REGULAR;
 
+  // Ejecución externa
+  const [ejecucionExterna, setEjecucionExterna] = useState<"mantencion_campus" | "gestion_campus" | null>(project.ejecucionExterna || null);
+  const isExternalExecution = !!ejecucionExterna;
+
   // Cuadrillas state (for obras)
   const [cuadrillas, setCuadrillas] = useState<string[]>(project.cuadrillas || []);
   const toggleCuadrilla = (value: string) => {
@@ -285,6 +289,7 @@ export default function ProjectDetail({
       ubicacionLat, ubicacionLng, ubicacionNombre,
       cuadrillas,
       recinto: recinto || undefined,
+      ejecucionExterna: ejecucionExterna || null,
     };
     onUpdate(updated);
     setSaved(true);
@@ -296,6 +301,9 @@ export default function ProjectDetail({
   const handleDeleteConfirm = () => { onDelete(project.id, deleteReason); setShowDeleteConfirm(false); };
 
   const handleStatusCheckbox = (clickedIdx: number) => {
+    // Block normal advance when external execution is active
+    if (isExternalExecution) return;
+
     let newStatusId = project.status;
     if (clickedIdx <= statusIndex) {
       if (clickedIdx === statusIndex && clickedIdx > 0) newStatusId = projectStatuses[clickedIdx - 1].id;
@@ -313,6 +321,26 @@ export default function ProjectDetail({
         setEmailDialog({ open: true, pendingStatusId: newStatusId, previousStatusLabel: prevLabel, newStatusLabel: newLabel });
       }
     }
+  };
+
+  // Jump to "Terminada" for external execution
+  const handleExternalTerminada = () => {
+    const terminadaStatus = projectStatuses.find(s => s.id === "terminada");
+    if (!terminadaStatus) return;
+    if (projectIsObras) {
+      onUpdate({ ...project, status: "terminada", ejecucionExterna });
+    } else {
+      const prevLabel = projectStatuses.find((s) => s.id === project.status)?.label || project.status;
+      setEmailDialog({ open: true, pendingStatusId: "terminada", previousStatusLabel: prevLabel, newStatusLabel: terminadaStatus.label });
+    }
+  };
+
+  // Toggle external execution
+  const handleToggleExternalExecution = (val: "mantencion_campus" | "gestion_campus") => {
+    const newVal = ejecucionExterna === val ? null : val;
+    setEjecucionExterna(newVal);
+    // Save immediately
+    onUpdate({ ...project, ejecucionExterna: newVal });
   };
 
   // Helper: send email to a single recipient, returns the email if sent
@@ -383,7 +411,7 @@ export default function ProjectDetail({
 
   /* ── Sub-etapas for current status ── */
   const currentStatusId = projectStatuses[statusIndex]?.id;
-  const hasSubEtapas = !projectIsFTE && !projectIsObras && (currentStatusId === "en_diseno" || currentStatusId === "gestion_compra");
+  const hasSubEtapas = !projectIsFTE && !projectIsObras && !isExternalExecution && (currentStatusId === "en_diseno" || currentStatusId === "gestion_compra");
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -534,6 +562,40 @@ export default function ProjectDetail({
                 ))}
               </>
             )}
+          </div>
+        )}
+
+        {/* External execution panel — shown when status is en_ejecucion or beyond and not obras */}
+        {!projectIsFTE && !projectIsObras && (currentStatusId === "en_ejecucion" || currentStatusId === "coordinacion_ejecucion" || currentStatusId === "gestion_compra" || currentStatusId === "en_diseno") && (
+          <div className={`flex items-center gap-4 mt-2.5 pl-2 border-t pt-2 ${isExternalExecution ? "border-purple-200 bg-purple-50/50 -mx-6 px-8 pb-2" : "border-gray-100"}`}>
+            <span className="text-[10px] uppercase font-bold text-gray-600 tracking-wide flex-shrink-0">Ejecución externa:</span>
+            <label className={`flex items-center gap-1.5 text-xs cursor-pointer px-2.5 py-1.5 rounded-lg transition font-medium ${ejecucionExterna === "mantencion_campus" ? "bg-purple-100 text-purple-800 ring-1 ring-purple-300" : "hover:bg-purple-50 text-gray-600"}`}>
+              <input type="checkbox" checked={ejecucionExterna === "mantencion_campus"} onChange={() => handleToggleExternalExecution("mantencion_campus")} className="rounded border-gray-300 text-purple-500 focus:ring-purple-400 w-3.5 h-3.5" />
+              Depto. Mantención Campus
+            </label>
+            <label className={`flex items-center gap-1.5 text-xs cursor-pointer px-2.5 py-1.5 rounded-lg transition font-medium ${ejecucionExterna === "gestion_campus" ? "bg-purple-100 text-purple-800 ring-1 ring-purple-300" : "hover:bg-purple-50 text-gray-600"}`}>
+              <input type="checkbox" checked={ejecucionExterna === "gestion_campus"} onChange={() => handleToggleExternalExecution("gestion_campus")} className="rounded border-gray-300 text-purple-500 focus:ring-purple-400 w-3.5 h-3.5" />
+              Depto. Gestión Campus
+            </label>
+            {isExternalExecution && (
+              <button
+                onClick={handleExternalTerminada}
+                className="ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-all shadow-sm"
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+                Marcar como Terminada
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Warning when external execution blocks progress */}
+        {isExternalExecution && currentStatusId !== "terminada" && (
+          <div className="mt-2 mx-2 flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg">
+            <Building2 className="w-4 h-4 text-purple-500 flex-shrink-0" />
+            <span className="text-xs text-purple-700 font-medium">
+              Ejecución derivada a <strong>{ejecucionExterna === "mantencion_campus" ? "Depto. Mantención del Campus" : "Depto. Gestión del Campus"}</strong> — avance de etapas y sub-etapas inhabilitado hasta que reporten término.
+            </span>
           </div>
         )}
       </div>
