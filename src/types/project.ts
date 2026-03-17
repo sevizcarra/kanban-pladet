@@ -8,6 +8,8 @@ export interface Project {
   requestingUnit: string;
   contactName: string;
   contactEmail: string;
+  contactoDirectoName?: string;
+  contactoDirectoEmail?: string;
   budget: string;
   dueDate: string | null;
   tipoFinanciamiento: string | null;
@@ -38,6 +40,8 @@ export interface Project {
   subEtapas?: {
     disenoArquitectura?: boolean;
     disenoEspecialidades?: boolean;
+    disenoSolicitudPermisos?: boolean;
+    disenoSolicitudCertificados?: boolean;
     compraCDP?: boolean;
     compraEnProceso?: boolean;
     compraEvaluacionAdj?: boolean;

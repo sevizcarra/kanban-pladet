@@ -269,7 +269,7 @@ export const getCompletenessScore = (p: Record<string, unknown>): {
 
 export const getProgress = (
   id: string,
-  subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean; compraAceptacionOC?: boolean },
+  subEtapas?: { disenoArquitectura?: boolean; disenoEspecialidades?: boolean; disenoSolicitudPermisos?: boolean; disenoSolicitudCertificados?: boolean; compraCDP?: boolean; compraEnProceso?: boolean; compraEvaluacionAdj?: boolean; compraAceptacionOC?: boolean },
   tipoDesarrollo?: string,
   dashboardType?: string
 ) => {
@@ -283,13 +283,15 @@ export const getProgress = (
     return Math.min(100, Math.round(((mainIdx + 1) / list.length) * 100));
   }
 
-  // Normal: 7 etapas principales + 6 sub-etapas = 13 checkpoints
+  // Normal: 7 etapas principales + 8 sub-etapas = 15 checkpoints
   let completed = mainIdx + 1;
-  const totalCheckpoints = list.length + 6;
+  const totalCheckpoints = list.length + 8;
 
   if (subEtapas) {
     if (subEtapas.disenoArquitectura) completed++;
     if (subEtapas.disenoEspecialidades) completed++;
+    if (subEtapas.disenoSolicitudPermisos) completed++;
+    if (subEtapas.disenoSolicitudCertificados) completed++;
     if (subEtapas.compraCDP) completed++;
     if (subEtapas.compraEnProceso) completed++;
     if (subEtapas.compraEvaluacionAdj) completed++;

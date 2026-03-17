@@ -73,6 +73,8 @@ export default function CreateObrasModal({
       requestingUnit: form.unidadRequirente,
       contactName: form.nombreContacto || "",
       contactEmail: form.emailContacto || "",
+      contactoDirectoName: "",
+      contactoDirectoEmail: "",
       budget: form.budget || "0",
       dueDate: form.fechaEntrega || null,
       tipoLicitacion: form.tipoLicitacion || "",

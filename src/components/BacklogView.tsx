@@ -201,6 +201,8 @@ export default function BacklogView({ userEmail, onPromoteToProject }: Props) {
         requestingUnit: item.requestingUnit || "—",
         contactName: item.contactName || "—",
         contactEmail: item.contactEmail || "—",
+        contactoDirectoName: "—",
+        contactoDirectoEmail: "—",
         budget: item.budget || "0",
         dueDate: item.dueDate || null,
         tipoFinanciamiento: item.tipoFinanciamiento || null,

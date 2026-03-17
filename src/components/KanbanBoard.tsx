@@ -177,6 +177,13 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
             </span>
           )}
 
+          {/* FTE badge */}
+          {p.tipoDesarrollo === "FTE" && (
+            <span className={`inline-block px-1.5 py-0 text-[9px] font-bold rounded mb-1 ml-0.5 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'}`}>
+              FTE
+            </span>
+          )}
+
           {/* Recinto badge */}
           {p.recinto && (
             <span className={`inline-block px-1.5 py-0 text-[9px] font-medium rounded mb-1 ml-0.5 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600'}`}>

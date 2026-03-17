@@ -130,7 +130,7 @@ export default function ProjectDetail({
   const [especialidades, setEspecialidades] = useState(project.especialidades || []);
   const [subEtapas, setSubEtapas] = useState(
     project.subEtapas || {
-      disenoArquitectura: false, disenoEspecialidades: false,
+      disenoArquitectura: false, disenoEspecialidades: false, disenoSolicitudPermisos: false, disenoSolicitudCertificados: false,
       compraCDP: false, compraEnProceso: false, compraEvaluacionAdj: false, compraAceptacionOC: false,
     }
   );
@@ -178,6 +178,8 @@ export default function ProjectDetail({
   const [infoUnit, setInfoUnit] = useState(project.requestingUnit || "—");
   const [infoContactName, setInfoContactName] = useState(project.contactName || "—");
   const [infoContactEmail, setInfoContactEmail] = useState(project.contactEmail || "—");
+  const [infoContactoDirectoName, setInfoContactoDirectoName] = useState(project.contactoDirectoName || "—");
+  const [infoContactoDirectoEmail, setInfoContactoDirectoEmail] = useState(project.contactoDirectoEmail || "—");
 
   // UI state
   const [saved, setSaved] = useState(false);
@@ -254,7 +256,7 @@ export default function ProjectDetail({
   const handleSave = () => {
     const updated: Project = {
       ...project,
-      memorandumNumber: memorandumNumber || "", requestingUnit: infoUnit || "", contactName: infoContactName || "", contactEmail: infoContactEmail || "", categoriaProyecto,
+      memorandumNumber: memorandumNumber || "", requestingUnit: infoUnit || "", contactName: infoContactName || "", contactEmail: infoContactEmail || "", contactoDirectoName: infoContactoDirectoName || "", contactoDirectoEmail: infoContactoDirectoEmail || "", categoriaProyecto,
       fechaRecepcionMemo: fechaRecepcionMemo || "", dueDate: fechaEstEntrega || "",
       description: descripcion, fechaLicitacion: fechaLicitacion || "",
       fechaPublicacion: fechaPublicacion || "",
@@ -443,6 +445,14 @@ export default function ProjectDetail({
                   <input type="checkbox" checked={!!subEtapas.disenoEspecialidades} onChange={() => handleSubEtapaChange("disenoEspecialidades")} className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3.5 h-3.5" />
                   Especialidades
                 </label>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-amber-50 px-2 py-1 rounded transition text-gray-700">
+                  <input type="checkbox" checked={!!subEtapas.disenoSolicitudPermisos} onChange={() => handleSubEtapaChange("disenoSolicitudPermisos")} className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3.5 h-3.5" />
+                  Solicitud Permisos
+                </label>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-amber-50 px-2 py-1 rounded transition text-gray-700">
+                  <input type="checkbox" checked={!!subEtapas.disenoSolicitudCertificados} onChange={() => handleSubEtapaChange("disenoSolicitudCertificados")} className="rounded border-gray-300 text-amber-500 focus:ring-amber-400 w-3.5 h-3.5" />
+                  Solicitud Certificados
+                </label>
               </>
             )}
             {currentStatusId === "gestion_compra" && (
@@ -504,12 +514,22 @@ export default function ProjectDetail({
                     <input type="text" value={infoUnit} onChange={(e) => setInfoUnit(e.target.value)} className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-800 font-semibold mb-1">Nombre Contacto</label>
-                    <input type="text" value={infoContactName} onChange={(e) => setInfoContactName(e.target.value)} placeholder="Nombre" className={inputCls} />
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Jefe Unidad Mayor</label>
+                    <input type="text" value={infoContactName} onChange={(e) => setInfoContactName(e.target.value)} placeholder="Ej: Decano" className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-800 font-semibold mb-1">Email Contacto</label>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Email Jefe U. Mayor</label>
                     <input type="email" value={infoContactEmail === "—" ? "" : infoContactEmail} onChange={(e) => setInfoContactEmail(e.target.value)} placeholder="correo@ejemplo.cl" className={inputCls} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-4 mt-3">
+                  <div className="col-start-3">
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Contacto Directo</label>
+                    <input type="text" value={infoContactoDirectoName === "—" ? "" : infoContactoDirectoName} onChange={(e) => setInfoContactoDirectoName(e.target.value)} placeholder="Ej: Jefe de Departamento" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-800 font-semibold mb-1">Email Contacto Directo</label>
+                    <input type="email" value={infoContactoDirectoEmail === "—" ? "" : infoContactoDirectoEmail} onChange={(e) => setInfoContactoDirectoEmail(e.target.value)} placeholder="correo@ejemplo.cl" className={inputCls} />
                   </div>
                 </div>
                 {/* Unidad Asignada + Recinto */}

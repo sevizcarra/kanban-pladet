@@ -37,6 +37,8 @@ export default function CreateProjectModal({
     fechaEntrega: "",
     nombreContacto: "",
     emailContacto: "",
+    nombreContactoDirecto: "",
+    emailContactoDirecto: "",
   });
 
   const generatedCode = useMemo(() => {
@@ -81,6 +83,8 @@ export default function CreateProjectModal({
       requestingUnit: form.unidadRequirente || "—",
       contactName: form.nombreContacto || "—",
       contactEmail: form.emailContacto || "—",
+      contactoDirectoName: form.nombreContactoDirecto || "—",
+      contactoDirectoEmail: form.emailContactoDirecto || "—",
       budget: "0",
       dueDate: form.fechaEntrega || null,
       tipoFinanciamiento: null,
@@ -331,29 +335,64 @@ export default function CreateProjectModal({
                 </div>
               </div>
 
-              {/* Contact Information */}
+              {/* Contact Information — Jefe de Unidad Mayor */}
+              <h4 className="text-xs font-semibold text-gray-900 mt-3 mb-2">
+                Jefe de Unidad Mayor
+              </h4>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Nombre de Contacto
+                  Nombre
                 </label>
                 <input
                   type="text"
                   name="nombreContacto"
                   value={form.nombreContacto}
                   onChange={handleInputChange}
-                  placeholder="Nombre completo"
+                  placeholder="Ej: Decano"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Email de Contacto
+                  Email
                 </label>
                 <input
                   type="email"
                   name="emailContacto"
                   value={form.emailContacto}
+                  onChange={handleInputChange}
+                  placeholder="correo@ejemplo.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                />
+              </div>
+
+              {/* Contact Information — Contacto Directo */}
+              <h4 className="text-xs font-semibold text-gray-900 mt-3 mb-2">
+                Contacto Directo
+              </h4>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  name="nombreContactoDirecto"
+                  value={form.nombreContactoDirecto}
+                  onChange={handleInputChange}
+                  placeholder="Ej: Jefe de Departamento"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="emailContactoDirecto"
+                  value={form.emailContactoDirecto}
                   onChange={handleInputChange}
                   placeholder="correo@ejemplo.com"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
