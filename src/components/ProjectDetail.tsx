@@ -25,6 +25,7 @@ import {
   Copy,
   Building2,
   ArrowRight,
+  Mail,
 } from "lucide-react";
 import {
   STATUSES,
@@ -326,6 +327,22 @@ export default function ProjectDetail({
     }
   };
 
+  // Manual email send — opens the same dialog but for current status
+  const [manualEmailDialog, setManualEmailDialog] = useState(false);
+  const handleManualEmailSend = async (editedName: string, editedEmail: string) => {
+    const toEmail = editedEmail || project.contactEmail;
+    const toName = editedName || project.contactName;
+    if (toEmail && toEmail !== "—" && toEmail.includes("@")) {
+      // Update contact info if edited
+      if (editedName !== undefined || editedEmail !== undefined) {
+        onUpdate({ ...project, ...(editedName !== undefined ? { contactName: editedName } : {}), ...(editedEmail !== undefined ? { contactEmail: editedEmail } : {}) });
+      }
+      const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "status_change", to: toEmail, contactName: toName || "Estimado/a", projectName: project.title, projectCode: project.codigoProyectoUsa || "—", previousStatus: project.status, newStatus: project.status, tipoDesarrollo: project.tipoDesarrollo || "", dashboardType: project.dashboardType || "" }) });
+      if (!res.ok) throw new Error("Email send failed");
+    }
+    setManualEmailDialog(false);
+  };
+
   const handleSubEtapaChange = (key: keyof typeof subEtapas) => { setSubEtapas((prev) => ({ ...prev, [key]: !prev[key] })); };
 
   /* ── Shared UI ── */
@@ -385,6 +402,15 @@ export default function ProjectDetail({
             title={project.frozen ? "Descongelar proyecto" : "Congelar proyecto"}>
             <Snowflake className="w-4 h-4" />
             {project.frozen ? "Congelado" : "Congelar"}
+          </button>
+        )}
+        {/* Manual email notification button */}
+        {!projectIsObras && (
+          <button onClick={() => setManualEmailDialog(true)}
+            className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all flex-shrink-0 bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+            title="Enviar notificación de estado actual">
+            <Mail className="w-4 h-4" />
+            Notificar
           </button>
         )}
         <button onClick={handleSave}
@@ -1187,6 +1213,15 @@ export default function ProjectDetail({
         contactName={project.contactName || "—"} contactEmail={project.contactEmail || "—"}
         projectName={project.title} projectCode={project.codigoProyectoUsa || "—"}
         type="status_change" previousStatus={emailDialog.previousStatusLabel} newStatus={emailDialog.newStatusLabel} />
+
+      {/* Manual email notification dialog */}
+      <EmailConfirmDialog isOpen={manualEmailDialog}
+        onClose={() => setManualEmailDialog(false)}
+        onConfirm={async (editedName: string, editedEmail: string) => { await handleManualEmailSend(editedName, editedEmail); }}
+        onSkip={() => setManualEmailDialog(false)}
+        contactName={project.contactName || "—"} contactEmail={project.contactEmail || "—"}
+        projectName={project.title} projectCode={project.codigoProyectoUsa || "—"}
+        type="status_change" previousStatus={statusObj?.label || project.status} newStatus={statusObj?.label || project.status} />
 
       {/* Freeze justification modal */}
       {showFreezeModal && (
