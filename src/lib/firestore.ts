@@ -471,3 +471,41 @@ export async function getSTDDocuments(): Promise<STDDocumentRecord[]> {
   const snapshot = await getDocs(collection(db, STD_DOCS_COLLECTION));
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as STDDocumentRecord));
 }
+
+// ── Online Presence (collection: presence) ──
+const PRESENCE_COLLECTION = "presence";
+const PRESENCE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+
+export interface PresenceRecord {
+  email: string;
+  lastSeen: string; // ISO date
+}
+
+export async function setPresence(email: string): Promise<void> {
+  const { setDoc } = await import("firebase/firestore");
+  const docId = email.replace(/[^a-zA-Z0-9]/g, "_");
+  const ref = doc(db, PRESENCE_COLLECTION, docId);
+  await setDoc(ref, {
+    email,
+    lastSeen: new Date().toISOString(),
+  });
+}
+
+export async function removePresence(email: string): Promise<void> {
+  const docId = email.replace(/[^a-zA-Z0-9]/g, "_");
+  const ref = doc(db, PRESENCE_COLLECTION, docId);
+  await deleteDoc(ref);
+}
+
+export function subscribePresence(callback: (users: PresenceRecord[]) => void): Unsubscribe {
+  return onSnapshot(collection(db, PRESENCE_COLLECTION), (snapshot) => {
+    const now = Date.now();
+    const users = snapshot.docs
+      .map((d) => d.data() as PresenceRecord)
+      .filter((u) => {
+        const lastSeen = new Date(u.lastSeen).getTime();
+        return now - lastSeen < PRESENCE_TIMEOUT_MS;
+      });
+    callback(users);
+  });
+}

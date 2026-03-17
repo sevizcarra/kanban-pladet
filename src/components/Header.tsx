@@ -2,12 +2,41 @@
 
 import { LogOut, Building2 } from "lucide-react";
 
+interface OnlineUser {
+  email: string;
+  lastSeen: string;
+}
+
 interface HeaderProps {
   userEmail?: string | null;
   onLogout?: () => void;
+  onlineUsers?: OnlineUser[];
 }
 
-export default function Header({ userEmail, onLogout }: HeaderProps) {
+// Deterministic color per email
+const AVATAR_COLORS = [
+  "from-orange-400 to-orange-600",
+  "from-blue-400 to-blue-600",
+  "from-emerald-400 to-emerald-600",
+  "from-purple-400 to-purple-600",
+  "from-pink-400 to-pink-600",
+  "from-cyan-400 to-cyan-600",
+  "from-amber-400 to-amber-600",
+  "from-rose-400 to-rose-600",
+];
+
+function getColorForEmail(email: string): string {
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    hash = email.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+export default function Header({ userEmail, onLogout, onlineUsers = [] }: HeaderProps) {
+  // Other online users (exclude current user)
+  const others = onlineUsers.filter((u) => u.email !== userEmail);
+
   return (
     <header className="relative bg-gradient-to-r from-[#1f2937] via-[#374151] to-[#1f2937] text-white overflow-hidden">
       {/* Subtle geometric pattern */}
@@ -45,23 +74,49 @@ export default function Header({ userEmail, onLogout }: HeaderProps) {
           </div>
         </div>
 
-        {userEmail && onLogout && (
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2.5 bg-white/[0.07] rounded-full px-4 py-1.5 border border-white/[0.06]">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
-                {userEmail.charAt(0)}
+        <div className="flex items-center gap-3">
+          {/* Online users */}
+          {others.length > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 bg-white/[0.07] rounded-full px-3 py-1.5 border border-white/[0.06]">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+              <div className="flex -space-x-1.5">
+                {others.slice(0, 4).map((u) => (
+                  <div
+                    key={u.email}
+                    title={u.email}
+                    className={`w-6 h-6 rounded-full bg-gradient-to-br ${getColorForEmail(u.email)} flex items-center justify-center text-[10px] font-bold text-white uppercase ring-2 ring-[#374151]`}
+                  >
+                    {u.email.charAt(0)}
+                  </div>
+                ))}
+                {others.length > 4 && (
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold text-white ring-2 ring-[#374151]">
+                    +{others.length - 4}
+                  </div>
+                )}
               </div>
-              <span className="text-xs text-white/70 font-medium">{userEmail}</span>
+              <span className="text-[10px] text-white/50 ml-1">en línea</span>
             </div>
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg transition-all duration-200"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Salir</span>
-            </button>
-          </div>
-        )}
+          )}
+
+          {userEmail && onLogout && (
+            <>
+              <div className="hidden sm:flex items-center gap-2.5 bg-white/[0.07] rounded-full px-4 py-1.5 border border-white/[0.06]">
+                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${getColorForEmail(userEmail)} flex items-center justify-center text-[10px] font-bold text-white uppercase`}>
+                  {userEmail.charAt(0)}
+                </div>
+                <span className="text-xs text-white/70 font-medium">{userEmail}</span>
+              </div>
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg transition-all duration-200"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Salir</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

@@ -27,6 +27,10 @@ import {
   deleteProject,
   addComment,
   batchUpdateSortOrder,
+  setPresence,
+  removePresence,
+  subscribePresence,
+  PresenceRecord,
 } from '@/lib/firestore';
 import { onAuthChange, logout, isAdmin, getUserProfile, ensureAdminProfile } from '@/lib/auth';
 import { Project } from '@/types/project';
@@ -81,6 +85,7 @@ export default function Home() {
     project: Project | null;
   }>({ open: false, project: null });
   const [freezeJustification, setFreezeJustification] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState<PresenceRecord[]>([]);
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -109,6 +114,34 @@ export default function Home() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Online presence: heartbeat + subscribe
+  useEffect(() => {
+    if (!authUser?.email) return;
+    const email = authUser.email;
+
+    // Set presence immediately
+    setPresence(email);
+
+    // Heartbeat every 60s
+    const heartbeat = setInterval(() => {
+      setPresence(email);
+    }, 60_000);
+
+    // Subscribe to all online users
+    const unsubPresence = subscribePresence(setOnlineUsers);
+
+    // Cleanup: remove presence on unmount / logout
+    const handleBeforeUnload = () => { removePresence(email); };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(heartbeat);
+      unsubPresence();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      removePresence(email);
+    };
+  }, [authUser?.email]);
 
   // Subscribe to projects only when authenticated
   useEffect(() => {
@@ -379,7 +412,7 @@ export default function Home() {
   if (selectedProject && matchingProject) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header userEmail={authUser.email} onLogout={handleLogout} />
+        <Header userEmail={authUser.email} onLogout={handleLogout} onlineUsers={onlineUsers} />
         <ProjectDetail
           project={matchingProject}
           allProjects={projects}
@@ -414,7 +447,7 @@ export default function Home() {
 
       <div className="relative z-10 flex flex-col h-screen">
         {/* Header */}
-        <Header userEmail={authUser.email} onLogout={handleLogout} />
+        <Header userEmail={authUser.email} onLogout={handleLogout} onlineUsers={onlineUsers} />
 
         {/* Body: Sidebar + Content */}
         <div className="flex flex-1 overflow-hidden">
