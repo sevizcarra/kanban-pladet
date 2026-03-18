@@ -773,6 +773,7 @@ export default function Home() {
         <CreateProjectModal
           onCreate={handleCreate}
           onClose={() => setShowCreateModal(false)}
+          existingProjects={projects}
         />
       )}
 
@@ -781,6 +782,7 @@ export default function Home() {
         <CreateObrasModal
           onCreate={handleCreate}
           onClose={() => setShowCreateObrasModal(false)}
+          existingProjects={projects}
         />
       )}
 

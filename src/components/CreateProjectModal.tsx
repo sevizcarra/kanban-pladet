@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { X } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 import {
   WORK_TYPES,
   LEADING_DISCIPLINE,
@@ -11,15 +11,18 @@ import {
   PROJECT_CATEGORIES,
 } from "@/lib/constants";
 import { Project } from "@/types/project";
+import { findSimilarProjects, type SimilarMatch } from "@/lib/similarity";
 
 interface CreateProjectModalProps {
   onClose: () => void;
   onCreate: (project: Omit<Project, "id">) => void;
+  existingProjects?: Project[];
 }
 
 export default function CreateProjectModal({
   onClose,
   onCreate,
+  existingProjects = [],
 }: CreateProjectModalProps) {
   const currentYear = new Date().getFullYear().toString();
 
@@ -61,6 +64,8 @@ export default function CreateProjectModal({
   ]);
 
   const canSubmit = form.nombre.trim().length > 0;
+  const [similarWarning, setSimilarWarning] = useState<SimilarMatch[] | null>(null);
+  const [pendingProject, setPendingProject] = useState<Omit<Project, "id"> | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -69,35 +74,50 @@ export default function CreateProjectModal({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const buildProject = (): Omit<Project, "id"> => ({
+    title: form.nombre,
+    description: "",
+    status: "recepcion_requerimiento",
+    priority: form.prioridad,
+    memorandumNumber: `MEM-${form.year}-${form.memorandum || "000"}`,
+    requestingUnit: form.unidadRequirente || "—",
+    contactName: form.nombreContacto || "—",
+    contactEmail: form.emailContacto || "—",
+    contactoDirectoName: form.nombreContactoDirecto || "—",
+    contactoDirectoEmail: form.emailContactoDirecto || "—",
+    budget: "0",
+    dueDate: form.fechaEntrega || null,
+    tipoFinanciamiento: null,
+    recinto: "",
+    codigoProyectoUsa: generatedCode,
+    tipoDesarrollo: form.tipoDesarrollo,
+    disciplinaLider: form.disciplinaLider,
+    sector: form.sector,
+    categoriaProyecto: form.categoriaProyecto,
+    tipoLicitacion: form.tipoLicitacion,
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!canSubmit) return;
 
-    const newProject: Omit<Project, "id"> = {
-      title: form.nombre,
-      description: "",
-      status: "recepcion_requerimiento",
-      priority: form.prioridad,
-      memorandumNumber: `MEM-${form.year}-${form.memorandum || "000"}`,
-      requestingUnit: form.unidadRequirente || "—",
-      contactName: form.nombreContacto || "—",
-      contactEmail: form.emailContacto || "—",
-      contactoDirectoName: form.nombreContactoDirecto || "—",
-      contactoDirectoEmail: form.emailContactoDirecto || "—",
-      budget: "0",
-      dueDate: form.fechaEntrega || null,
-      tipoFinanciamiento: null,
-      recinto: "",
-      codigoProyectoUsa: generatedCode,
-      tipoDesarrollo: form.tipoDesarrollo,
-      disciplinaLider: form.disciplinaLider,
-      sector: form.sector,
-      categoriaProyecto: form.categoriaProyecto,
-      tipoLicitacion: form.tipoLicitacion,
-    };
+    const newProject = buildProject();
+
+    // Check for similar existing projects
+    const matches = findSimilarProjects(newProject.title, existingProjects);
+    if (matches.length > 0) {
+      setSimilarWarning(matches);
+      setPendingProject(newProject);
+      return;
+    }
 
     onCreate(newProject);
+  };
+
+  const handleConfirmCreate = () => {
+    if (pendingProject) onCreate(pendingProject);
+    setSimilarWarning(null);
+    setPendingProject(null);
   };
 
   return (
@@ -424,6 +444,46 @@ export default function CreateProjectModal({
           </div>
         </form>
       </div>
+
+      {/* Similar project warning dialog */}
+      {similarWarning && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="bg-amber-500 px-6 py-4 flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-white" />
+              <h3 className="text-lg font-bold text-white">Posible Duplicado</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-700">
+                Se encontraron proyectos existentes con nombres similares:
+              </p>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {similarWarning.map((m) => (
+                  <div key={m.project.id} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-sm font-semibold text-gray-900">{m.project.title}</p>
+                    <p className="text-xs text-amber-700 mt-1">{m.similarity}% de coincidencia — Estado: {m.project.status}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-gray-600">¿Deseas crear el proyecto de todas formas?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setSimilarWarning(null); setPendingProject(null); }}
+                  className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmCreate}
+                  className="flex-1 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition"
+                >
+                  Crear de todas formas
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
