@@ -85,6 +85,7 @@ export const REQUESTING_UNITS = [
 ];
 
 export const PROJECT_CATEGORIES = [
+  { value: "accesibilidad", label: "Accesibilidad" },
   { value: "banos", label: "Baños y Servicios" },
   { value: "climatizacion", label: "Climatización" },
   { value: "fachada", label: "Fachadas y Elementos" },
