@@ -43,10 +43,13 @@ import {
   Wallet,
   Gavel,
   Tag,
+  Copy,
 } from "lucide-react";
+import { findSimilarProjects } from "@/lib/similarity";
 
 interface StatsViewProps {
   projects: Project[];
+  onProjectClick?: (project: Project) => void;
 }
 
 const CHART_COLORS = [
@@ -62,7 +65,7 @@ const tooltipStyle = {
   fontSize: "12px",
 };
 
-export default function StatsView({ projects }: StatsViewProps) {
+export default function StatsView({ projects, onProjectClick }: StatsViewProps) {
   const total = projects.length;
   const terminados = projects.filter((p) => p.status === "terminada").length;
   const activos = total - terminados;
@@ -219,6 +222,23 @@ export default function StatsView({ projects }: StatsViewProps) {
     }))
     .filter((d) => d.value > 0);
 
+  // ── Possible duplicates (all-vs-all scan) ──
+  const duplicatePairs = useMemo(() => {
+    const pairs: { a: Project; b: Project; similarity: number }[] = [];
+    const seen = new Set<string>();
+    for (let i = 0; i < projects.length; i++) {
+      const matches = findSimilarProjects(projects[i].title, projects.filter((_, j) => j > i), 55);
+      for (const m of matches) {
+        const key = [projects[i].id, m.project.id].sort().join("-");
+        if (!seen.has(key)) {
+          seen.add(key);
+          pairs.push({ a: projects[i], b: m.project, similarity: m.similarity });
+        }
+      }
+    }
+    return pairs.sort((x, y) => y.similarity - x.similarity);
+  }, [projects]);
+
   // ── Workload per professional ──
   const workloadData = PROFESSIONALS.map((prof, idx) => {
     const assigned = projects.filter((p) => p.jefeProyectoId === idx);
@@ -336,6 +356,54 @@ export default function StatsView({ projects }: StatsViewProps) {
           );
         })}
       </div>
+
+      {/* ── Posibles Duplicados ── */}
+      {duplicatePairs.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Copy className="w-5 h-5 text-amber-600" />
+            <h3 className="font-bold text-amber-700">Posibles Duplicados ({duplicatePairs.length} pares)</h3>
+          </div>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {duplicatePairs.map(({ a, b, similarity }, idx) => {
+              const statusA = getStatusObj(a.status, a.tipoDesarrollo, a.dashboardType);
+              const statusB = getStatusObj(b.status, b.tipoDesarrollo, b.dashboardType);
+              return (
+                <div key={idx} className="bg-white rounded-lg p-3 border border-amber-100 flex items-start gap-3">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-amber-700">{similarity}%</span>
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p
+                      className={`text-sm font-semibold text-gray-900 truncate ${onProjectClick ? "cursor-pointer hover:text-[#F97316]" : ""}`}
+                      onClick={() => onProjectClick?.(a)}
+                      title={a.title}
+                    >
+                      {a.title}
+                    </p>
+                    <p className="text-[10px] text-gray-500">
+                      <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: statusA.color }} />
+                      {statusA.label} — {a.requestingUnit || "Sin unidad"}
+                    </p>
+                    <div className="border-t border-dashed border-amber-200 my-1" />
+                    <p
+                      className={`text-sm font-semibold text-gray-900 truncate ${onProjectClick ? "cursor-pointer hover:text-[#F97316]" : ""}`}
+                      onClick={() => onProjectClick?.(b)}
+                      title={b.title}
+                    >
+                      {b.title}
+                    </p>
+                    <p className="text-[10px] text-gray-500">
+                      <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: statusB.color }} />
+                      {statusB.label} — {b.requestingUnit || "Sin unidad"}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Alertas Section ── */}
       {(overdue.length > 0 || dueThisWeek.length > 0) && (

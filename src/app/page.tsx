@@ -726,7 +726,7 @@ export default function Home() {
               )}
 
               {activeTab === 'stats' && (
-                <StatsView projects={filteredProjects} />
+                <StatsView projects={filteredProjects} onProjectClick={setSelectedProject} />
               )}
 
               {activeTab === 'gantt' && (
