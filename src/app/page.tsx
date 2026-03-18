@@ -72,6 +72,7 @@ export default function Home() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterUnit, setFilterUnit] = useState('all');
+  const [filterAssignedUnit, setFilterAssignedUnit] = useState('all');
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -363,15 +364,17 @@ export default function Home() {
         filterPriority === 'all' || project.priority === filterPriority;
       const unitMatch =
         filterUnit === 'all' || project.requestingUnit === filterUnit;
+      const assignedUnitMatch =
+        filterAssignedUnit === 'all' || project.unidadAsignada === filterAssignedUnit;
       const searchMatch =
         search === '' ||
         project.title.toLowerCase().includes(search.toLowerCase()) ||
         (project.memorandumNumber &&
           project.memorandumNumber.toLowerCase().includes(search.toLowerCase()));
 
-      return statusMatch && priorityMatch && unitMatch && searchMatch;
+      return statusMatch && priorityMatch && unitMatch && assignedUnitMatch && searchMatch;
     });
-  }, [projects, activeTab, filterStatus, filterPriority, filterUnit, search]);
+  }, [projects, activeTab, filterStatus, filterPriority, filterUnit, filterAssignedUnit, search]);
 
   const matchingProject = selectedProject
     ? projects.find((p) => p.id === selectedProject.id) || null
@@ -548,19 +551,33 @@ export default function Home() {
                       </select>
                     </div>
 
-                    {/* Unit Filter */}
+                    {/* Requesting Unit Filter */}
                     <div className="bg-gray-50 rounded-lg px-3 border border-gray-200/80">
                       <select
                         value={filterUnit}
                         onChange={(e) => setFilterUnit(e.target.value)}
                         className="px-0 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
                       >
-                        <option value="all">Todas las Unidades</option>
+                        <option value="all">Todas las U. Requirentes</option>
                         {REQUESTING_UNITS.map((unit) => (
                           <option key={unit} value={unit}>
                             {unit}
                           </option>
                         ))}
+                      </select>
+                    </div>
+
+                    {/* Assigned Unit Filter */}
+                    <div className="bg-gray-50 rounded-lg px-3 border border-gray-200/80">
+                      <select
+                        value={filterAssignedUnit}
+                        onChange={(e) => setFilterAssignedUnit(e.target.value)}
+                        className="px-0 py-2 bg-transparent text-sm focus:outline-none text-gray-700 cursor-pointer"
+                      >
+                        <option value="all">Todas las U. Asignadas</option>
+                        <option value="UOM">UOM - Obras Menores</option>
+                        <option value="UPT">UPT - Planificación</option>
+                        <option value="UGO">UGO - Grandes Obras</option>
                       </select>
                     </div>
 
