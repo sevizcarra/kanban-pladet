@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   STATUSES,
   PRIORITIES,
@@ -46,6 +46,7 @@ import {
   Copy,
 } from "lucide-react";
 import { findSimilarProjects } from "@/lib/similarity";
+import { getDismissedDuplicates, dismissDuplicate } from "@/lib/firestore";
 
 interface StatsViewProps {
   projects: Project[];
@@ -222,7 +223,19 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
     }))
     .filter((d) => d.value > 0);
 
-  // ── Possible duplicates (all-vs-all scan) ──
+  // ── Dismissed duplicates ──
+  const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    getDismissedDuplicates().then(setDismissedKeys);
+  }, []);
+
+  const handleDismiss = useCallback(async (idA: string, idB: string) => {
+    await dismissDuplicate(idA, idB);
+    const key = [idA, idB].sort().join("_");
+    setDismissedKeys((prev) => new Set([...prev, key]));
+  }, []);
+
+  // ── Possible duplicates (all-vs-all scan, excluding dismissed) ──
   const duplicatePairs = useMemo(() => {
     const pairs: { a: Project; b: Project; similarity: number }[] = [];
     const seen = new Set<string>();
@@ -230,14 +243,15 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
       const matches = findSimilarProjects(projects[i].title, projects.filter((_, j) => j > i), 55);
       for (const m of matches) {
         const key = [projects[i].id, m.project.id].sort().join("-");
-        if (!seen.has(key)) {
+        const dismissKey = [projects[i].id, m.project.id].sort().join("_");
+        if (!seen.has(key) && !dismissedKeys.has(dismissKey)) {
           seen.add(key);
           pairs.push({ a: projects[i], b: m.project, similarity: m.similarity });
         }
       }
     }
     return pairs.sort((x, y) => y.similarity - x.similarity);
-  }, [projects]);
+  }, [projects, dismissedKeys]);
 
   // ── Workload per professional ──
   const workloadData = PROFESSIONALS.map((prof, idx) => {
@@ -404,6 +418,13 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
                       {statusB.label} — {b.requestingUnit || "Sin unidad"}
                     </p>
                   </div>
+                  <button
+                    onClick={() => handleDismiss(a.id, b.id)}
+                    className="flex-shrink-0 self-center px-3 py-1.5 text-[10px] font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition"
+                    title="Descartar — no es duplicado"
+                  >
+                    No es duplicado
+                  </button>
                 </div>
               );
             })}

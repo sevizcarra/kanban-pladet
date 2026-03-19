@@ -472,6 +472,24 @@ export async function getSTDDocuments(): Promise<STDDocumentRecord[]> {
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as STDDocumentRecord));
 }
 
+// ── Dismissed Duplicates (collection: dismissed-duplicates) ──
+const DISMISSED_DUPES_COLLECTION = "dismissed-duplicates";
+
+export async function getDismissedDuplicates(): Promise<Set<string>> {
+  const snapshot = await getDocs(collection(db, DISMISSED_DUPES_COLLECTION));
+  const keys = new Set<string>();
+  snapshot.docs.forEach((d) => keys.add(d.id));
+  return keys;
+}
+
+export async function dismissDuplicate(idA: string, idB: string): Promise<void> {
+  const { setDoc } = await import("firebase/firestore");
+  const key = [idA, idB].sort().join("_");
+  await setDoc(doc(db, DISMISSED_DUPES_COLLECTION, key), {
+    idA, idB, dismissedAt: new Date().toISOString(),
+  });
+}
+
 // ── Online Presence (collection: presence) ──
 const PRESENCE_COLLECTION = "presence";
 const PRESENCE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
