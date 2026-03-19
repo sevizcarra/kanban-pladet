@@ -388,6 +388,9 @@ export default function KanbanBoard({ projects, statuses: statusesProp, onProjec
       const colProjects = projects
         .filter((p) => p.status === s.id)
         .sort((a, b) => {
+          // Flagged (urgent) projects always first
+          if (a.flagged && !b.flagged) return -1;
+          if (!a.flagged && b.flagged) return 1;
           const orderA = a.sortOrder ?? Infinity;
           const orderB = b.sortOrder ?? Infinity;
           if (orderA !== orderB) return orderA - orderB;
