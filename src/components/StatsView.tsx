@@ -298,13 +298,27 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
         import("html2canvas-pro"),
       ]);
       const node = exportRef.current;
-      // Capture at higher scale for better quality
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
+      // Hide elements marked as excluded
+      const excluded = node.querySelectorAll<HTMLElement>("[data-pdf-exclude='true']");
+      const previousDisplay: string[] = [];
+      excluded.forEach((el) => {
+        previousDisplay.push(el.style.display);
+        el.style.display = "none";
       });
+
+      let canvas;
+      try {
+        // Capture at higher scale for better quality
+        canvas = await html2canvas(node, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+        });
+      } finally {
+        // Restore display
+        excluded.forEach((el, i) => { el.style.display = previousDisplay[i]; });
+      }
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
       const pdf = new jsPDF("p", "mm", "a4");
@@ -463,8 +477,13 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
         ].map((kpi) => {
           const Icon = kpi.icon;
           const isAlert = kpi.color === "#ef4444" && typeof kpi.value === "number" && kpi.value > 0;
+          const isExcludedFromPdf = kpi.label === "Atrasados" || kpi.label === "Vencen pronto";
           return (
-            <div key={kpi.label} className={`rounded-xl p-3.5 border ${isAlert ? "border-red-200 bg-red-50" : "border-gray-100 bg-white"} shadow-sm`}>
+            <div
+              key={kpi.label}
+              {...(isExcludedFromPdf ? { "data-pdf-exclude": "true" } : {})}
+              className={`rounded-xl p-3.5 border ${isAlert ? "border-red-200 bg-red-50" : "border-gray-100 bg-white"} shadow-sm`}
+            >
               <Icon className="w-4 h-4 mb-2" style={{ color: kpi.color }} />
               <p className="text-xl font-bold" style={{ color: isAlert ? "#ef4444" : "#111827" }}>{kpi.value}</p>
               <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">{kpi.label}</p>
@@ -475,13 +494,13 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
 
       {/* ── Posibles Duplicados ── */}
       {duplicatePairs.length === 0 && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
+        <div data-pdf-exclude="true" className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
           <p className="text-sm font-medium text-green-700">Sin duplicados detectados — todos los proyectos tienen nombres únicos.</p>
         </div>
       )}
       {duplicatePairs.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+        <div data-pdf-exclude="true" className="rounded-xl border border-amber-200 bg-amber-50 p-5">
           <div className="flex items-center gap-2 mb-3">
             <Copy className="w-5 h-5 text-amber-600" />
             <h3 className="font-bold text-amber-700">Posibles Duplicados ({duplicatePairs.length} pares)</h3>
@@ -536,7 +555,7 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
 
       {/* ── Alertas Section ── */}
       {(overdue.length > 0 || dueThisWeek.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div data-pdf-exclude="true" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {overdue.length > 0 && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-5">
               <div className="flex items-center gap-2 mb-3">
