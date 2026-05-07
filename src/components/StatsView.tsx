@@ -306,6 +306,11 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
         el.style.display = "none";
       });
 
+      // Wait two animation frames + small delay so charts re-layout after hiding excluded elements
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 250)))
+      );
+
       let canvas;
       try {
         // Capture at higher scale for better quality
@@ -399,7 +404,7 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
               formatter={((value: any, _name: any, props: any) => [
                 `${value} proyectos`, props?.payload?.fullName || "Cantidad"
               ]) as any} />
-            <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+            <Bar dataKey="count" radius={[0, 6, 6, 0]} isAnimationActive={false}>
               {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
               ))}
@@ -427,7 +432,7 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
                 `$${value}M (${props?.payload?.count || 0} proyectos)`,
                 props?.payload?.fullName || ""
               ]) as any} />
-            <Bar dataKey="budgetM" radius={[0, 6, 6, 0]}>
+            <Bar dataKey="budgetM" radius={[0, 6, 6, 0]} isAnimationActive={false}>
               {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
               ))}
@@ -622,7 +627,7 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
                 formatter={((value: any, _name: any, props: any) => [
                   String(value), props?.payload?.fullName || ""
                 ]) as any} />
-              <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+              <Bar dataKey="count" radius={[0, 6, 6, 0]} isAnimationActive={false}>
                 {statusChartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
@@ -637,7 +642,7 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
             <PieChart>
               <Pie data={priorityChartData} cx="50%" cy="50%" labelLine={false}
                 label={(entry) => entry.value > 0 ? `${entry.name}: ${entry.value}` : ""}
-                outerRadius={95} innerRadius={50} fill="#8884d8" dataKey="value" strokeWidth={2}>
+                outerRadius={95} innerRadius={50} fill="#8884d8" dataKey="value" strokeWidth={2} isAnimationActive={false}>
                 {priorityChartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
