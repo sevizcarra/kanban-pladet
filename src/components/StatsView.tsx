@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   STATUSES,
   PRIORITIES,
@@ -44,6 +44,8 @@ import {
   Gavel,
   Tag,
   Copy,
+  FileDown,
+  Loader2,
 } from "lucide-react";
 import { findSimilarProjects } from "@/lib/similarity";
 import { getDismissedDuplicates, dismissDuplicate } from "@/lib/firestore";
@@ -67,6 +69,9 @@ const tooltipStyle = {
 };
 
 export default function StatsView({ projects, onProjectClick }: StatsViewProps) {
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
   const total = projects.length;
   const terminados = projects.filter((p) => p.status === "terminada").length;
   const activos = total - terminados;
@@ -283,6 +288,81 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
     }).filter((r) => (r.total as number) > 0);
   }, [projects]);
 
+  /* ── PDF Export ── */
+  const handleExportPDF = useCallback(async () => {
+    if (!exportRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas-pro"),
+      ]);
+      const node = exportRef.current;
+      // Capture at higher scale for better quality
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const usableWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * usableWidth) / canvas.width;
+
+      // Header on first page
+      const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" });
+      const drawHeader = (pageNum: number, totalPages: number) => {
+        pdf.setFillColor(249, 115, 22);
+        pdf.rect(0, 0, pageWidth, 12, "F");
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("PLADET — Reporte de Estadísticas", margin, 8);
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(`${today} · Página ${pageNum} de ${totalPages}`, pageWidth - margin, 8, { align: "right" });
+        pdf.setTextColor(0, 0, 0);
+      };
+
+      const headerH = 14;
+      const contentTop = headerH;
+      const usableHeight = pageHeight - contentTop - margin;
+      const totalPages = Math.ceil(imgHeight / usableHeight);
+
+      let heightLeft = imgHeight;
+      let position = 0;
+      let pageNum = 1;
+
+      while (heightLeft > 0) {
+        if (pageNum > 1) pdf.addPage();
+        drawHeader(pageNum, totalPages);
+        pdf.addImage(imgData, "JPEG", margin, contentTop - position, usableWidth, imgHeight);
+        // Cover anything that overflows above content area
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pageWidth, contentTop, "F");
+        drawHeader(pageNum, totalPages);
+        // Cover anything below page
+        pdf.rect(0, pageHeight - margin, pageWidth, margin, "F");
+        heightLeft -= usableHeight;
+        position += usableHeight;
+        pageNum++;
+      }
+
+      const isoDate = new Date().toISOString().slice(0, 10);
+      pdf.save(`pladet-estadisticas-${isoDate}.pdf`);
+    } catch (err) {
+      console.error("Error exporting PDF:", err);
+      alert("Error al exportar el PDF. Revisa la consola.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting]);
+
   /* ── Render helpers ── */
   const SectionTitle = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
     <div className="flex items-center gap-2 mb-4">
@@ -348,6 +428,28 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
 
   return (
     <div className="space-y-6">
+      {/* ── Export PDF button ── */}
+      <div className="flex justify-end print:hidden">
+        <button
+          onClick={handleExportPDF}
+          disabled={isExporting}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F97316] hover:bg-[#ea580c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-semibold shadow-sm transition-all"
+        >
+          {isExporting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generando PDF...
+            </>
+          ) : (
+            <>
+              <FileDown className="w-4 h-4" />
+              Exportar PDF
+            </>
+          )}
+        </button>
+      </div>
+
+      <div ref={exportRef} className="space-y-6 bg-gray-50 p-1">
       {/* ── KPI Summary Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
@@ -652,6 +754,7 @@ export default function StatsView({ projects, onProjectClick }: StatsViewProps) 
         ) : (
           <p className="text-sm text-gray-500 text-center py-8">Aún no hay profesionales asignados como jefes de proyecto.</p>
         )}
+      </div>
       </div>
     </div>
   );
