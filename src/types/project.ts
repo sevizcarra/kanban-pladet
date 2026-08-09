@@ -89,6 +89,7 @@ export interface Project {
   frozenAt?: string; // ISO date when project was frozen
   frozenDaysAccum?: number; // Total accumulated frozen days (for daysLeft calculation)
   sortOrder?: number; // Orden dentro de la columna
+  semanaProgramada?: string; // Lunes (YYYY-MM-DD) de la semana en que se programó asignar/abordar
   dashboardType?: "compras" | "obras"; // Tipo de dashboard
   cuadrillas?: string[]; // Cuadrillas asignadas (obras)
   // Recinto (location grouping — links related purchases for the same physical location)
