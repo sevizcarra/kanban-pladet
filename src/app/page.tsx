@@ -19,6 +19,8 @@ import EmailConfirmDialog from '@/components/EmailConfirmDialog';
 import AdminPanel from '@/components/AdminPanel';
 import BacklogView from '@/components/BacklogView';
 import IndicadorView from '@/components/IndicadorView';
+import CargaView from '@/components/CargaView';
+import QuickCaptureModal from '@/components/QuickCaptureModal';
 
 import {
   subscribeProjects,
@@ -53,10 +55,12 @@ import {
   Hammer,
   ShoppingCart,
   ClipboardList,
+  Gauge,
+  Zap,
 } from 'lucide-react';
 import { STATUSES, OBRAS_STATUSES, PRIORITIES, REQUESTING_UNITS } from '@/lib/constants';
 
-type Tab = 'compras' | 'obras' | 'indicador' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
+type Tab = 'compras' | 'obras' | 'carga' | 'indicador' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
 
 export default function Home() {
   // Auth state
@@ -75,6 +79,7 @@ export default function Home() {
   const [filterAssignedUnit, setFilterAssignedUnit] = useState('all');
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showQuickCapture, setShowQuickCapture] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'kanban' | 'compact' | 'table'>('kanban');
   const [creationEmailDialog, setCreationEmailDialog] = useState<{
@@ -434,6 +439,7 @@ export default function Home() {
   const tabs: { id: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
     { id: 'compras', label: 'Dashboard Compras', icon: <ShoppingCart size={18} /> },
     { id: 'obras', label: 'Dashboard Cuadrilla', icon: <Hammer size={18} /> },
+    { id: 'carga', label: 'Carga del Equipo', icon: <Gauge size={18} /> },
     { id: 'indicador', label: 'Indicador', icon: <ClipboardList size={18} /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
     { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
@@ -485,6 +491,18 @@ export default function Home() {
             {/* New project buttons at bottom of sidebar */}
             <div className="p-2 border-t border-gray-100 space-y-1.5">
               <button
+                onClick={() => setShowQuickCapture(true)}
+                title="Captura rápida de memo"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-md shadow-violet-500/15 hover:shadow-lg hover:shadow-violet-500/25 active:scale-[0.97] transition-all"
+              >
+                <span className="flex-shrink-0 w-5 flex justify-center">
+                  <Zap size={16} strokeWidth={2.5} />
+                </span>
+                <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 text-xs">
+                  Captura Rápida
+                </span>
+              </button>
+              <button
                 onClick={() => setShowCreateModal(true)}
                 title="Nuevo Proyecto Compras"
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#F97316] to-[#ea580c] text-white shadow-md shadow-orange-500/15 hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.97] transition-all"
@@ -514,7 +532,7 @@ export default function Home() {
           {/* Main content area */}
           <main className="flex-1 overflow-auto">
             {/* Filter Bar — hide on admin panel and backlog */}
-            {activeTab !== 'users' && activeTab !== 'backlog' && activeTab !== 'indicador' && (
+            {activeTab !== 'users' && activeTab !== 'backlog' && activeTab !== 'indicador' && activeTab !== 'carga' && (
               <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
                 <div className="px-5 py-2.5">
                   <div className="flex flex-wrap gap-2.5 items-center">
@@ -717,6 +735,27 @@ export default function Home() {
                 />
               )}
 
+              {activeTab === 'carga' && (
+                <CargaView
+                  projects={projects}
+                  onProjectClick={setSelectedProject}
+                  onSetWeek={async (projectId, week) => {
+                    try {
+                      await updateProject(projectId, { semanaProgramada: week ?? "" });
+                    } catch (error) {
+                      console.error('Error setting semana programada:', error);
+                    }
+                  }}
+                  onAssign={async (projectId, data) => {
+                    try {
+                      await updateProject(projectId, data);
+                    } catch (error) {
+                      console.error('Error assigning from carga view:', error);
+                    }
+                  }}
+                />
+              )}
+
               {activeTab === 'indicador' && (
                 <IndicadorView
                   projects={projects}
@@ -769,6 +808,20 @@ export default function Home() {
       </div>
 
       {/* Create Project Modal */}
+      {showQuickCapture && (
+        <QuickCaptureModal
+          existingProjects={projects}
+          onCreate={async (projectData) => {
+            try {
+              await createProject(projectData);
+            } catch (error) {
+              console.error('Error en captura rápida:', error);
+            }
+          }}
+          onClose={() => setShowQuickCapture(false)}
+        />
+      )}
+
       {showCreateModal && (
         <CreateProjectModal
           onCreate={handleCreate}
