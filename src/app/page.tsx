@@ -18,7 +18,6 @@ import CreateObrasModal from '@/components/CreateObrasModal';
 import EmailConfirmDialog from '@/components/EmailConfirmDialog';
 import AdminPanel from '@/components/AdminPanel';
 import BacklogView from '@/components/BacklogView';
-import IndicadorView from '@/components/IndicadorView';
 import CargaView from '@/components/CargaView';
 import QuickCaptureModal from '@/components/QuickCaptureModal';
 
@@ -54,13 +53,12 @@ import {
   Snowflake,
   Hammer,
   ShoppingCart,
-  ClipboardList,
   Gauge,
   Zap,
 } from 'lucide-react';
 import { STATUSES, OBRAS_STATUSES, PRIORITIES, REQUESTING_UNITS } from '@/lib/constants';
 
-type Tab = 'compras' | 'obras' | 'carga' | 'indicador' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
+type Tab = 'compras' | 'obras' | 'carga' | 'stats' | 'gantt' | 'map' | 'timeline' | 'backlog' | 'users';
 
 export default function Home() {
   // Auth state
@@ -440,7 +438,6 @@ export default function Home() {
     { id: 'compras', label: 'Dashboard Compras', icon: <ShoppingCart size={18} /> },
     { id: 'obras', label: 'Dashboard Cuadrilla', icon: <Hammer size={18} /> },
     { id: 'carga', label: 'Carga del Equipo', icon: <Gauge size={18} /> },
-    { id: 'indicador', label: 'Indicador', icon: <ClipboardList size={18} /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
     { id: 'gantt', label: 'Carta Gantt', icon: <GanttChart size={18} /> },
     { id: 'map', label: 'Mapa', icon: <MapPin size={18} /> },
@@ -532,7 +529,7 @@ export default function Home() {
           {/* Main content area */}
           <main className="flex-1 overflow-auto">
             {/* Filter Bar — hide on admin panel and backlog */}
-            {activeTab !== 'users' && activeTab !== 'backlog' && activeTab !== 'indicador' && activeTab !== 'carga' && (
+            {activeTab !== 'users' && activeTab !== 'backlog' && activeTab !== 'carga' && (
               <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
                 <div className="px-5 py-2.5">
                   <div className="flex flex-wrap gap-2.5 items-center">
@@ -753,14 +750,6 @@ export default function Home() {
                       console.error('Error assigning from carga view:', error);
                     }
                   }}
-                />
-              )}
-
-              {activeTab === 'indicador' && (
-                <IndicadorView
-                  projects={projects}
-                  onProjectClick={setSelectedProject}
-                  onUpdateProject={handleUpdate}
                 />
               )}
 
