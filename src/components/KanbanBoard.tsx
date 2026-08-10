@@ -1,10 +1,9 @@
 "use client";
 import { useState, useMemo, useCallback } from "react";
-import { STATUSES, PRIORITIES, PROFESSIONALS, CUADRILLAS, getProgress, daysLeft, getAntecedentesIncompletos, getCompletenessScore } from "@/lib/constants";
+import { STATUSES, PRIORITIES, PROFESSIONALS, CUADRILLAS, getProgress, daysLeft, getAntecedentesIncompletos } from "@/lib/constants";
 import type { Project } from "@/types/project";
 import Badge from "./Badge";
-import ProgressBar from "./ProgressBar";
-import { User, MessageCircle, AlertTriangle, AlertCircle, Siren, Snowflake, GripVertical, Copy } from "lucide-react";
+import { MessageCircle, AlertTriangle, Siren, Snowflake, GripVertical, Copy } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -22,7 +21,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 interface Props {
   projects: Project[];
@@ -183,19 +182,6 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
         </div>
       )}
 
-      {/* Punto rojo: Antecedentes incompletos */}
-      {antecedentes.incompleto && (
-        <div className="absolute -top-1.5 -right-1.5 group/dot z-10">
-          <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
-            <span className="text-white text-[8px] font-bold">{antecedentes.faltantes.length}</span>
-          </div>
-          <div className="absolute right-0 top-5 hidden group-hover/dot:block z-50 w-48 bg-gray-900 text-white text-[10px] rounded-lg p-2 shadow-lg">
-            <p className="font-semibold mb-1">Antecedentes incompletos:</p>
-            {antecedentes.faltantes.map(f => <p key={f} className="text-gray-300">• {f}</p>)}
-          </div>
-        </div>
-      )}
-
       {/* Drag handle + content area */}
       <div className="flex">
         {/* Drag handle */}
@@ -225,45 +211,28 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isFrozen || isFlagged ? 'text-white bg-white/20' : 'text-gray-500 bg-gray-50'}`}>{p.requestingUnit}</span>
           </div>
 
-          {/* Multi-memo display */}
-          {p.memos && p.memos.length > 0 && (
-            <p className={`text-[10px] truncate mt-0.5 ${isFrozen || isFlagged ? 'text-white/70' : 'text-gray-400'}`}>
-              {p.memos.slice(0, 2).map(m => m.key).join(" · ")}
-              {p.memos.length > 2 && ` +${p.memos.length - 2}`}
-            </p>
-          )}
+          {/* Memo + días restantes */}
+          <div className="flex items-center justify-between mt-1.5">
+            {p.memorandumNumber ? (
+              <span className={`text-[10px] ${isFrozen || isFlagged ? 'text-white/70' : 'text-gray-400'}`}>
+                {p.memorandumNumber}
+              </span>
+            ) : <span />}
+            {dl !== null && p.dueDate && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                isFrozen || isFlagged ? 'bg-white/20 text-white'
+                  : isOverdue ? 'bg-red-50 text-red-600'
+                  : isDueSoon ? 'bg-amber-50 text-amber-600'
+                  : 'bg-gray-50 text-gray-500'
+              }`}>
+                {isOverdue ? `${Math.abs(dl)}d atrasado` : `${dl}d`}
+              </span>
+            )}
+          </div>
 
-          {/* Tipo Licitación badge */}
-          {p.tipoLicitacion && (
-            <span className={`inline-block px-1.5 py-0 text-[9px] font-bold rounded mb-1 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-700'}`}>
-              {p.tipoLicitacion}
-            </span>
-          )}
-
-          {/* FTE badge */}
-          {p.tipoDesarrollo === "FTE" && (
-            <span className={`inline-block px-1.5 py-0 text-[9px] font-bold rounded mb-1 ml-0.5 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'}`}>
-              FTE
-            </span>
-          )}
-
-          {/* External execution badge */}
-          {p.ejecucionExterna && (
-            <span className="inline-block px-1.5 py-0 text-[9px] font-bold rounded mb-1 ml-0.5 bg-purple-100 text-purple-700" title={p.ejecucionExterna === "mantencion_campus" ? "Ejecución: Depto. Mantención Campus" : "Ejecución: Depto. Gestión Campus"}>
-              {p.ejecucionExterna === "mantencion_campus" ? "MANT" : "GEST"}
-            </span>
-          )}
-
-          {/* Recinto badge */}
-          {p.recinto && (
-            <span className={`inline-block px-1.5 py-0 text-[9px] font-medium rounded mb-1 ml-0.5 ${isFrozen || isFlagged ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-              📍 {p.recinto.length > 30 ? p.recinto.slice(0, 30) + '…' : p.recinto}
-            </span>
-          )}
-
-          {/* Cuadrilla badges (obras projects) */}
+          {/* Cuadrillas (proyectos de obras) */}
           {p.cuadrillas && p.cuadrillas.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-1">
+            <div className="flex flex-wrap gap-1 mt-1.5">
               {p.cuadrillas.map(c => {
                 const cuad = CUADRILLAS.find(q => q.value === c);
                 return cuad ? (
@@ -275,30 +244,7 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
             </div>
           )}
 
-          {/* Completeness bar */}
-          {(() => {
-            const score = getCompletenessScore(p as unknown as Record<string, unknown>);
-            if (score.pct === 100) return null;
-            return (
-              <div className="mt-1.5 mb-1">
-                <div className="flex items-center gap-1.5">
-                  <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${score.pct >= 75 ? 'bg-emerald-400' : score.pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
-                      style={{ width: `${score.pct}%` }}
-                    />
-                  </div>
-                  <span className={`text-[9px] flex-shrink-0 ${isFrozen || isFlagged ? 'text-white/60' : 'text-gray-400'}`}>{score.filled}/{score.total}</span>
-                </div>
-                {score.missingCritical.length > 0 && (
-                  <p className={`text-[9px] mt-0.5 truncate ${isFrozen || isFlagged ? 'text-white/60' : 'text-amber-500'}`}>
-                    ⚠ {score.missingCritical.join(" · ")}
-                  </p>
-                )}
-              </div>
-            );
-          })()}
-
+          {/* Responsable + comentarios + acciones (al hover) */}
           <div className={`flex items-center justify-between mt-2.5 pt-2 border-t ${isFrozen || isFlagged ? 'border-white/30' : 'border-gray-100'}`}>
             {p.jefeProyectoId !== undefined && p.jefeProyectoId >= 0 && PROFESSIONALS[p.jefeProyectoId] ? (
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -308,63 +254,51 @@ function CardContent({ p, statusColor, onProjectClick, onToggleFlag, onToggleFre
                 >
                   {getInitials(PROFESSIONALS[p.jefeProyectoId].name)}
                 </div>
-                <span className={`text-[10px] truncate ${isFrozen || isFlagged ? 'text-white/90' : 'text-gray-600'}`}>{PROFESSIONALS[p.jefeProyectoId].name}</span>
+                <span className={`text-[10px] truncate ${isFrozen || isFlagged ? 'text-white/90' : 'text-gray-600'}`}>
+                  {PROFESSIONALS[p.jefeProyectoId].name.split(" ")[0]}
+                </span>
               </div>
-            ) : <div />}
-            {(p.commentCount || 0) > 0 && (
-              <div className="flex items-center gap-0.5 text-gray-400 flex-shrink-0">
-                <MessageCircle className="w-3 h-3" />
-                <span className="text-[10px] font-medium">{p.commentCount}</span>
+            ) : (
+              <span className={`text-[10px] font-semibold ${isFrozen || isFlagged ? 'text-white/80' : 'text-orange-500'}`}>Sin asignar</span>
+            )}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {(p.commentCount || 0) > 0 && (
+                <div className={`flex items-center gap-0.5 ${isFrozen || isFlagged ? 'text-white/70' : 'text-gray-400'}`}>
+                  <MessageCircle className="w-3 h-3" />
+                  <span className="text-[10px] font-medium">{p.commentCount}</span>
+                </div>
+              )}
+              {/* Acciones: visibles solo al pasar el mouse */}
+              <div className={`flex items-center gap-0.5 transition-opacity ${isOverlay ? '' : 'opacity-0 group-hover:opacity-100'}`}>
+                {onDuplicate && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDuplicate(p); }}
+                    title="Duplicar proyecto"
+                    className={`p-1 rounded transition-colors ${isFrozen || isFlagged ? 'text-white/60 hover:bg-white/20' : 'text-gray-300 hover:bg-gray-100 hover:text-gray-600'}`}
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {onToggleFreeze && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleFreeze(p); }}
+                    title={isFrozen ? "Descongelar proyecto" : "Congelar proyecto"}
+                    className={`p-1 rounded transition-colors ${isFrozen ? 'bg-white/20 text-white' : 'text-gray-300 hover:bg-blue-50 hover:text-blue-500'}`}
+                  >
+                    <Snowflake className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {onToggleFlag && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleFlag(p); }}
+                    title={isFlagged ? "Quitar alerta" : "Marcar con alerta"}
+                    className={`p-1 rounded transition-colors ${isFlagged ? 'bg-white/20 text-white' : 'text-gray-300 hover:bg-gray-100 hover:text-red-500'}`}
+                  >
+                    <Siren className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Action buttons row — below jefe de proyecto */}
-          <div className={`flex items-center gap-1 mt-2 pt-1.5 border-t ${isFrozen || isFlagged ? 'border-white/20' : 'border-gray-100'}`}>
-            {/* Duplicate */}
-            {onDuplicate && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDuplicate(p); }}
-                title="Duplicar proyecto"
-                className={`p-1.5 rounded-lg transition-all duration-200 ${
-                  isFrozen || isFlagged
-                    ? 'text-white/60 hover:bg-white/20 hover:text-white'
-                    : 'text-gray-300 hover:bg-gray-100 hover:text-gray-600'
-                }`}
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {/* Freeze toggle */}
-            {onToggleFreeze && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleFreeze(p); }}
-                title={isFrozen ? "Descongelar proyecto" : "Congelar proyecto"}
-                className={`p-1.5 rounded-lg transition-all duration-200 ${
-                  isFrozen
-                    ? 'bg-white/20 text-white hover:bg-white/30'
-                    : 'text-gray-300 hover:bg-blue-50 hover:text-blue-500'
-                }`}
-              >
-                <Snowflake className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {/* Flag toggle */}
-            {onToggleFlag && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleFlag(p); }}
-                title={isFlagged ? "Quitar alerta" : "Marcar con alerta"}
-                className={`p-1.5 rounded-lg transition-all duration-200 ${
-                  isFlagged
-                    ? 'bg-white/20 text-white hover:bg-white/30'
-                    : isFrozen
-                      ? 'text-white/60 hover:bg-white/20 hover:text-white'
-                      : 'text-gray-300 hover:bg-gray-100 hover:text-red-500'
-                }`}
-              >
-                <Siren className="w-3.5 h-3.5" />
-              </button>
-            )}
+            </div>
           </div>
         </div>
       </div>
