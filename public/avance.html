@@ -174,6 +174,29 @@ button.mx-r:hover{background:var(--soft)}
 .mx-nx b{display:block;color:var(--fg);font-weight:600;font-size:13px}
 .mx-nx b.late{color:var(--late)}
 .note{font-size:12px;color:var(--muted);padding:10px 0}
+/* Finanzas */
+.fk{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--fg);border-bottom:1px solid var(--line);margin-top:24px}
+.fk div{padding:14px 16px 14px 0}
+.fk div+div{padding-left:16px;border-left:1px solid var(--line)}
+.fk b{display:block;font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.1}
+.fk span{font-size:12px;color:var(--muted)}
+.fk i{font-style:normal;font-size:12px;color:var(--muted);display:block;margin-top:2px}
+.fb{display:grid;gap:8px;border-top:2px solid var(--fg);padding-top:14px}
+.fb-r{display:grid;grid-template-columns:240px minmax(0,1fr) 200px;gap:16px;align-items:center;font-size:13px}
+.fb-r b{font-weight:600}
+.fb-bar{display:flex;height:18px;background:var(--soft)}
+.fb-bar i{height:100%}
+.fb-bar .c{background:var(--fg)}.fb-bar .p{background:var(--st1)}
+.fb-r .m{text-align:right;font-size:12px;color:var(--muted)}
+.fb-r .m b{color:var(--fg);font-size:13px}
+.ft{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+.ft th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--fg);padding:8px 8px 8px 0}
+.ft td{border-bottom:1px solid var(--line);padding:9px 8px 9px 0;vertical-align:top}
+.ft .r{text-align:right}
+.ft tr.click{cursor:pointer}.ft tr.click:hover td{background:var(--soft)}
+.ft tfoot td{border-top:2px solid var(--fg);border-bottom:0;font-weight:600}
+.ft small{display:block;color:var(--muted);font-size:11px}
+@media (max-width:820px){.fk{grid-template-columns:repeat(2,1fr)}.fk div:nth-child(3){padding-left:0;border-left:0}.fb-r{grid-template-columns:1fr}.fb-r .m{text-align:left}}
 
 /* Panel */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:10}
@@ -281,6 +304,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="sum" aria-pressed="true">Resumen</button>
       <button data-v="list">Lista</button>
       <button data-v="gantt">Gantt</button>
+      <button data-v="fin">Finanzas</button>
     </div>
     <div class="seg" id="semaf" role="group" aria-label="Filtrar por estado">
       <button data-v="all" aria-pressed="true">Todos</button>
@@ -508,6 +532,7 @@ function render(){
     .sort((a,b)=>order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
   const M=document.getElementById("main");
   if(F.view==="sum"){M.innerHTML=resumen(rows,I)}
+  else if(F.view==="fin"){M.innerHTML=finanzas(rows)}
   else if(F.view==="gantt"){
     const byStart=[...rows].sort((a,b)=>(a.i.pl[0]||"9")<(b.i.pl[0]||"9")?-1:1);
     M.innerHTML=gantt(byStart,"all");
@@ -545,6 +570,46 @@ function cuellos(I){
   ${(()=>{const c=I.reduce((a,x)=>({n:a.n+(x.i.cx?x.i.cx.n:0),l:a.l+(x.i.cx?x.i.cx.late:0)}),{n:0,l:0});
     return c.n?`<p class="note"><b style="color:var(--fg)">Compras complementarias en paralelo:</b> ${c.n} pendiente${c.n>1?"s":""}${c.l?` · <span style="color:var(--late);font-weight:600">${c.l} atrasada${c.l>1?"s":""}</span>`:""}. No se cuentan en las barras, que muestran solo el camino principal de cada obra.</p>`:""})()}
   ${sinf?`<p class="note">${sinf} obra${sinf>1?"s":""} sin fecha estimada no entra${sinf>1?"n":""} en este gráfico.</p>`:""}`;
+}
+
+/* ---------- Finanzas ----------
+   Cada compra se carga con su monto estimado; al emitirse la OC se corrige con el monto adjudicado.
+   Adjudicado = compras con OC emitida. Estimado = compras sin OC. */
+function finanzas(rows){
+  const all=rows.flatMap(({p,i})=>p.compras.map((c,j)=>({p,i,c,j,m:+c.monto||0,oc:!!c.r[4]})));
+  const sum=a=>a.reduce((s,x)=>s+x.m,0);
+  const tot=sum(all),com=sum(all.filter(x=>x.oc)),pro=tot-com;
+  const sinM=rows.filter(({p})=>!montoTotal(p)).length;
+  const porCorregir=all.filter(x=>x.oc&&!x.c.adj);
+  const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
+  const bars=(groups)=>{const mx=Math.max(1,...groups.map(g=>g.t));
+    return`<div class="fb">${groups.map(g=>`<div class="fb-r"><b>${g.n}</b>
+      <div class="fb-bar" title="Adjudicado ${clp(g.c)} · Estimado ${clp(g.t-g.c)}"><i class="c" style="width:${g.c/mx*100}%"></i><i class="p" style="width:${(g.t-g.c)/mx*100}%"></i></div>
+      <span class="m num"><b>${clpM(g.t)}</b>${g.sub?" · "+g.sub:""}</span></div>`).join("")}</div>`};
+  const byUnit=UNITS.map(u=>{const g=all.filter(x=>x.p.resp===u.k);return{n:u.n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:rows.filter(r=>r.p.resp===u.k).length+" obras"}}).filter(g=>g.t||g.sub!=="0 obras");
+  const byType=CTYPES.map(t=>{const g=all.filter(x=>(x.c.tipo||"")===t.k);return{n:t.k?t.n:"Tipo por definir",t:sum(g),c:sum(g.filter(x=>x.oc)),sub:g.length+" compra"+(g.length===1?"":"s")}}).filter(g=>g.t);
+  const byStage=["Diseño","Compra","Ejecución","Entrega","Cerrado"].map((n,k)=>{const g=all.filter(x=>x.i.stage===k);return{n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:new Set(g.map(x=>x.p.id)).size+" obras"}}).filter(g=>g.t);
+  const tab=[...rows].sort((a,b)=>montoTotal(b.p)-montoTotal(a.p)).map(({p,i})=>{
+    const c=sum(p.compras.filter(x=>x.r[4]).map(x=>({m:+x.monto||0}))),t=montoTotal(p);
+    return`<tr class="click" data-id="${p.id}"><td><b>${esc(p.nombre)}</b><small>${esc(uName(p.resp))}</small></td>
+      <td>${p.compras.map(x=>`${x.tipo||"s/t"}${x.desc?" · "+esc(x.desc):""}`).join("<br>")}</td>
+      <td>${STAGES[i.stage]||"Cerrado"}</td>
+      <td class="r num">${t?clp(c):"—"}</td><td class="r num">${t?clp(t-c):"—"}</td><td class="r num"><b>${clp(t)}</b></td></tr>`}).join("");
+  if(!rows.length)return`<div class="empty">No hay proyectos con este filtro.</div>`;
+  return`<div class="fk num">
+      <div><b>${clpM(tot)}</b><span>Costo total de la cartera</span><i>${all.filter(x=>x.m).length} compras con monto</i></div>
+      <div><b>${clpM(com)}</b><span>Adjudicado (con OC)</span><i>${pct(com,tot)} del total</i></div>
+      <div><b>${clpM(pro)}</b><span>Estimado (sin OC)</span><i>${pct(pro,tot)} del total</i></div>
+      <div><b>${sinM}</b><span>Obras sin monto cargado</span><i>de ${rows.length} en vista</i></div></div>
+    <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (OC emitida)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin OC)</span>${F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
+    <div class="sum-h"><h2>Por unidad</h2></div>${bars(byUnit)}
+    ${byType.length?`<div class="sum-h"><h2>Por tipo de compra</h2></div>${bars(byType)}`:""}
+    ${byStage.length?`<div class="sum-h"><h2>Por etapa de la obra</h2></div>${bars(byStage)}`:""}
+    <div class="sum-h"><h2>Detalle por obra</h2><span>Ordenado por costo total</span></div>
+    <div class="gwrap"><table class="ft"><thead><tr><th>Obra</th><th>Compras</th><th>Etapa</th><th class="r">Adjudicado</th><th class="r">Estimado</th><th class="r">Total</th></tr></thead>
+    <tbody>${tab}</tbody><tfoot><tr><td colspan="3">Total</td><td class="r num">${clp(com)}</td><td class="r num">${clp(pro)}</td><td class="r num">${clp(tot)}</td></tr></tfoot></table></div>
+    ${porCorregir.length?`<p class="note" style="color:var(--risk)"><b>${porCorregir.length} compra${porCorregir.length>1?"s":""} con OC emitida sin monto adjudicado confirmado:</b> ${porCorregir.map(x=>esc(x.p.nombre)+(x.c.tipo?" ("+x.c.tipo+")":"")).join(", ")}. Abre la obra y corrige el monto con el valor adjudicado.</p>`:""}
+    ${sinM?`<p class="note">${sinM} obra${sinM>1?"s":""} sin monto: ábrelas y agrega el monto en cada compra para que entren a estos totales.</p>`:""}`;
 }
 
 /* ---------- Resumen integrado ---------- */
@@ -613,7 +678,7 @@ function drawPanel(){
         <div class="cp-h"><span class="cp-n num">${j+1}</span>
           <div class="f"><label for="c-tipo-${j}">Tipo</label><select id="c-tipo-${j}" data-cf="${j}:tipo">${CTYPES.map(t=>`<option value="${t.k}" ${c.tipo===t.k?"selected":""}>${t.n}</option>`).join("")}</select></div>
           <div class="f"><label for="c-desc-${j}">Qué se compra</label><input type="text" id="c-desc-${j}" data-cf="${j}:desc" value="${esc(c.desc)}" placeholder="Ej. obra civil, mobiliario"></div>
-          <div class="f"><label for="c-monto-${j}">Monto (CLP)</label><input type="text" inputmode="numeric" id="c-monto-${j}" data-cf="${j}:monto" class="num" value="${c.monto?Math.round(c.monto).toLocaleString("es-CL"):""}" placeholder="0"></div>
+          <div class="f"><label for="c-monto-${j}">${c.r[4]?(c.adj?"Monto adjudicado (CLP)":"<span style=\"color:var(--risk)\">OC emitida: ingresa el monto adjudicado</span>"):"Monto estimado (CLP)"}</label><input type="text" inputmode="numeric" id="c-monto-${j}" data-cf="${j}:monto" class="num" value="${c.monto?Math.round(c.monto).toLocaleString("es-CL"):""}" placeholder="0"></div>
           ${p.compras.length>1?`<button class="rs" data-cdel="${j}" title="Quitar compra" aria-label="Quitar compra ${j+1}">×</button>`:"<span></span>"}
         </div>
         <div class="hrow head"><span></span><span>Hito</span><span>Fecha estimada</span><span class="ph2"></span></div>
@@ -672,10 +737,10 @@ function drawPanel(){
   panel.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{p.ov[+b.dataset.rs]="";reDone();upd()});
   /* Compras */
   panel.querySelectorAll("[data-cf]").forEach(el=>el.onchange=()=>{const[j,f]=el.dataset.cf.split(":");const c=p.compras[+j];
-    if(f==="monto")c.monto=+String(el.value).replace(/\D/g,"")||0;else c[f]=el.value;
+    if(f==="monto"){c.monto=+String(el.value).replace(/\D/g,"")||0;if(c.r[4])c.adj=true}else c[f]=el.value;
     if(f==="tipo"){c.r=c.r.map((v,k)=>applies(c,k)?v:"");c.ov=c.ov.map((v,k)=>applies(c,k)?v:"");reDone()}upd()});
   panel.querySelectorAll("[data-cc]").forEach(el=>el.onchange=()=>{const[j,k]=jk(el.dataset.cc);
-    p.compras[j].r[k]=el.checked?doneAt(plan(p).cps[j][k]):"";upd()});
+    p.compras[j].r[k]=el.checked?doneAt(plan(p).cps[j][k]):"";if(k===4&&!el.checked)p.compras[j].adj=false;upd()});
   panel.querySelectorAll("[data-cpl]").forEach(el=>el.onchange=()=>{const[j,k]=jk(el.dataset.cpl);
     if(el.value&&!okDate(el.value))return;p.compras[j].ov[k]=el.value;reDone();upd()});
   panel.querySelectorAll("[data-crs]").forEach(b=>b.onclick=()=>{const[j,k]=jk(b.dataset.crs);p.compras[j].ov[k]="";reDone();upd()});
