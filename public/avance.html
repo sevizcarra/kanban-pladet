@@ -1,0 +1,736 @@
+hola
+mundo<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Avance de Proyectos PLADET</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Swiss grid: negro sobre blanco, gris = plan, negro = real, rojo solo para atraso */
+:root{
+  --bg:#ffffff; --fg:#111111; --muted:#6e6e6a; --line:#dcdcd8; --soft:#f3f3f1; --plan:#cfcfca;
+  --st0:#e6e6e2; --st1:#b9b9b3; --st2:#7a7a75; --st3:#45453f;
+  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3;
+  --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
+  --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
+  --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 24px 80px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:12px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+header{display:grid;grid-template-columns:1fr auto;gap:8px 24px;align-items:end;border-bottom:2px solid var(--fg);padding-bottom:16px}
+h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-weight:700;margin:6px 0 0;text-wrap:balance}
+.today{text-align:right;color:var(--muted)}
+.today b{display:block;color:var(--fg);font-size:18px;font-weight:600}
+
+.stages{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.stage{background:none;border:0;border-right:1px solid var(--line);text-align:left;padding:18px 16px 16px;display:grid;gap:4px;position:relative}
+.stage:last-child{border-right:0}
+.stage:hover{background:var(--soft)}
+.stage[aria-pressed="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--fg)}
+.stage .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stage .n{font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.stage .s{font-size:12px;color:var(--muted)}
+.stage .s .l{color:var(--late);font-weight:600}
+
+.bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.seg{display:flex;border:1px solid var(--fg)}
+.seg button{background:none;border:0;padding:6px 12px;font-size:13px;border-right:1px solid var(--fg)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.search{flex:1;min-width:160px;border:0;border-bottom:1px solid var(--line);background:none;padding:6px 0;outline:none}
+.search:focus{border-bottom-color:var(--fg)}
+.btn{background:var(--fg);color:var(--bg);border:1px solid var(--fg);padding:7px 14px;font-weight:600;font-size:13px}
+
+/* Lista */
+.cols,.row{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.4fr) 160px minmax(0,1.3fr) 84px;gap:16px;align-items:center}
+.cols{padding:12px 0 8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--fg)}
+.cols .r,.row .r{text-align:right}
+.row{padding:14px 0;border:0;border-bottom:1px solid var(--line);cursor:pointer;background:none;width:100%;text-align:left}
+.row:hover{background:var(--soft)}
+.p-code{color:var(--muted)}
+.p-name{font-weight:600;font-size:15px;letter-spacing:-.01em;margin:1px 0}
+.p-resp{color:var(--muted);font-size:12px}
+.estado{display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--none)}
+.dot.late{background:var(--late)}.dot.risk{background:var(--risk)}.dot.ok{background:var(--ok)}.dot.done{background:var(--fg)}
+.estado small,.hito small{display:block;color:var(--muted);font-size:12px}
+.prog{display:grid;grid-template-columns:repeat(11,1fr);gap:2px}
+.prog i{height:6px;background:var(--line)}
+.prog i.d{background:var(--fg)}
+.prog i.n.late{background:var(--late)}.prog i.n.risk{background:var(--risk)}.prog i.n.ok{background:var(--ok)}.prog i.n.none{background:var(--none)}
+.prog i.sep{margin-left:4px}
+.prog-l{font-size:11px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between}
+.delta{font-weight:600;font-size:15px}
+.delta.late{color:var(--late)}
+.delta small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.empty{padding:48px 0;color:var(--muted)}
+
+/* Gantt */
+.gwrap{overflow-x:auto;border-bottom:1px solid var(--line)}
+.gantt{min-width:760px;position:relative}
+.g-axis,.g-row{display:grid;grid-template-columns:220px 1fr;align-items:center}
+.g-axis{border-bottom:1px solid var(--fg);height:30px}
+.g-ticks,.g-track{position:relative;height:100%}
+.g-ticks span{position:absolute;bottom:6px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);transform:translateX(3px);white-space:nowrap}
+.g-ticks span::before{content:"";position:absolute;left:-3px;bottom:-6px;height:6px;border-left:1px solid var(--line)}
+.g-row{border-bottom:1px solid var(--line);min-height:44px;cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;padding:0}
+.g-row:hover{background:var(--soft)}
+.g-row.static{cursor:default}.g-row.static:hover{background:none}
+.g-name{padding:8px 12px 8px 0;min-width:0}
+.g-name b{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-name span{font-size:11px;color:var(--muted)}
+.g-track{height:44px}
+.g-grid{position:absolute;top:0;bottom:0;border-left:1px solid var(--soft)}
+.g-plan,.g-real{position:absolute;height:6px}
+.g-plan{top:16px;height:12px;background:var(--plan)}
+.g-plan.d{background:var(--fg)}.g-plan.c.late{background:var(--late)}.g-plan.c.risk{background:var(--risk)}.g-plan.c.ok{background:var(--ok)}.g-plan.c.none{background:var(--none)}
+.g-pt{position:absolute;top:13px;width:9px;height:9px;border:1.5px solid var(--fg);background:var(--bg);transform:translate(-50%,0) rotate(45deg);margin-top:4px;z-index:1}
+.g-pt.d{background:var(--fg)}
+.bn{display:grid;gap:6px;border-top:2px solid var(--fg);padding-top:14px}
+.bn-r{display:grid;grid-template-columns:28px 250px minmax(0,1fr) 170px;gap:12px;align-items:center;font-size:13px}
+.bn-r .st{font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.bn-r.max b{font-weight:700}
+.bn-bar{height:18px;display:flex;gap:2px}
+.bn-bar i{height:100%}
+.bn-bar .bl{background:var(--late)}.bn-bar .br{background:var(--risk)}.bn-bar .bo{background:var(--fg)}
+.bn-r .m{font-size:12px;color:var(--muted);text-align:right}
+.bn-r .m b{color:var(--fg)}
+.g-real{top:23px;height:9px;background:var(--fg)}
+.g-real.late{background:var(--late)}.g-real.risk{background:var(--risk)}.g-real.ok{background:var(--ok)}.g-real.none{background:var(--none)}
+.g-real.open{background-image:repeating-linear-gradient(90deg,transparent 0 3px,var(--bg) 3px 4px)}
+.g-ms{position:absolute;top:21px;width:2px;height:13px;background:var(--fg);transform:translateX(-1px)}
+.g-today{position:absolute;top:0;bottom:0;border-left:1px dashed var(--fg);z-index:1;pointer-events:none}
+.g-today-l{position:absolute;top:-1px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:var(--fg);color:var(--bg);padding:1px 4px;transform:translateX(-50%);z-index:2;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:12px;color:var(--muted);padding:12px 0}
+.legend i{display:inline-block;width:18px;vertical-align:middle;margin-right:6px}
+
+.foot{margin-top:24px;color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+.who{display:block;font-size:12px;margin-top:4px}
+.who button,.who a,.lnk{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;font-size:12px;cursor:pointer}
+.login{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+.login-box{width:min(380px,100%);display:grid;gap:16px;border-top:2px solid var(--fg);padding-top:16px}
+.login-box h1{font-size:40px;margin:0}
+.login-box input{width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:6px 0;font-size:15px;outline:none}
+.login-box input:focus{border-bottom-color:var(--fg)}
+.lg-err{color:var(--late);font-size:13px;margin:0;min-height:1em}
+.banner{position:sticky;top:0;z-index:20;background:var(--late);color:#fff;padding:8px 16px;font-size:13px;text-align:center}
+.imp{display:grid;gap:8px;margin-top:12px}
+.imp textarea{width:100%;font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px}
+.foot button{background:none;border:0;text-decoration:underline;color:var(--muted);padding:0;font-size:12px}
+
+/* Resumen */
+.sum-h{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin:28px 0 10px}
+.sum-h h2{margin:0;font-size:20px;letter-spacing:-.02em}
+.sum-h span{font-size:12px;color:var(--muted)}
+.units{display:grid;gap:10px;border-top:2px solid var(--fg);padding-top:14px}
+.u-row{display:grid;grid-template-columns:260px minmax(0,1fr) 210px;gap:16px;align-items:center}
+.u-row b{font-weight:600}
+.u-row .u-n{font-size:12px;color:var(--muted);text-align:right}
+.u-row .u-n .l{color:var(--late);font-weight:600}
+.u-bar{display:flex;height:22px;gap:2px}
+.u-bar i{display:flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;font-weight:600;min-width:20px}
+.u-bar i.e{flex:1;border:1px dashed var(--line);color:var(--muted);font-weight:400}
+.s0{background:var(--st0);color:var(--fg)}.s1{background:var(--st1);color:var(--fg)}.s2{background:var(--st2);color:var(--bg)}.s3{background:var(--st3);color:var(--bg)}.s4{background:var(--fg);color:var(--bg)}
+.mx{min-width:820px}
+.mx-r{display:grid;grid-template-columns:260px minmax(340px,1fr) 170px 120px;gap:16px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+button.mx-r{background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;cursor:pointer}
+button.mx-r:hover{background:var(--soft)}
+.mx-h{border-bottom:1px solid var(--fg);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 0}
+.mx-u{padding:18px 0 6px;border-bottom:2px solid var(--fg);display:flex;justify-content:space-between;align-items:baseline}
+.mx-u b{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.mx-u span{font-size:12px;color:var(--muted)}
+.cells{display:grid;grid-template-columns:repeat(2,1fr) 10px repeat(5,1fr) 10px repeat(3,1fr) 10px 1fr;align-items:center}
+.cells .gap{width:10px}
+.cells i{justify-self:center;width:15px;height:15px;border:1.5px solid var(--line)}
+.cells i.d{background:var(--fg);border-color:var(--fg)}
+.cells i.n{border-width:2px}
+.cells i.n.late{border-color:var(--late);background:color-mix(in srgb,var(--late) 25%,transparent)}
+.cells i.n.risk{border-color:var(--risk);background:color-mix(in srgb,var(--risk) 25%,transparent)}
+.cells i.n.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 25%,transparent)}
+.cells i.n.none{border-color:var(--none);border-style:dashed}
+.cells span{text-align:center;font-size:10px;letter-spacing:.06em;color:var(--muted)}
+.mx-name{min-width:0}
+.mx-name b{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-name small{color:var(--muted);font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-nx{font-size:12px;color:var(--muted)}
+.mx-nx b{display:block;color:var(--fg);font-weight:600;font-size:13px}
+.mx-nx b.late{color:var(--late)}
+.note{font-size:12px;color:var(--muted);padding:10px 0}
+
+/* Panel */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:10}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--bg);border-left:2px solid var(--fg);z-index:11;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 28px calc(40px + env(safe-area-inset-bottom,0px))}
+.ph{display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:16px}
+.ph h2{margin:4px 0 0;font-size:24px;letter-spacing:-.02em;line-height:1.05}
+.x{background:none;border:1px solid var(--fg);width:32px;height:32px;font-size:18px;line-height:1;flex:none}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--fg);border-bottom:1px solid var(--line);margin-bottom:12px}
+.kpi{padding:10px 12px 10px 0}
+.kpi+.kpi{padding-left:12px;border-left:1px solid var(--line)}
+.kpi b{display:block;font-size:24px;font-weight:600;letter-spacing:-.02em}
+.kpi b.late{color:var(--late)}
+.kpi span{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.panel .gantt{min-width:520px}
+.panel .g-axis,.panel .g-row{grid-template-columns:150px 1fr}
+.sec{border-top:2px solid var(--fg);margin-top:20px;padding-top:10px}
+.sec h3{margin:0 0 6px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:baseline}
+.sec h3 span{font-size:12px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:400}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.f{display:grid;gap:4px;min-width:0}
+.f.full{grid-column:1/-1}
+.f label,.lbl{font-size:11px;color:var(--muted);letter-spacing:.03em}
+input[type=date],input[type=text],input[type=number],select{width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:5px 0;border-radius:0;outline:none}
+input:focus,select:focus{border-bottom-color:var(--fg)}
+input[type=date]{font-family:var(--mono);font-size:12px}
+.hrow{display:grid;grid-template-columns:22px minmax(0,1fr) 128px 128px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.hrow.head{border-bottom:1px solid var(--fg);padding:4px 0;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.hrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--fg);margin:0}
+.hrow .nm{font-size:14px}
+.hrow.done .nm{font-weight:600}
+.hrow .pl{display:flex;align-items:center;gap:4px}
+.hrow .pl input{color:var(--muted)}
+.hrow .pl input.ov{color:var(--fg);font-weight:500}
+.rs{background:none;border:0;color:var(--muted);padding:0 2px;font-size:13px}
+.hrow .dl{font-size:11px;font-weight:600;margin-left:2px}
+.hrow .dl.late{color:var(--late)}
+.obs{margin:4px 0 0 32px;display:grid;gap:4px}
+.obs-r{display:grid;grid-template-columns:auto 128px auto 128px auto;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+.obs-r input[type=checkbox]{width:15px;height:15px;accent-color:var(--fg);margin:0}
+.addobs{background:none;border:1px solid var(--line);padding:3px 10px;font-size:12px;justify-self:start;margin-top:2px}
+.cp{border:1px solid var(--line);padding:10px 12px 4px;margin-top:10px}
+.cp-tag{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.cp-tag b{font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.cp-tag span{font-size:12px;color:var(--muted);flex:1}
+.cp-h{display:grid;grid-template-columns:22px 170px minmax(0,1fr) 150px 20px;gap:12px;align-items:end;padding-bottom:6px}
+.cp-n{font-weight:700;font-size:15px;padding-bottom:6px}
+.cp-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--muted);padding:2px 0}
+.cp-total b{color:var(--fg);font-size:16px;font-weight:600;margin-left:6px}
+.danger{display:flex;gap:12px;align-items:center;margin-top:24px;font-size:13px}
+.danger button{background:none;border:0;color:var(--late);padding:0;text-decoration:underline}
+
+@media (max-width:820px){
+  .bn-r{grid-template-columns:24px 1fr;}.bn-r .bn-bar,.bn-r .m{grid-column:2}.bn-r .m{text-align:left}
+  .u-row{grid-template-columns:1fr;gap:4px}.u-row .u-n{text-align:left}
+  .wrap{padding:24px 16px 64px}
+  .stages{grid-template-columns:repeat(2,1fr)}
+  .stage:nth-child(2){border-right:0}
+  .stage:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .cols{display:none}
+  .row{grid-template-columns:1fr auto;gap:8px 16px}
+  .row>.c-name,.row>.c-prog,.row>.c-estado{grid-column:1/-1}
+  .row>.c-hito{grid-column:1}
+  .row>.c-delta{grid-column:2;grid-row:4}
+  .panel{padding-left:16px;padding-right:16px}
+  .grid2{grid-template-columns:1fr}
+  .cp-h{grid-template-columns:22px 1fr 20px}.cp-h .f{grid-column:2}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .hrow{grid-template-columns:22px minmax(0,1fr) 112px;}
+  .hrow .pl{grid-column:2/4}
+  .hrow.head .ph2{display:none}
+  .obs{margin-left:0}
+  .obs-r{grid-template-columns:auto 1fr;}
+}
+@media (prefers-reduced-motion:no-preference){.row,.stage,.g-row{transition:background .12s}}
+</style>
+</head>
+<body>
+
+
+<div class="login" id="login" hidden>
+  <form class="login-box" id="loginForm">
+    <div class="eyebrow">PLADET · Usach</div>
+    <h1>Avance de proyectos</h1>
+    <div class="f"><label for="lg-email">Correo institucional</label><input type="email" id="lg-email" autocomplete="username" required></div>
+    <div class="f"><label for="lg-pass">Contraseña</label><input type="password" id="lg-pass" autocomplete="current-password" required></div>
+    <button class="btn" type="submit" id="lg-btn">Entrar</button>
+    <p class="lg-err" id="lg-err" role="alert"></p>
+    <p class="note">Usa la misma cuenta del tablero kanban de PLADET.</p>
+  </form>
+</div>
+<div class="banner" id="banner" hidden></div>
+<div class="wrap" id="app" hidden>
+  <header>
+    <div>
+      <div class="eyebrow">PLADET · Usach · Control de cartera</div>
+      <h1>Avance de proyectos</h1>
+    </div>
+    <div class="today"><span class="eyebrow">Hoy</span><b class="num" id="today"></b><span class="who"><span id="who"></span> · <button id="logout">Cerrar sesión</button> · <a href="/kanban">Kanban anterior</a></span></div>
+  </header>
+
+  <div class="stages" id="stages"></div>
+
+  <div class="bar">
+    <div class="seg" id="view" role="group" aria-label="Vista">
+      <button data-v="sum" aria-pressed="true">Resumen</button>
+      <button data-v="list">Lista</button>
+      <button data-v="gantt">Gantt</button>
+    </div>
+    <div class="seg" id="semaf" role="group" aria-label="Filtrar por estado">
+      <button data-v="all" aria-pressed="true">Todos</button>
+      <button data-v="late">Atrasados</button>
+      <button data-v="risk">En riesgo</button>
+      <button data-v="ok">En plazo</button>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Buscar proyecto, código o unidad">
+    <button class="btn" id="add">+ Proyecto</button>
+  </div>
+
+  <div id="main"></div>
+
+  <div class="foot">
+    <span>Las fechas estimadas se generan desde el inicio de diseño y se pueden editar. La compra principal define el paso a Ejecución; las complementarias corren en paralelo y, si se atrasan, encienden el semáforo de la obra. El costo total es la suma de todas las compras.</span>
+    <span class="foot-act"><button id="copy">Copiar respaldo</button> · <button id="imp">Importar datos</button></span>
+  </div>
+  <div class="imp" id="impBox" hidden>
+    <label class="lbl" for="impTxt">Pega aquí los datos copiados desde el prototipo ("Copiar datos para traspaso"). Los proyectos con el mismo nombre interno se reemplazan.</label>
+    <textarea id="impTxt" rows="6"></textarea>
+    <div style="display:flex;gap:12px;align-items:center"><button class="btn" id="impGo">Importar</button><button id="impNo" class="lnk">Cancelar</button><span id="impMsg" class="lbl"></span></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" hidden aria-label="Proyecto"></aside>
+
+<script>
+const STAGES=["Diseño","Compra","Ejecución","Entrega"];
+const H=[
+  {n:"Inicio de diseño",s:0},
+  {n:"Envío a gestión de compra",s:0},
+  {n:"Bases enviadas a tramitación",s:1},
+  {n:"Publicado",s:1},
+  {n:"Apertura",s:1},
+  {n:"Adjudicación enviada a tramitación",s:1},
+  {n:"OC emitida",s:1},
+  {n:"Antecedentes de arranque",s:2},
+  {n:"Entrega de terreno",s:2},
+  {n:"Recepción provisoria",s:2},
+  {n:"Entrega a usuario",s:3}];
+const NH=H.length;
+const SPAN=[[0,1],[1,6],[6,9],[9,10]];
+/* Días entre hitos consecutivos. null = plazo contractual de la oferta */
+const TPL={menor:{n:"Obra menor",d:[0,45,20,15,20,10,15,10,10,null,14],plazo:60},
+           mayor:{n:"Obra mayor",d:[0,90,30,20,30,15,20,15,15,null,14],plazo:180}};
+const KEY="pladet-avance-v5",DAY=864e5;
+const T=new Date();T.setHours(12,0,0,0);
+const iso=d=>d.toISOString().slice(0,10);
+const TODAY=iso(T);
+const pd=s=>s?new Date(s+"T12:00:00"):null;
+const add=(s,n)=>s?iso(new Date(pd(s).getTime()+n*DAY)):"";
+const off=n=>iso(new Date(T.getTime()+n*DAY));
+const diff=(a,b)=>Math.round((pd(a)-pd(b))/DAY);
+const fmt=s=>s?pd(s).toLocaleDateString("es-CL",{day:"2-digit",month:"short",year:"2-digit"}).replace(".",""):"—";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- Compras ---------- */
+const CTYPES=[{k:"",n:"Tipo por definir",lic:true},{k:"L1",n:"L1 · Licitación",lic:true},{k:"LE",n:"LE · Licitación",lic:true},
+  {k:"LQ",n:"LQ · Licitación",lic:true},{k:"LR",n:"LR · Licitación",lic:true},{k:"LS",n:"LS · Licitación",lic:true},
+  {k:"CM",n:"CM · Convenio marco",lic:false},{k:"CA",n:"CA · Compra ágil",lic:false}];
+const ctype=k=>CTYPES.find(t=>t.k===k)||CTYPES[0];
+/* Pasos de compra (posiciones 2–6 del proyecto). CM y CA solo tienen envío y OC */
+const CSTEP=["Bases enviadas a tramitación","Publicado","Apertura","Adjudicación enviada a tramitación","OC emitida"];
+const CDUR={lic:[20,15,20,10,15],CM:[20,0,0,0,15],CA:[15,0,0,0,10]};
+const applies=(c,k)=>ctype(c.tipo).lic||k===0||k===4;
+const stepName=(c,k)=>!ctype(c.tipo).lic&&k===0?"Solicitud enviada a tramitación":CSTEP[k];
+function blankCompra(){return{id:"k"+Date.now()+Math.random().toString(36).slice(2,6),tipo:"",desc:"",monto:0,r:Array(5).fill(""),ov:Array(5).fill(""),obs:[]}}
+function compraPlan(c,base){const d=ctype(c.tipo).lic?CDUR.lic:CDUR[c.tipo],out=[];let prev=base;
+  for(let k=0;k<5;k++){if(applies(c,k)){out[k]=c.ov[k]||add(prev,d[k]);prev=out[k]}else out[k]=""}return out}
+const maxD=a=>a.filter(Boolean).sort().pop()||"";
+const montoTotal=p=>(p.compras||[]).reduce((a,c)=>a+(+c.monto||0),0);
+const clp=n=>n?"$ "+Math.round(n).toLocaleString("es-CL"):"—";
+const clpM=n=>n?"$ "+(n/1e6).toLocaleString("es-CL",{maximumFractionDigits:n<1e8?1:0})+" M":"—";
+
+function blank(){return{id:"p"+Date.now(),nombre:"Nuevo proyecto",resp:"SD",
+  inicio:TODAY,plazo:TPL.menor.plazo,ov:Array(NH).fill(""),r:Array(NH).fill(""),obs:[],compras:[blankCompra()]}}
+
+function plan(p){const t=TPL.menor,a=[];
+  a[0]=p.ov[0]||p.inicio;a[1]=p.ov[1]||add(a[0],t.d[1]);
+  const cps=(p.compras||[]).map(c=>compraPlan(c,a[1]));
+  /* Solo la compra principal (la n.º 1) marca el camino del proyecto; las complementarias corren en paralelo */
+  for(let k=0;k<5;k++)a[2+k]=(applies(p.compras[0],k)&&cps[0][k])||a[1+k];
+  for(let i=7;i<NH;i++)a[i]=p.ov[i]||add(a[i-1],t.d[i]??(+p.plazo||t.plazo));
+  a.cps=cps;return a}
+/* Los pasos de compra del proyecto se cumplen cuando todas las compras que los tienen están cumplidas */
+function sync(p){if(!p.compras||!p.compras.length)p.compras=[blankCompra()];
+  const c=p.compras[0];
+  for(let k=0;k<5;k++)p.r[2+k]=applies(c,k)?(c.r[k]||""):(p.r[1+k]||"")}
+/* Estado de las compras complementarias pendientes */
+function compl(p,pl){const out={n:0,late:0,risk:0,worst:null};
+  p.compras.slice(1).forEach((c,j)=>{if(c.r[4])return;out.n++;const cp=pl.cps[j+1],nx=[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]);
+    const t=cp[nx];if(!t)return;const d=diff(t,TODAY);if(d<0)out.late++;else if(d<=14)out.risk++;
+    if(out.worst===null||d<out.worst)out.worst=d});return out}
+
+const UNITS=[{k:"UOI",n:"Unidad de Obras Institucionales"},{k:"UPM",n:"Unidad de Proyectos y Mejoramiento"},
+  {k:"UOG",n:"Unidad de Operación y Gestión"},{k:"MANT",n:"Dpto. Mantenimiento"},{k:"SD",n:"Sin definir"}];
+const uName=k=>(UNITS.find(u=>u.k===k)||{n:k||"Sin definir"}).n;
+/* Cartera inicial: sin fechas ni hitos cargados */
+function sample(){
+  const mk=(i,nombre,resp,tipo,usuario="")=>Object.assign(blank(),{id:"c"+i,nombre,resp,tipo,usuario,inicio:"",plazo:TPL[tipo].plazo});
+  return[
+    mk(1,"Pabellón FORMA","UOI","mayor"),
+    mk(2,"Pabellón ESTADIO","UOI","mayor"),
+    mk(3,"Casino Casa Estadio y baños","MANT","menor"),
+    mk(4,"Edificio Vinculación","SD","mayor","Admisión · Of. de Partes · Inclusión · Tienda USACH"),
+    mk(5,"Auditorio Bachillerato","UPM","menor"),
+    mk(6,"Teatro Víctor Jara","UPM","menor"),
+    mk(7,"Paraninfo","UPM","menor"),
+    mk(8,"Salón de Honor","UOI","menor"),
+    mk(9,"Plaza Nodo (ex FACIMED)","UOI","menor"),
+    mk(10,"Baños Admisión 2027","MANT","menor"),
+    mk(11,"Acceso Estadio–DIINF","UOI","menor"),
+    mk(12,"Kioscos FAE","UPM","menor"),
+    mk(13,"Plaza de la Memoria (Romería)","SD","menor"),
+    mk(14,"Paisajismo Frontis","UOI","menor"),
+    mk(15,"Pavimentos FQyB","UPM","menor")
+  ]}
+
+let data=[],F={stage:null,sem:"all",q:"",view:"sum"},openId=null,confirmDel=false;
+/* Migra versiones anteriores: posición vieja -> posición nueva del hito */
+function remap(list,map){return list.map(p=>{const r=Array(NH).fill(""),ov=Array(NH).fill("");
+  map.forEach((n,k)=>{r[n]=p.r[k]||"";ov[n]=p.ov[k]||""});return Object.assign(p,{r,ov})})}
+/* ---------- Datos compartidos (Firestore, colección "avance") ---------- */
+let lastSaved={},ready=false,saveT=null;
+function norm(p){
+  if(!Array.isArray(p.r))p.r=Array(NH).fill("");if(!Array.isArray(p.ov))p.ov=Array(NH).fill("");if(!p.obs)p.obs=[];
+  if(!p.compras){const c=blankCompra();c.r=p.r.slice(2,7);c.ov=p.ov.slice(2,7);c.obs=p.obs||[];p.compras=[c];p.obs=[];for(let k=2;k<7;k++)p.ov[k]=""}
+  const ok=v=>!v||/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000;
+  ["ov","r"].forEach(k=>p[k]=p[k].map(v=>ok(v)?v:""));if(!ok(p.inicio))p.inicio="";
+  p.compras.forEach(c=>{c.r=c.r.map(v=>ok(v)?v:"");c.ov=c.ov.map(v=>ok(v)?v:"");c.obs=(c.obs||[]).filter(o=>ok(o.d))});
+  sync(p);return p}
+function save(){clearTimeout(saveT);saveT=setTimeout(flushSave,300)}
+function flushSave(){if(!window.FB||!ready)return;const ids=new Set();
+  data.forEach((p,k)=>{ids.add(p.id);const j=JSON.stringify(p);if(lastSaved[p.id]!==j){lastSaved[p.id]=j;FB.put(p.id,JSON.parse(j))}});
+  Object.keys(lastSaved).forEach(id=>{if(!ids.has(id)){delete lastSaved[id];FB.del(id)}})}
+/* Cambios que llegan desde Firestore (de esta u otra persona) */
+window.onRemote=docs=>{
+  if(!ready&&!docs.length){data=sample().map((p,k)=>Object.assign(p,{orden:k}));data.forEach(norm);ready=true;save();render();return}
+  const byId=new Map(data.map(p=>[p.id,p]));const seen=new Set();
+  docs.forEach(d=>{seen.add(d.id);const j=JSON.stringify(d);lastSaved[d.id]=j;const cur=byId.get(d.id);
+    if(cur){if(JSON.stringify(cur)!==j){Object.keys(cur).forEach(k=>delete cur[k]);Object.assign(cur,d);norm(cur)}}
+    else data.push(norm(d))});
+  data=data.filter(p=>seen.has(p.id)||!(p.id in lastSaved));
+  Object.keys(lastSaved).forEach(id=>{if(!seen.has(id))delete lastSaved[id]});
+  data.sort((x,y)=>(x.orden??0)-(y.orden??0));
+  if(openId&&!data.find(p=>p.id===openId))closePanel();
+  ready=true;render()};
+
+function info(p){
+  const pl=plan(p),next=p.r.findIndex(x=>!x);
+  let last=-1;for(let i=0;i<NH;i++)if(p.r[i])last=i;
+  const acum=last>=0&&pl[last]?diff(p.r[last],pl[last]):null;
+  const nOk=p.r.filter(Boolean).length;
+  const cx=compl(p,pl),cnote=cx.n?(cx.late?cx.late+" complementaria"+(cx.late>1?"s":"")+" atrasada"+(cx.late>1?"s":""):cx.n+" complementaria"+(cx.n>1?"s":"")+" en curso"):"";
+  const worse=(a,b)=>{const o={late:0,risk:1,ok:2,none:3,done:4};return o[a]<=o[b]?a:b};
+  const cst=cx.late?"late":cx.risk?"risk":cx.n?"ok":"done";
+  if(next===-1)return{pl,next,stage:4,estado:"Entregado",hito:"Cerrado",target:p.r[NH-1],status:worse("done",cst),delta:null,acum,nOk,note:cnote,cx};
+  const stage=H[next].s,mainObs=p.compras[0].obs,allObs=p.compras.flatMap(c=>c.obs),openObs=mainObs.filter(o=>!o.ok).length;
+  let estado=["En espera","Diseño en curso","En redacción de bases",
+    openObs?"Con observaciones":mainObs.length?"Observaciones subsanadas":"En tramitación",
+    "Publicado, en período de ofertas","Ofertas abiertas, en evaluación","Adjudicación en tramitación, OC pendiente",
+    "Antecedentes pendientes","Por entregar terreno","En obra","Por entregar"][next];
+  let note=[stage===1&&mainObs.length?mainObs.length+(mainObs.length===1?" ronda":" rondas")+" de observaciones":"",cnote].filter(Boolean).join(" · ");
+  const target=pl[next],delta=target?diff(target,TODAY):null;
+  const since=next>0?p.r[next-1]:"",wait=since?diff(TODAY,since):null;
+  let status=delta===null?"none":delta<0?"late":delta<=14?"risk":"ok";
+  if(!target&&next===0)estado="Sin programar";
+  if(stage===1&&mainObs.length>=2&&status==="ok")status="risk";
+  const mstatus=status;
+  if(status!=="none"&&cx.n)status=worse(status,cst);
+  return{pl,next,stage,estado,hito:H[next].n,target,status,mstatus,delta,acum,nOk,note,wait,cx}
+}
+
+/* ---------- Gantt ---------- */
+function domain(list){let a=null,b=null;
+  list.forEach(({p,i})=>{[...i.pl,...p.r,TODAY].forEach(d=>{if(!d)return;if(!a||d<a)a=d;if(!b||d>b)b=d})});
+  return[add(a,-10),add(b,20)]}
+function ticks(a,b,maxN){const out=[],s=pd(a);let d=new Date(s.getFullYear(),s.getMonth()+1,1,12);
+  const months=Math.max(1,Math.round(diff(b,a)/30));const step=Math.max(1,Math.ceil(months/maxN));
+  while(iso(d)<=b){out.push(iso(d));d=new Date(d.getFullYear(),d.getMonth()+step,1,12)}return out}
+function gantt(list,mode){
+  const all=list.length;list=list.filter(({p,i})=>i.pl[0]||p.r.some(Boolean));
+  if(!list.length)return`<div class="empty">${mode==="one"?"Ingresa la fecha estimada de Inicio de diseño (sección 1) para generar el plan y ver el Gantt.":all?"Ningún proyecto tiene fechas todavía. Ingresa la fecha estimada de inicio de diseño de cada obra para ver el Gantt.":"No hay proyectos con este filtro."}</div>`;
+  const hidden=all-list.length;
+  const[a,b]=domain(list),W=diff(b,a);
+  const X=d=>(diff(d,a)/W*100).toFixed(3)+"%";
+  const Wd=(d1,d2)=>(Math.max(diff(d2,d1),1)/W*100).toFixed(3)+"%";
+  const tk=ticks(a,b,mode==="one"?6:14);
+  const tl=d=>{const x=pd(d);return x.getMonth()===0?x.getFullYear():x.toLocaleDateString("es-CL",{month:"short"}).replace(".","")};
+  const grid=tk.map(t=>`<i class="g-grid" style="left:${X(t)}"></i>`).join("");
+  const today=`<i class="g-today" style="left:${X(TODAY)}"></i>`;
+  let rows;
+  const stCls=(p,i,k)=>{const e=SPAN[k][1];return p.r[e]?"d":k===i.stage?"c "+i.status:""};
+  const planSeg=(p,i,k)=>{const[s,e]=SPAN[k];if(!i.pl[s]||!i.pl[e])return"";return`<i class="g-plan ${stCls(p,i,k)}" style="left:${X(i.pl[s])};width:${Wd(i.pl[s],i.pl[e])}" title="${STAGES[k]}: ${fmt(i.pl[s])} → ${fmt(i.pl[e])}"></i>`};
+  if(mode==="one"){
+    const{p,i}=list[0];
+    rows=STAGES.map((n,k)=>{const[s,e]=SPAN[k];
+      const pts=[];for(let h=s;h<=e;h++)if(H[h].s===k&&i.pl[h])pts.push(`<i class="g-pt ${p.r[h]?"d":""}" style="left:${X(i.pl[h])}" title="${H[h].n}: ${fmt(i.pl[h])}"></i>`);
+      return`<div class="g-row static"><div class="g-name"><b>${n}</b><span class="num">${fmt(i.pl[s])} → ${fmt(i.pl[e])}</span></div>
+      <div class="g-track">${grid}${planSeg(p,i,k)}${pts.join("")}${today}</div></div>`}).join("");
+  }else{
+    rows=list.map(({p,i})=>`<button class="g-row" data-id="${p.id}"><div class="g-name"><b>${esc(p.nombre)}</b><span>${esc(i.estado)}</span></div>
+      <div class="g-track">${grid}${[0,1,2,3].map(k=>planSeg(p,i,k)).join("")}${today}</div></button>`).join("");
+  }
+  return`<div class="gwrap"><div class="gantt">
+    <div class="g-axis"><div class="eyebrow">${mode==="one"?"Etapa":"Proyecto"}</div><div class="g-ticks">${tk.map(t=>`<span style="left:${X(t)}">${tl(t)}</span>`).join("")}<span class="g-today-l" style="left:${X(TODAY)};bottom:auto">Hoy</span></div></div>
+    ${rows}</div></div>
+    <div class="legend">${hidden?`<span>${hidden} proyecto${hidden>1?"s":""} sin fechas no aparece${hidden>1?"n":""}</span>`:""}<span><i style="height:10px;background:var(--fg)"></i>Etapa cumplida</span><span><i style="height:10px;background:var(--late)"></i><i style="height:10px;background:var(--risk);margin-left:-4px"></i><i style="height:10px;background:var(--ok);margin-left:-4px"></i>Etapa en curso, según semáforo</span><span><i style="height:10px;background:var(--plan)"></i>Pendiente</span><span>Fechas estimadas</span></div>`;
+}
+
+/* ---------- Vista principal ---------- */
+function render(){
+  document.getElementById("today").textContent=T.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"});
+  const I=data.map(p=>({p,i:info(p)}));
+  const st=document.getElementById("stages");
+  st.innerHTML=STAGES.map((n,k)=>{
+    const g=I.filter(x=>x.i.stage===k),l=g.filter(x=>x.i.status==="late").length,r=g.filter(x=>x.i.status==="risk").length;
+    return`<button class="stage" data-k="${k}" aria-pressed="${F.stage===k}"><span class="k">${k+1} · ${n}</span><span class="n num">${g.length}</span>
+      <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("");
+  st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
+  const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4};
+  const rows=I.filter(({p,i})=>(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
+      &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q)))
+    .sort((a,b)=>order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
+  const M=document.getElementById("main");
+  if(F.view==="sum"){M.innerHTML=resumen(rows,I)}
+  else if(F.view==="gantt"){
+    const byStart=[...rows].sort((a,b)=>(a.i.pl[0]||"9")<(b.i.pl[0]||"9")?-1:1);
+    M.innerHTML=gantt(byStart,"all");
+  }else if(!rows.length){M.innerHTML=`<div class="empty">No hay proyectos con este filtro.</div>`}
+  else{
+    M.innerHTML=`<div class="cols"><div>Proyecto</div><div>Estado</div><div>Avance</div><div>Próximo hito</div><div class="r">Días</div></div>`+
+    rows.map(({p,i})=>{
+      const bars=H.map((h,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}${k&&h.s!==H[k-1].s?" sep":""}"></i>`).join("");
+      const dl=i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
+      const dlab=i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
+      return`<button class="row" data-id="${p.id}">
+        <div class="c-name"><div class="p-name">${esc(p.nombre)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
+        <div class="c-estado estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
+        <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${STAGES[i.stage]||"Cerrado"}</span></div></div>
+        <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.status==="done"?"Entregado el ":"Plan "}${fmt(i.target)}</small></div>
+        <div class="c-delta r delta num ${i.status==="late"?"late":""}">${dl}<small>${dlab}</small></div></button>`}).join("");
+  }
+  M.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>openPanel(b.dataset.id));
+  if(openId){if(editingDate)pending=true;else drawPanel()}
+}
+
+/* ---------- Cuellos de botella ---------- */
+function cuellos(I){
+  const act=I.filter(x=>x.i.next!==-1&&x.i.mstatus!=="none");
+  const per=H.map((h,k)=>{const g=act.filter(x=>x.i.next===k);const w=g.map(x=>x.i.wait).filter(v=>v!==null);
+    return{k,h,n:g.length,l:g.filter(x=>x.i.mstatus==="late").length,r:g.filter(x=>x.i.mstatus==="risk").length,
+      avg:w.length?Math.round(w.reduce((a,b)=>a+b,0)/w.length):null,names:g.map(x=>x.p.nombre)}});
+  const mx=Math.max(1,...per.map(x=>x.n)),top=Math.max(...per.map(x=>x.l*100+x.n));
+  const sinf=I.filter(x=>x.i.status==="none").length;
+  return`<div class="sum-h"><h2>Cuellos de botella</h2><span>Obras detenidas en cada hito · rojo = atrasadas, ámbar = en riesgo</span></div>
+  <div class="bn">${per.map(x=>`<div class="bn-r ${x.n&&x.l*100+x.n===top?"max":""}" title="${esc(x.names.join(" · "))}">
+    <span class="st">${["DIS","DIS","COM","COM","COM","COM","COM","EJE","EJE","EJE","ENT"][x.k]}</span><b>${x.h.n}</b>
+    <div class="bn-bar">${x.l?`<i class="bl" style="width:${x.l/mx*100}%"></i>`:""}${x.r?`<i class="br" style="width:${x.r/mx*100}%"></i>`:""}${x.n-x.l-x.r?`<i class="bo" style="width:${(x.n-x.l-x.r)/mx*100}%"></i>`:""}</div>
+    <span class="m num">${x.n?`<b>${x.n}</b> obra${x.n>1?"s":""}${x.avg!==null?` · ${x.avg} d detenidas`:""}`:"—"}</span></div>`).join("")}</div>
+  ${(()=>{const c=I.reduce((a,x)=>({n:a.n+(x.i.cx?x.i.cx.n:0),l:a.l+(x.i.cx?x.i.cx.late:0)}),{n:0,l:0});
+    return c.n?`<p class="note"><b style="color:var(--fg)">Compras complementarias en paralelo:</b> ${c.n} pendiente${c.n>1?"s":""}${c.l?` · <span style="color:var(--late);font-weight:600">${c.l} atrasada${c.l>1?"s":""}</span>`:""}. No se cuentan en las barras, que muestran solo el camino principal de cada obra.</p>`:""})()}
+  ${sinf?`<p class="note">${sinf} obra${sinf>1?"s":""} sin fecha estimada no entra${sinf>1?"n":""} en este gráfico.</p>`:""}`;
+}
+
+/* ---------- Resumen integrado ---------- */
+function resumen(rows,I){
+  const SL=["Diseño","Compra","Ejecución","Entrega","Cerrado"];
+  const cnt=a=>({l:a.filter(x=>x.i.status==="late").length,r:a.filter(x=>x.i.status==="risk").length,n:a.filter(x=>x.i.status==="none").length});
+  const tot=cnt(I);
+  const ubars=UNITS.map(u=>{const g=I.filter(x=>x.p.resp===u.k);const c=cnt(g);
+    const segs=[0,1,2,3,4].map(k=>{const n=g.filter(x=>x.i.stage===k).length;return n?`<i class="s${k}" style="flex:${n}" title="${SL[k]}: ${n}">${n}</i>`:""}).join("");
+    return`<div class="u-row"><b>${u.n}</b><div class="u-bar">${g.length?segs:`<i class="e">Sin proyectos asignados</i>`}</div>
+      <span class="u-n num">${g.length} obra${g.length===1?"":"s"}${g.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(g.reduce((a,x)=>a+montoTotal(x.p),0)):""}${c.l?` · <span class="l">${c.l} atrasada${c.l>1?"s":""}</span>`:""}${c.n?` · ${c.n} sin fechas`:""}</span></div>`}).join("");
+  const legend=`<div class="legend">${SL.map((n,k)=>`<span><i class="s${k}" style="height:12px"></i>${n}</span>`).join("")}</div>`;
+  const head=`<div class="mx-r mx-h"><span>Obra</span><div class="cells"><span style="grid-column:1/3">Diseño</span><span style="grid-column:4/9">Compra</span><span style="grid-column:10/13">Ejecución</span><span style="grid-column:14/15">Entrega</span></div><span>Estado</span><span>Próximo hito</span></div>`;
+  const cell=(p,i,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}" title="${H[k].n}${p.r[k]?": "+fmt(p.r[k]):i.pl[k]?" · plan "+fmt(i.pl[k]):""}"></i>`;
+  const cells=(p,i)=>[0,1,"g",2,3,4,5,6,"g",7,8,9,"g",10].map(k=>k==="g"?`<b class="gap"></b>`:cell(p,i,k)).join("");
+  const groups=UNITS.map(u=>{const g=rows.filter(x=>x.p.resp===u.k);if(!g.length)return"";
+    return`<div class="mx-u"><b>${u.n}</b><span class="num">${g.length} obra${g.length===1?"":"s"}</span></div>`+
+    g.map(({p,i})=>`<button class="mx-r" data-id="${p.id}"><div class="mx-name"><b>${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
+      <div class="cells">${cells(p,i)}</div>
+      <div class="estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
+      <div class="mx-nx">${i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
+  return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin fechas</span></div>
+    <div class="units">${ubars}</div>${legend}
+    ${cuellos(I)}
+    <div class="sum-h"><h2>Avance por hito</h2><span>■ cumplido · □ pendiente · borde de color = próximo hito según semáforo</span></div>
+    <div class="gwrap"><div class="mx">${head}${groups||`<div class="empty">No hay proyectos con este filtro.</div>`}</div></div>
+    ${tot.n?`<p class="note">Las obras sin fechas aparecen como "Sin programar". Abre cada una e ingresa la fecha estimada de inicio de diseño: el resto de las fechas se genera solo.</p>`:""}`;
+}
+
+/* ---------- Panel del proyecto ---------- */
+const panel=document.getElementById("panel"),scrim=document.getElementById("scrim");
+/* Fecha completa: año de 4 cifras desde 2000. Evita guardar mientras se escribe el año */
+const okDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000&&+v.slice(0,4)<=2100;
+/* El panel no se redibuja mientras se escribe una fecha; se redibuja al salir del campo */
+let pending=false,ptrDown=false,editingDate=false;
+function flush(){if(pending&&openId&&!ptrDown&&!editingDate){pending=false;drawPanel()}}
+panel.addEventListener("focusin",e=>{if(e.target.type==="date")editingDate=true});
+document.addEventListener("pointerdown",()=>{ptrDown=true},true);
+document.addEventListener("pointerup",()=>{setTimeout(()=>{ptrDown=false;flush()},0)},true);
+panel.addEventListener("focusout",e=>{if(e.target.type==="date"){editingDate=false;setTimeout(flush,0)}});
+function openPanel(id){openId=id;confirmDel=false;drawPanel();panel.hidden=false;scrim.hidden=false;panel.scrollTop=0;setTimeout(()=>panel.querySelector(".x")?.focus(),0)}
+function closePanel(){openId=null;panel.hidden=true;scrim.hidden=true}
+scrim.onclick=closePanel;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&openId)closePanel()});
+
+function drawPanel(){
+  const p=data.find(x=>x.id===openId);if(!p){closePanel();return}
+  const i=info(p),pl=i.pl,keep=panel.scrollTop,focusId=panel.contains(document.activeElement)?document.activeElement.id:"";
+  const fin=p.r[NH-1]||pl[NH-1],total=montoTotal(p);
+  const lateB=(d)=>`<b class="${d<0?"late":""}" style="display:inline">${d<0?"+"+(-d)+" d atraso":d+" d"}</b>`;
+  const compras=()=>{
+    const rows=p.compras.map((c,j)=>{const cp=pl.cps[j],nx=[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]);
+      const steps=[0,1,2,3,4].filter(k=>applies(c,k)).map(k=>`<div class="hrow ${c.r[k]?"done":""}">
+        <input type="checkbox" id="cc-${j}-${k}" data-cc="${j}:${k}" ${c.r[k]?"checked":""}>
+        <label class="nm" for="cc-${j}-${k}">${stepName(c,k)}</label>
+        <span class="pl"><input type="date" id="cpl-${j}-${k}" data-cpl="${j}:${k}" class="${c.ov[k]?"ov":""}" value="${cp[k]||""}" aria-label="Fecha estimada ${stepName(c,k)}">${c.ov[k]?`<button class="rs" data-crs="${j}:${k}" title="Volver a la plantilla" aria-label="Volver a la plantilla">↺</button>`:""}</span>
+        <span class="mx-nx num">${!c.r[k]&&k===nx&&cp[k]?lateB(diff(cp[k],TODAY)):""}</span></div>
+        ${k===0?`<div class="obs"><span class="lbl">Rondas de observaciones en tramitación</span>
+          ${c.obs.map((o,q)=>`<div class="obs-r"><span class="num">#${q+1}</span><input type="date" id="o-d-${j}-${q}" data-obs="${j}:${q}" data-f="d" value="${o.d}" aria-label="Fecha observación ${q+1}">
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-obsok="${j}:${q}" ${o.ok?"checked":""}>Subsanada</label>
+          ${o.ok?`<input type="date" id="o-ok-${j}-${q}" data-obs="${j}:${q}" data-f="ok" value="${o.ok}" aria-label="Fecha subsanación ${q+1}">`:"<span></span>"}
+          <button class="rs" data-obsdel="${j}:${q}" aria-label="Quitar ronda">×</button></div>`).join("")}
+          <button class="addobs" data-addobs="${j}">+ Registrar observaciones (hoy)</button></div>`:""}`).join("");
+      return`<div class="cp">
+        <div class="cp-tag"><b>${j?"Compra complementaria":"Compra principal"}</b><span>${j?"Corre en paralelo; no detiene la obra":"Define el avance del proyecto hacia Ejecución"}</span>${j?`<button class="addobs" data-cmain="${j}">Hacer principal</button>`:""}</div>
+        <div class="cp-h"><span class="cp-n num">${j+1}</span>
+          <div class="f"><label for="c-tipo-${j}">Tipo</label><select id="c-tipo-${j}" data-cf="${j}:tipo">${CTYPES.map(t=>`<option value="${t.k}" ${c.tipo===t.k?"selected":""}>${t.n}</option>`).join("")}</select></div>
+          <div class="f"><label for="c-desc-${j}">Qué se compra</label><input type="text" id="c-desc-${j}" data-cf="${j}:desc" value="${esc(c.desc)}" placeholder="Ej. obra civil, mobiliario"></div>
+          <div class="f"><label for="c-monto-${j}">Monto (CLP)</label><input type="text" inputmode="numeric" id="c-monto-${j}" data-cf="${j}:monto" class="num" value="${c.monto?Math.round(c.monto).toLocaleString("es-CL"):""}" placeholder="0"></div>
+          ${p.compras.length>1?`<button class="rs" data-cdel="${j}" title="Quitar compra" aria-label="Quitar compra ${j+1}">×</button>`:"<span></span>"}
+        </div>
+        <div class="hrow head"><span></span><span>Hito</span><span>Fecha estimada</span><span class="ph2"></span></div>
+        ${steps}</div>`}).join("");
+    return`<div class="cp-total"><span>${p.compras.length} compra${p.compras.length>1?"s":""}</span><span>Costo total del proyecto <b class="num">${clp(total)}</b></span></div>
+      ${rows}<button class="addobs" id="addcompra" style="margin-top:10px">+ Agregar compra complementaria</button>`};
+  const hit=H.map((h,k)=>{
+    const sec=k===0||h.s!==H[k-1].s?`<div class="sec"><h3>${h.s+1} · ${STAGES[h.s]}<span>${pl[SPAN[h.s][0]]?fmt(pl[SPAN[h.s][0]])+" → "+fmt(pl[SPAN[h.s][1]]):"Sin fechas estimadas"}</span></h3>
+      ${h.s===2?`<div class="grid2" style="padding:4px 0 12px"><div class="f"><label for="f-plazo">Plazo contractual (ofertado), días corridos</label><input type="number" min="1" id="f-plazo" data-k="plazo" value="${p.plazo}" class="num"></div><p class="lbl" style="align-self:end;margin:0 0 6px">Fija la recepción provisoria estimada desde la entrega de terreno.</p></div>`:""}
+      ${h.s===1?"":`<div class="hrow head"><span></span><span>Hito</span><span>Fecha estimada</span><span class="ph2"></span></div>`}`:"";
+    const close=k===NH-1||H[k+1].s!==h.s?"</div>":"";
+    if(h.s===1)return sec+(k===2?compras():"")+close;
+    return`${sec}<div class="hrow ${p.r[k]?"done":""}">
+      <input type="checkbox" id="h-${k}" data-h="${k}" ${p.r[k]?"checked":""}>
+      <label class="nm" for="h-${k}">${h.n}</label>
+      <span class="pl"><input type="date" id="pl-${k}" data-pl="${k}" class="${p.ov[k]?"ov":""}" value="${pl[k]}" aria-label="Fecha estimada ${h.n}">${p.ov[k]?`<button class="rs" data-rs="${k}" title="Volver a la plantilla" aria-label="Volver a la plantilla">↺</button>`:""}</span>
+      <span class="mx-nx num">${p.r[k]?"":k===i.next&&i.target?lateB(i.delta):""}</span>
+    </div>${close}`}).join("");
+
+  panel.innerHTML=`
+  <div class="ph"><div><div class="eyebrow">${esc(uName(p.resp))}</div><h2>${esc(p.nombre)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
+  <div class="kpis num">
+    <div class="kpi"><b>${i.nOk}/${NH}</b><span>Hitos cumplidos</span></div>
+    <div class="kpi"><b class="${i.status==="late"?"late":""}">${i.wait===null?"—":i.wait+" d"}</b><span>Detenido en el hito actual</span></div>
+    <div class="kpi"><b>${fmt(fin)}</b><span>${p.r[NH-1]?"Entregado":"Entrega estimada"}</span></div>
+    <div class="kpi"><b>${clpM(total)}</b><span>Costo total</span></div>
+  </div>
+  ${gantt([{p,i}],"one")}
+  <div class="sec"><h3>Datos base</h3>
+  <div class="grid2">
+    <div class="f full"><label for="f-nombre">Nombre</label><input type="text" id="f-nombre" data-k="nombre" value="${esc(p.nombre)}"></div>
+    <div class="f"><label for="f-resp">Unidad responsable</label><select id="f-resp" data-k="resp">${UNITS.map(u=>`<option value="${u.k}" ${p.resp===u.k?"selected":""}>${u.n}</option>`).join("")}</select></div>
+  </div></div>
+  ${hit}
+  <div class="danger">${confirmDel?`<span>¿Eliminar este proyecto?</span><button data-del="yes">Sí, eliminar</button><button data-del="no" style="color:var(--fg)">Cancelar</button>`:`<button data-del="ask">Eliminar proyecto</button>`}</div>`;
+  panel.scrollTop=keep;
+  if(focusId){const n=document.getElementById(focusId);if(n)n.focus({preventScroll:true})}
+  /* Al marcar, el hito se da por cumplido en su fecha estimada si ya pasó; si no, hoy */
+  const doneAt=v=>v&&v<=TODAY?v:TODAY;
+  const reDone=()=>{const np=plan(p);[0,1,7,8,9,10].forEach(j=>{if(p.r[j])p.r[j]=doneAt(np[j])});
+    p.compras.forEach((c,j)=>{c.r=c.r.map((v,k)=>v?doneAt(np.cps[j][k]):v)})};
+  const upd=()=>{sync(p);save();render()};
+  const jk=s=>s.split(":").map(Number);
+  panel.querySelector(".x").onclick=closePanel;
+  panel.querySelectorAll("[data-k]").forEach(el=>{
+    const text=el.type==="text";
+    el.addEventListener(text?"input":"change",()=>{
+      let v=el.value;if(el.dataset.k==="plazo")v=Math.max(1,+v||1);
+      p[el.dataset.k]=v;if(el.dataset.k==="plazo")reDone();upd();
+      if(text){const n=document.getElementById(el.id);n.focus();n.setSelectionRange(n.value.length,n.value.length)}
+    })});
+  panel.querySelectorAll("[data-h]").forEach(c=>c.onchange=()=>{const k=+c.dataset.h;p.r[k]=c.checked?doneAt(plan(p)[k]):"";upd()});
+  panel.querySelectorAll("[data-pl]").forEach(c=>c.onchange=()=>{const k=+c.dataset.pl;
+    if(c.value&&!okDate(c.value))return;
+    if(k===0&&!p.ov[0]){if(c.value){p.inicio=c.value}}else p.ov[k]=c.value;reDone();upd()});
+  panel.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{p.ov[+b.dataset.rs]="";reDone();upd()});
+  /* Compras */
+  panel.querySelectorAll("[data-cf]").forEach(el=>el.onchange=()=>{const[j,f]=el.dataset.cf.split(":");const c=p.compras[+j];
+    if(f==="monto")c.monto=+String(el.value).replace(/\D/g,"")||0;else c[f]=el.value;
+    if(f==="tipo"){c.r=c.r.map((v,k)=>applies(c,k)?v:"");c.ov=c.ov.map((v,k)=>applies(c,k)?v:"");reDone()}upd()});
+  panel.querySelectorAll("[data-cc]").forEach(el=>el.onchange=()=>{const[j,k]=jk(el.dataset.cc);
+    p.compras[j].r[k]=el.checked?doneAt(plan(p).cps[j][k]):"";upd()});
+  panel.querySelectorAll("[data-cpl]").forEach(el=>el.onchange=()=>{const[j,k]=jk(el.dataset.cpl);
+    if(el.value&&!okDate(el.value))return;p.compras[j].ov[k]=el.value;reDone();upd()});
+  panel.querySelectorAll("[data-crs]").forEach(b=>b.onclick=()=>{const[j,k]=jk(b.dataset.crs);p.compras[j].ov[k]="";reDone();upd()});
+  panel.querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{p.compras.splice(+b.dataset.cdel,1);upd()});
+  panel.querySelectorAll("[data-cmain]").forEach(b=>b.onclick=()=>{const j=+b.dataset.cmain;const[c]=p.compras.splice(j,1);p.compras.unshift(c);reDone();upd()});
+  panel.querySelector("#addcompra").onclick=()=>{p.compras.push(blankCompra());upd()};
+  panel.querySelectorAll("[data-obs]").forEach(c=>c.onchange=()=>{const[j,q]=jk(c.dataset.obs);if(okDate(c.value)){p.compras[j].obs[q][c.dataset.f]=c.value;upd()}});
+  panel.querySelectorAll("[data-obsok]").forEach(c=>c.onchange=()=>{const[j,q]=jk(c.dataset.obsok);p.compras[j].obs[q].ok=c.checked?TODAY:"";upd()});
+  panel.querySelectorAll("[data-obsdel]").forEach(b=>b.onclick=()=>{const[j,q]=jk(b.dataset.obsdel);p.compras[j].obs.splice(q,1);upd()});
+  panel.querySelectorAll("[data-addobs]").forEach(b=>b.onclick=()=>{p.compras[+b.dataset.addobs].obs.push({d:TODAY,ok:""});upd()});
+  panel.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const a=b.dataset.del;
+    if(a==="ask"){confirmDel=true;drawPanel()}else if(a==="no"){confirmDel=false;drawPanel()}
+    else{data=data.filter(x=>x.id!==p.id);save();closePanel();render()}});
+}
+
+function seg(id,key){document.getElementById(id).querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  F[key]=b.dataset.v;document.querySelectorAll(`#${id} button`).forEach(x=>x.setAttribute("aria-pressed",x===b));render()})}
+seg("view","view");seg("semaf","sem");
+document.getElementById("q").oninput=e=>{F.q=e.target.value;render()};
+document.getElementById("add").onclick=()=>{const p=blank();p.orden=Math.min(0,...data.map(x=>x.orden??0))-1;data.unshift(p);save();render();openPanel(p.id)};
+document.getElementById("copy").onclick=async e=>{const t=JSON.stringify(data);
+  try{await navigator.clipboard.writeText(t);e.target.textContent="Respaldo copiado"}catch(_){e.target.textContent="No se pudo copiar"}
+  setTimeout(()=>e.target.textContent="Copiar respaldo",3000)};
+const impBox=document.getElementById("impBox");
+document.getElementById("imp").onclick=()=>{impBox.hidden=false;document.getElementById("impTxt").focus()};
+document.getElementById("impNo").onclick=()=>{impBox.hidden=true};
+document.getElementById("impGo").onclick=()=>{const m=document.getElementById("impMsg");let arr;
+  try{arr=JSON.parse(document.getElementById("impTxt").value);if(!Array.isArray(arr))throw 0}catch(_){m.textContent="El texto pegado no son datos válidos.";return}
+  let n=0;arr.forEach((p,k)=>{if(!p||!p.id||!p.nombre)return;norm(p);const i=data.findIndex(x=>x.id===p.id);
+    if(i>=0){p.orden=data[i].orden;data[i]=p}else{p.orden=data.length+k;data.push(p)}n++});
+  save();render();m.textContent=n+" proyectos importados.";document.getElementById("impTxt").value=""};
+
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import {getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyChraly0ienzU2hGw0AlD9k1JAEq73yS-o",authDomain:"kanban-pladet.firebaseapp.com",projectId:"kanban-pladet",
+  storageBucket:"kanban-pladet.firebasestorage.app",messagingSenderId:"420984183452",appId:"1:420984183452:web:849f277db1b255895a2b59"});
+const auth=getAuth(app),db=getFirestore(app),COL="avance";
+const $=id=>document.getElementById(id),banner=$("banner");
+const fail=e=>{banner.hidden=false;banner.textContent=(e&&e.code==="permission-denied")?"No se pudo guardar: la base de datos rechazó el permiso. Avisa a Seba.":"No se pudo guardar el último cambio. Revisa tu conexión y recarga la página."};
+window.FB={put:(id,d)=>setDoc(doc(db,COL,id),d).then(()=>{banner.hidden=true}).catch(fail),del:id=>deleteDoc(doc(db,COL,id)).catch(fail)};
+let unsub=null;
+onAuthStateChanged(auth,u=>{
+  if(unsub){unsub();unsub=null}
+  if(u){$("login").hidden=true;$("app").hidden=false;$("who").textContent=u.email;
+    unsub=onSnapshot(collection(db,COL),s=>window.onRemote(s.docs.map(d=>d.data())),e=>{fail(e)});}
+  else{$("app").hidden=true;$("login").hidden=false;$("lg-email").focus()}});
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("lg-err").textContent="";$("lg-btn").disabled=true;
+  try{await signInWithEmailAndPassword(auth,$("lg-email").value.trim(),$("lg-pass").value)}
+  catch(err){$("lg-err").textContent=/invalid-credential|wrong-password|user-not-found/.test(err.code)?"Correo o contraseña incorrectos.":"No se pudo iniciar sesión ("+err.code+")."}
+  finally{$("lg-btn").disabled=false}});
+$("logout").onclick=()=>signOut(auth);
+</script>
+
+</body>
+</html>
