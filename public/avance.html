@@ -12,18 +12,18 @@
 :root{
   --bg:#ffffff; --fg:#111111; --muted:#6e6e6a; --line:#dcdcd8; --soft:#f3f3f1; --plan:#cfcfca;
   --st0:#e6e6e2; --st1:#b9b9b3; --st2:#7a7a75; --st3:#45453f;
-  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3; --sunf:#fdf0b3; --suns:#c9a227;
+  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3; --sunf:#fdf0b3; --suns:#c9a227; --verbg:#fff8d6; --verbgh:#fdf0b3;
   --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; color-scheme:dark}}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --verbgh:#3a3418; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; color-scheme:dark}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --verbgh:#3a3418; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
@@ -182,6 +182,10 @@ button.mx-r:hover{background:var(--soft)}
 .sun:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
 h2 .sun svg{width:20px;height:20px}
 .seg button.vb[aria-pressed="true"]{background:var(--sunf);color:var(--fg)}
+/* Fila completa en amarillo claro para obras de verano */
+.row.ver,button.mx-r.ver,.g-row.ver,.ft tr.ver td{background:var(--verbg)}
+.row.ver:hover,button.mx-r.ver:hover,.g-row.ver:hover,.ft tr.ver:hover td{background:var(--verbgh)}
+.ver .sun.on svg{fill:var(--bg)}
 /* Finanzas */
 .fk{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--fg);border-bottom:1px solid var(--line);margin-top:24px}
 .fk div{padding:14px 16px 14px 0}
@@ -519,7 +523,7 @@ function gantt(list,mode){
       return`<div class="g-row static"><div class="g-name"><b>${n}</b><span class="num">${fmt(i.pl[s])} → ${fmt(i.pl[e])}</span></div>
       <div class="g-track">${grid}${planSeg(p,i,k)}${pts.join("")}${today}</div></div>`}).join("");
   }else{
-    rows=list.map(({p,i})=>`<button class="g-row" data-id="${p.id}"><div class="g-name"><b>${sun(p)}${esc(p.nombre)}</b><span>${esc(i.estado)}</span></div>
+    rows=list.map(({p,i})=>`<button class="g-row${p.verano?" ver":""}" data-id="${p.id}"><div class="g-name"><b>${sun(p)}${esc(p.nombre)}</b><span>${esc(i.estado)}</span></div>
       <div class="g-track">${grid}${[0,1,2,3].map(k=>planSeg(p,i,k)).join("")}${today}</div></button>`).join("");
   }
   return`<div class="gwrap"><div class="gantt">
@@ -555,7 +559,7 @@ function render(){
       const bars=H.map((h,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}${k&&h.s!==H[k-1].s?" sep":""}"></i>`).join("");
       const dl=i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
       const dlab=i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
-      return`<button class="row" data-id="${p.id}">
+      return`<button class="row${p.verano?" ver":""}" data-id="${p.id}">
         <div class="c-name"><div class="p-name">${sun(p)}${esc(p.nombre)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
         <div class="c-estado estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
         <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${STAGES[i.stage]||"Cerrado"}</span></div></div>
@@ -610,7 +614,7 @@ function finanzas(rows){
   const byStage=["Diseño","Compra","Ejecución","Entrega","Cerrado"].map((n,k)=>{const g=all.filter(x=>x.i.stage===k);return{n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:new Set(g.map(x=>x.p.id)).size+" obras"}}).filter(g=>g.t);
   const tab=[...rows].sort((a,b)=>montoTotal(b.p)-montoTotal(a.p)).map(({p,i})=>{
     const c=sum(p.compras.filter(x=>x.r[4]).map(x=>({m:+x.monto||0}))),t=montoTotal(p);
-    return`<tr class="click" data-id="${p.id}"><td><b>${sun(p)}${esc(p.nombre)}</b><small>${esc(uName(p.resp))}</small></td>
+    return`<tr class="click${p.verano?" ver":""}" data-id="${p.id}"><td><b>${sun(p)}${esc(p.nombre)}</b><small>${esc(uName(p.resp))}</small></td>
       <td>${p.compras.map(x=>`${x.tipo||"s/t"}${x.desc?" · "+esc(x.desc):""}`).join("<br>")}</td>
       <td>${STAGES[i.stage]||"Cerrado"}</td>
       <td class="r num">${t?clp(c):"—"}</td><td class="r num">${t?clp(t-c):"—"}</td><td class="r num"><b>${clp(t)}</b></td></tr>`}).join("");
@@ -646,7 +650,7 @@ function resumen(rows,I){
   const cells=(p,i)=>[0,1,"g",2,3,4,5,6,"g",7,8,9,"g",10].map(k=>k==="g"?`<b class="gap"></b>`:cell(p,i,k)).join("");
   const groups=UNITS.map(u=>{const g=rows.filter(x=>x.p.resp===u.k);if(!g.length)return"";
     return`<div class="mx-u"><b>${u.n}</b><span class="num">${g.length} obra${g.length===1?"":"s"}</span></div>`+
-    g.map(({p,i})=>`<button class="mx-r" data-id="${p.id}"><div class="mx-name"><b>${sun(p)}${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
+    g.map(({p,i})=>`<button class="mx-r${p.verano?" ver":""}" data-id="${p.id}"><div class="mx-name"><b>${sun(p)}${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
       <div class="cells">${cells(p,i)}</div>
       <div class="estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
       <div class="mx-nx">${i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
