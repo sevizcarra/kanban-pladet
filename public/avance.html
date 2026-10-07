@@ -12,18 +12,18 @@
 :root{
   --bg:#ffffff; --fg:#111111; --muted:#6e6e6a; --line:#dcdcd8; --soft:#f3f3f1; --plan:#cfcfca;
   --st0:#e6e6e2; --st1:#b9b9b3; --st2:#7a7a75; --st3:#45453f;
-  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3;
+  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3; --sunf:#fdf0b3; --suns:#c9a227;
   --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; color-scheme:dark}}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; color-scheme:dark}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
@@ -174,6 +174,14 @@ button.mx-r:hover{background:var(--soft)}
 .mx-nx b{display:block;color:var(--fg);font-weight:600;font-size:13px}
 .mx-nx b.late{color:var(--late)}
 .note{font-size:12px;color:var(--muted);padding:10px 0}
+/* Obras de verano */
+.sun{display:inline-flex;vertical-align:-3px;margin-right:6px;cursor:pointer;border-radius:50%;line-height:0}
+.sun svg{width:16px;height:16px;fill:none;stroke:var(--line);stroke-width:1.6}
+.sun:hover svg{stroke:var(--suns)}
+.sun.on svg{fill:var(--sunf);stroke:var(--suns)}
+.sun:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
+h2 .sun svg{width:20px;height:20px}
+.seg button.vb[aria-pressed="true"]{background:var(--sunf);color:var(--fg)}
 /* Finanzas */
 .fk{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--fg);border-bottom:1px solid var(--line);margin-top:24px}
 .fk div{padding:14px 16px 14px 0}
@@ -313,6 +321,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="ok">En plazo</button>
     </div>
     <input class="search" id="q" type="search" placeholder="Buscar proyecto, código o unidad">
+    <div class="seg"><button class="vb" id="verF" aria-pressed="false" title="Mostrar solo obras de verano">☀ Verano</button></div>
     <button class="btn" id="add">+ Proyecto</button>
   </div>
 
@@ -445,8 +454,11 @@ function flushSave(){if(!window.FB||!ready)return;const ids=new Set();
 window.onRemote=docs=>{
   if(!ready&&!docs.length){data=sample().map((p,k)=>Object.assign(p,{orden:k}));data.forEach(norm);ready=true;save();render();return}
   const byId=new Map(data.map(p=>[p.id,p]));const seen=new Set();
-  docs.forEach(d=>{seen.add(d.id);const j=JSON.stringify(d);lastSaved[d.id]=j;const cur=byId.get(d.id);
-    if(cur){if(JSON.stringify(cur)!==j){Object.keys(cur).forEach(k=>delete cur[k]);Object.assign(cur,d);norm(cur)}}
+  docs.forEach(d=>{seen.add(d.id);const j=JSON.stringify(d);const cur=byId.get(d.id);
+    /* Si esta obra tiene cambios locales aún sin guardar, no se pisan con la versión remota */
+    const dirty=cur&&lastSaved[d.id]!==undefined&&JSON.stringify(cur)!==lastSaved[d.id];
+    if(!dirty)lastSaved[d.id]=j;
+    if(cur){if(!dirty&&JSON.stringify(cur)!==j){Object.keys(cur).forEach(k=>delete cur[k]);Object.assign(cur,d);norm(cur)}}
     else data.push(norm(d))});
   data=data.filter(p=>seen.has(p.id)||!(p.id in lastSaved));
   Object.keys(lastSaved).forEach(id=>{if(!seen.has(id))delete lastSaved[id]});
@@ -507,7 +519,7 @@ function gantt(list,mode){
       return`<div class="g-row static"><div class="g-name"><b>${n}</b><span class="num">${fmt(i.pl[s])} → ${fmt(i.pl[e])}</span></div>
       <div class="g-track">${grid}${planSeg(p,i,k)}${pts.join("")}${today}</div></div>`}).join("");
   }else{
-    rows=list.map(({p,i})=>`<button class="g-row" data-id="${p.id}"><div class="g-name"><b>${esc(p.nombre)}</b><span>${esc(i.estado)}</span></div>
+    rows=list.map(({p,i})=>`<button class="g-row" data-id="${p.id}"><div class="g-name"><b>${sun(p)}${esc(p.nombre)}</b><span>${esc(i.estado)}</span></div>
       <div class="g-track">${grid}${[0,1,2,3].map(k=>planSeg(p,i,k)).join("")}${today}</div></button>`).join("");
   }
   return`<div class="gwrap"><div class="gantt">
@@ -527,7 +539,7 @@ function render(){
       <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("");
   st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
   const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4};
-  const rows=I.filter(({p,i})=>(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
+  const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
       &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q)))
     .sort((a,b)=>order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
   const M=document.getElementById("main");
@@ -544,7 +556,7 @@ function render(){
       const dl=i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
       const dlab=i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
       return`<button class="row" data-id="${p.id}">
-        <div class="c-name"><div class="p-name">${esc(p.nombre)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
+        <div class="c-name"><div class="p-name">${sun(p)}${esc(p.nombre)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
         <div class="c-estado estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
         <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${STAGES[i.stage]||"Cerrado"}</span></div></div>
         <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.status==="done"?"Entregado el ":"Plan "}${fmt(i.target)}</small></div>
@@ -572,6 +584,13 @@ function cuellos(I){
   ${sinf?`<p class="note">${sinf} obra${sinf>1?"s":""} sin fecha estimada no entra${sinf>1?"n":""} en este gráfico.</p>`:""}`;
 }
 
+/* ---------- Obras de verano: sol al lado del nombre ---------- */
+const SUN_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>';
+const sun=p=>`<span class="sun ${p.verano?"on":""}" role="button" tabindex="0" data-sun="${p.id}" aria-pressed="${!!p.verano}" title="${p.verano?"Obra de verano (clic para quitar)":"Marcar como obra de verano"}">${SUN_SVG}</span>`;
+function toggleSun(id){const p=data.find(x=>x.id===id);if(!p)return;p.verano=!p.verano;save();render()}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-sun]");if(!t)return;e.stopPropagation();e.preventDefault();toggleSun(t.dataset.sun)},true);
+document.addEventListener("keydown",e=>{const t=e.target.closest&&e.target.closest("[data-sun]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopPropagation();toggleSun(t.dataset.sun)}},true);
+
 /* ---------- Finanzas ----------
    Cada compra se carga con su monto estimado; al emitirse la OC se corrige con el monto adjudicado.
    Adjudicado = compras con OC emitida. Estimado = compras sin OC. */
@@ -591,17 +610,17 @@ function finanzas(rows){
   const byStage=["Diseño","Compra","Ejecución","Entrega","Cerrado"].map((n,k)=>{const g=all.filter(x=>x.i.stage===k);return{n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:new Set(g.map(x=>x.p.id)).size+" obras"}}).filter(g=>g.t);
   const tab=[...rows].sort((a,b)=>montoTotal(b.p)-montoTotal(a.p)).map(({p,i})=>{
     const c=sum(p.compras.filter(x=>x.r[4]).map(x=>({m:+x.monto||0}))),t=montoTotal(p);
-    return`<tr class="click" data-id="${p.id}"><td><b>${esc(p.nombre)}</b><small>${esc(uName(p.resp))}</small></td>
+    return`<tr class="click" data-id="${p.id}"><td><b>${sun(p)}${esc(p.nombre)}</b><small>${esc(uName(p.resp))}</small></td>
       <td>${p.compras.map(x=>`${x.tipo||"s/t"}${x.desc?" · "+esc(x.desc):""}`).join("<br>")}</td>
       <td>${STAGES[i.stage]||"Cerrado"}</td>
       <td class="r num">${t?clp(c):"—"}</td><td class="r num">${t?clp(t-c):"—"}</td><td class="r num"><b>${clp(t)}</b></td></tr>`}).join("");
   if(!rows.length)return`<div class="empty">No hay proyectos con este filtro.</div>`;
   return`<div class="fk num">
-      <div><b>${clpM(tot)}</b><span>Costo total de la cartera</span><i>${all.filter(x=>x.m).length} compras con monto</i></div>
+      <div><b>${clpM(tot)}</b><span>Costo total de la cartera</span><i>${(n=>n+(n===1?" compra":" compras")+" con monto")(all.filter(x=>x.m).length)}</i></div>
       <div><b>${clpM(com)}</b><span>Adjudicado (con OC)</span><i>${pct(com,tot)} del total</i></div>
       <div><b>${clpM(pro)}</b><span>Estimado (sin OC)</span><i>${pct(pro,tot)} del total</i></div>
       <div><b>${sinM}</b><span>Obras sin monto cargado</span><i>de ${rows.length} en vista</i></div></div>
-    <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (OC emitida)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin OC)</span>${F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
+    <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (OC emitida)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin OC)</span>${F.ver||F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
     <div class="sum-h"><h2>Por unidad</h2></div>${bars(byUnit)}
     ${byType.length?`<div class="sum-h"><h2>Por tipo de compra</h2></div>${bars(byType)}`:""}
     ${byStage.length?`<div class="sum-h"><h2>Por etapa de la obra</h2></div>${bars(byStage)}`:""}
@@ -627,7 +646,7 @@ function resumen(rows,I){
   const cells=(p,i)=>[0,1,"g",2,3,4,5,6,"g",7,8,9,"g",10].map(k=>k==="g"?`<b class="gap"></b>`:cell(p,i,k)).join("");
   const groups=UNITS.map(u=>{const g=rows.filter(x=>x.p.resp===u.k);if(!g.length)return"";
     return`<div class="mx-u"><b>${u.n}</b><span class="num">${g.length} obra${g.length===1?"":"s"}</span></div>`+
-    g.map(({p,i})=>`<button class="mx-r" data-id="${p.id}"><div class="mx-name"><b>${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
+    g.map(({p,i})=>`<button class="mx-r" data-id="${p.id}"><div class="mx-name"><b>${sun(p)}${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
       <div class="cells">${cells(p,i)}</div>
       <div class="estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
       <div class="mx-nx">${i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
@@ -699,7 +718,7 @@ function drawPanel(){
     </div>${close}`}).join("");
 
   panel.innerHTML=`
-  <div class="ph"><div><div class="eyebrow">${esc(uName(p.resp))}</div><h2>${esc(p.nombre)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
+  <div class="ph"><div><div class="eyebrow">${esc(uName(p.resp))}</div><h2>${sun(p)}${esc(p.nombre)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
   <div class="kpis num">
     <div class="kpi"><b>${i.nOk}/${NH}</b><span>Hitos cumplidos</span></div>
     <div class="kpi"><b class="${i.status==="late"?"late":""}">${i.wait===null?"—":i.wait+" d"}</b><span>Detenido en el hito actual</span></div>
@@ -760,6 +779,7 @@ function seg(id,key){document.getElementById(id).querySelectorAll("button").forE
   F[key]=b.dataset.v;document.querySelectorAll(`#${id} button`).forEach(x=>x.setAttribute("aria-pressed",x===b));render()})}
 seg("view","view");seg("semaf","sem");
 document.getElementById("q").oninput=e=>{F.q=e.target.value;render()};
+document.getElementById("verF").onclick=e=>{F.ver=!F.ver;e.currentTarget.setAttribute("aria-pressed",F.ver);render()};
 document.getElementById("add").onclick=()=>{const p=blank();p.orden=Math.min(0,...data.map(x=>x.orden??0))-1;data.unshift(p);save();render();openPanel(p.id)};
 document.getElementById("copy").onclick=async e=>{const t=JSON.stringify(data);
   try{await navigator.clipboard.writeText(t);e.target.textContent="Respaldo copiado"}catch(_){e.target.textContent="No se pudo copiar"}
