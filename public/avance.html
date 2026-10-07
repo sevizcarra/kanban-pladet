@@ -666,13 +666,14 @@ function resumen(rows,I){
 const panel=document.getElementById("panel"),scrim=document.getElementById("scrim");
 /* Fecha completa: año de 4 cifras desde 2000. Evita guardar mientras se escribe el año */
 const okDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000&&+v.slice(0,4)<=2100;
-/* El panel no se redibuja mientras se escribe una fecha; se redibuja al salir del campo */
+/* El panel no se redibuja mientras se escribe en un campo (texto, número o fecha); se redibuja al salir */
 let pending=false,ptrDown=false,editingDate=false;
 function flush(){if(pending&&openId&&!ptrDown&&!editingDate){pending=false;drawPanel()}}
-panel.addEventListener("focusin",e=>{if(e.target.type==="date")editingDate=true});
+const isEd=t=>t&&(t.tagName==="TEXTAREA"||["date","text","number","search"].includes(t.type));
+panel.addEventListener("focusin",e=>{if(isEd(e.target))editingDate=true});
 document.addEventListener("pointerdown",()=>{ptrDown=true},true);
 document.addEventListener("pointerup",()=>{setTimeout(()=>{ptrDown=false;flush()},0)},true);
-panel.addEventListener("focusout",e=>{if(e.target.type==="date"){editingDate=false;setTimeout(flush,0)}});
+panel.addEventListener("focusout",e=>{if(isEd(e.target)){editingDate=false;setTimeout(flush,0)}});
 function openPanel(id){openId=id;confirmDel=false;drawPanel();panel.hidden=false;scrim.hidden=false;panel.scrollTop=0;setTimeout(()=>panel.querySelector(".x")?.focus(),0)}
 function closePanel(){openId=null;panel.hidden=true;scrim.hidden=true}
 scrim.onclick=closePanel;
@@ -751,7 +752,6 @@ function drawPanel(){
     el.addEventListener(text?"input":"change",()=>{
       let v=el.value;if(el.dataset.k==="plazo")v=Math.max(1,+v||1);
       p[el.dataset.k]=v;if(el.dataset.k==="plazo")reDone();upd();
-      if(text){const n=document.getElementById(el.id);n.focus();n.setSelectionRange(n.value.length,n.value.length)}
     })});
   panel.querySelectorAll("[data-h]").forEach(c=>c.onchange=()=>{const k=+c.dataset.h;p.r[k]=c.checked?doneAt(plan(p)[k]):"";upd()});
   panel.querySelectorAll("[data-pl]").forEach(c=>c.onchange=()=>{const k=+c.dataset.pl;
