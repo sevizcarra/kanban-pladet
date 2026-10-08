@@ -231,9 +231,15 @@ h2 .sun svg{width:20px;height:20px}
 .f{display:grid;gap:4px;min-width:0}
 .f.full{grid-column:1/-1}
 .f label,.lbl{font-size:11px;color:var(--muted);letter-spacing:.03em}
-input[type=date],input[type=text],input[type=number],select{width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:5px 0;border-radius:0;outline:none}
+input[type=date],input[type=text],input[type=number],input[type=email],input[type=password],select{width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:5px 0;border-radius:0;outline:none}
 input:focus,select:focus{border-bottom-color:var(--fg)}
 input[type=date]{font-family:var(--mono);font-size:12px}
+.us-row{display:grid;grid-template-columns:minmax(0,1fr) 140px 300px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.us-row b{display:block;font-size:14px;font-weight:600}.us-row small{color:var(--muted);font-size:12px;word-break:break-all}
+.us-row.off b,.us-row.off small{color:var(--muted)}
+.u-act{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.u-msg{font-size:13px;min-height:1em;margin:6px 0 0}.u-msg.err{color:var(--late)}
+@media (max-width:640px){.us-row{grid-template-columns:1fr}.u-act{justify-content:flex-start}}
 .hrow{display:grid;grid-template-columns:22px minmax(0,1fr) 128px 128px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
 .hrow.head{border-bottom:1px solid var(--fg);padding:4px 0;font-size:11px;color:var(--muted);letter-spacing:.04em}
 .hrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--fg);margin:0}
@@ -297,7 +303,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
     <div class="f"><label for="lg-pass">Contraseña</label><input type="password" id="lg-pass" autocomplete="current-password" required></div>
     <button class="btn" type="submit" id="lg-btn">Entrar</button>
     <p class="lg-err" id="lg-err" role="alert"></p>
-    <p class="note">Usa la misma cuenta del tablero kanban de PLADET.</p>
+    <p class="note">Si no tienes cuenta, pídela a un administrador de PLADET.</p>
   </form>
 </div>
 <div class="banner" id="banner" hidden></div>
@@ -307,7 +313,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <div class="eyebrow">PLADET · Usach · Control de cartera</div>
       <h1>Avance de proyectos</h1>
     </div>
-    <div class="today"><span class="eyebrow">Hoy</span><b class="num" id="today"></b><span class="who"><span id="who"></span> · <button id="logout">Cerrar sesión</button> · <a href="/kanban">Kanban anterior</a></span></div>
+    <div class="today"><span class="eyebrow">Hoy</span><b class="num" id="today"></b><span class="who"><span id="who"></span> · <button id="logout">Cerrar sesión</button> <span id="admLnk" hidden>· <button id="usersBtn">Usuarios</button></span></span></div>
   </header>
 
   <div class="stages" id="stages"></div>
@@ -345,6 +351,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="panel" id="panel" hidden aria-label="Proyecto"></aside>
+<aside class="panel" id="upanel" hidden aria-label="Usuarios"></aside>
 
 <script>
 const STAGES=["Diseño","Compra","Ejecución","Entrega"];
@@ -800,21 +807,106 @@ document.getElementById("impGo").onclick=()=>{const m=document.getElementById("i
 
 </script>
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import {getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
-const app=initializeApp({apiKey:"AIzaSyChraly0ienzU2hGw0AlD9k1JAEq73yS-o",authDomain:"kanban-pladet.firebaseapp.com",projectId:"kanban-pladet",
-  storageBucket:"kanban-pladet.firebasestorage.app",messagingSenderId:"420984183452",appId:"1:420984183452:web:849f277db1b255895a2b59"});
+import {initializeApp,deleteApp} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,createUserWithEmailAndPassword,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import {getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc,getDoc,getDocs} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+const CFG={apiKey:"AIzaSyChraly0ienzU2hGw0AlD9k1JAEq73yS-o",authDomain:"kanban-pladet.firebaseapp.com",projectId:"kanban-pladet",
+  storageBucket:"kanban-pladet.firebasestorage.app",messagingSenderId:"420984183452",appId:"1:420984183452:web:849f277db1b255895a2b59"};
+const app=initializeApp(CFG);
 const auth=getAuth(app),db=getFirestore(app),COL="avance";
 const $=id=>document.getElementById(id),banner=$("banner");
 const fail=e=>{banner.hidden=false;banner.textContent=(e&&e.code==="permission-denied")?"No se pudo guardar: la base de datos rechazó el permiso. Avisa a Seba.":"No se pudo guardar el último cambio. Revisa tu conexión y recarga la página."};
 window.FB={put:(id,d)=>setDoc(doc(db,COL,id),d).then(()=>{banner.hidden=true}).catch(fail),del:id=>deleteDoc(doc(db,COL,id)).catch(fail)};
 let unsub=null;
-onAuthStateChanged(auth,u=>{
+/* ---------- Acceso: solo entran las cuentas registradas en "users" y activas ---------- */
+const UCOL="users",ADMIN="sebastian.vizcarra@usach.cl";
+let ME=null,isAdm=false;
+onAuthStateChanged(auth,async u=>{
   if(unsub){unsub();unsub=null}
-  if(u){$("login").hidden=true;$("app").hidden=false;$("who").textContent=u.email;
-    unsub=onSnapshot(collection(db,COL),s=>window.onRemote(s.docs.map(d=>d.data())),e=>{fail(e)});}
-  else{$("app").hidden=true;$("login").hidden=false;$("lg-email").focus()}});
+  closeUsers();
+  if(!u){ME=null;isAdm=false;$("app").hidden=true;$("login").hidden=false;$("lg-email").focus();return}
+  let prof;
+  try{const s=await getDoc(doc(db,UCOL,u.uid));prof=s.exists()?s.data():null}catch(e){prof=undefined}
+  if(prof===null&&u.email===ADMIN){prof={email:u.email,name:"Sebastián Vizcarra",role:"admin",createdAt:new Date().toISOString()};
+    try{await setDoc(doc(db,UCOL,u.uid),prof)}catch(e){}}
+  if(!prof||prof.active===false){
+    const msg=prof===undefined?"No se pudo verificar tu acceso. Revisa tu conexión e intenta de nuevo.":"Tu cuenta no tiene acceso a esta aplicación. Pídelo a un administrador de PLADET.";
+    await signOut(auth);$("lg-err").textContent=msg;return}
+  ME={uid:u.uid,...prof};isAdm=prof.role==="admin"||u.email===ADMIN;
+  $("login").hidden=true;$("app").hidden=false;$("who").textContent=u.email;$("admLnk").hidden=!isAdm;
+  unsub=onSnapshot(collection(db,COL),s=>window.onRemote(s.docs.map(d=>d.data())),e=>{fail(e)});});
+
+/* ---------- Panel de usuarios (solo administradores) ---------- */
+const up=$("upanel"),scrimEl=$("scrim");
+const escH=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let USERS=[],uConfirm=null,uMsg={t:"",err:false};
+function closeUsers(){if(!up.hidden){up.hidden=true;if($("panel").hidden)scrimEl.hidden=true}}
+scrimEl.addEventListener("click",closeUsers);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeUsers()});
+async function loadUsers(){
+  try{const s=await getDocs(collection(db,UCOL));USERS=s.docs.map(d=>({uid:d.id,...d.data()}))
+    .sort((a,b)=>(a.active===false)-(b.active===false)||String(a.name||a.email).localeCompare(String(b.name||b.email),"es"))}
+  catch(e){USERS=[];uMsg={t:"No se pudo leer la lista de usuarios ("+(e.code||e.message)+").",err:true}}
+  drawUsers()}
+async function openUsers(){if(!isAdm)return;uConfirm=null;uMsg={t:"",err:false};up.hidden=false;scrimEl.hidden=false;up.innerHTML='<p class="note">Cargando…</p>';await loadUsers()}
+function setMsg(t,err){uMsg={t,err};const m=up.querySelector("#u-msg");if(m){m.textContent=t;m.className="u-msg"+(err?" err":"")}}
+const roleSel=u=>{const fixed=u.email===ADMIN||u.uid===ME.uid;
+  return`<select data-urole="${u.uid}" aria-label="Rol de ${escH(u.name||u.email)}" ${fixed?"disabled":""}><option value="collaborator" ${u.role!=="admin"?"selected":""}>Colaborador</option><option value="admin" ${u.role==="admin"?"selected":""}>Administrador</option></select>`};
+function row(u){const self=u.uid===ME.uid||u.email===ADMIN,off=u.active===false;
+  return`<div class="us-row${off?" off":""}"><div><b>${escH(u.name||"Sin nombre")}${u.uid===ME.uid?" (tú)":""}</b><small>${escH(u.email)}</small></div>
+    ${off?"<span class=\"lbl\">Sin acceso</span>":roleSel(u)}
+    <div class="u-act">${off?`<button class="addobs" data-uon="${u.uid}">Restaurar acceso</button>`:
+      `<button class="addobs" data-ureset="${escH(u.email)}">Enviar cambio de contraseña</button>${self?"":`<button class="addobs del" data-uoff="${u.uid}">${uConfirm===u.uid?"¿Quitar? Confirmar":"Quitar acceso"}</button>`}`}</div></div>`}
+function drawUsers(){
+  const on=USERS.filter(u=>u.active!==false),off=USERS.filter(u=>u.active===false);
+  up.innerHTML=`<div class="ph"><div><div class="eyebrow">Administración</div><h2>Usuarios</h2></div><button class="x" id="u-x" aria-label="Cerrar">×</button></div>
+  <p class="note">Solo las personas de esta lista pueden entrar. Quitar el acceso la bloquea de inmediato y se puede restaurar.</p>
+  <div class="sec"><h3>Agregar usuario</h3>
+    <form id="u-form" class="grid2" autocomplete="off">
+      <div class="f"><label for="u-name">Nombre</label><input type="text" id="u-name" required></div>
+      <div class="f"><label for="u-email">Correo @usach.cl</label><input type="email" id="u-email" required></div>
+      <div class="f"><label for="u-pass">Contraseña inicial (mín. 6 caracteres)</label><input type="password" id="u-pass" autocomplete="new-password" required minlength="6"></div>
+      <div class="f"><label for="u-role">Rol</label><select id="u-role"><option value="collaborator">Colaborador</option><option value="admin">Administrador</option></select></div>
+      <div class="f full" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn" type="submit" id="u-go">Crear usuario</button>
+        <span class="lbl">Entrégale el correo y la contraseña inicial; puede cambiarla con "Enviar cambio de contraseña".</span></div>
+    </form>
+    <p id="u-msg" class="u-msg${uMsg.err?" err":""}" role="status">${escH(uMsg.t)}</p></div>
+  <div class="sec"><h3>Con acceso<span>${on.length} usuario${on.length===1?"":"s"}</span></h3>${on.map(row).join("")||'<p class="note">Sin usuarios.</p>'}</div>
+  ${off.length?`<div class="sec"><h3>Sin acceso<span>${off.length}</span></h3>${off.map(row).join("")}</div>`:""}
+  <p class="note" style="margin-top:16px">Administrador: puede gestionar usuarios. Colaborador: carga y edita proyectos.</p>`;
+  up.querySelector("#u-x").onclick=closeUsers;
+  up.querySelector("#u-form").onsubmit=createUser;
+  up.querySelectorAll("[data-urole]").forEach(s=>s.onchange=async()=>{
+    try{await setDoc(doc(db,UCOL,s.dataset.urole),{role:s.value},{merge:true});const u=USERS.find(x=>x.uid===s.dataset.urole);if(u)u.role=s.value;setMsg("Rol actualizado.",false)}
+    catch(e){setMsg("No se pudo cambiar el rol ("+(e.code||e.message)+").",true);loadUsers()}});
+  up.querySelectorAll("[data-uoff]").forEach(b=>b.onclick=async()=>{const id=b.dataset.uoff;
+    if(uConfirm!==id){uConfirm=id;drawUsers();return}uConfirm=null;
+    try{await setDoc(doc(db,UCOL,id),{active:false,removedAt:new Date().toISOString()},{merge:true});uMsg={t:"Acceso quitado.",err:false}}
+    catch(e){uMsg={t:"No se pudo quitar el acceso ("+(e.code||e.message)+").",err:true}}loadUsers()});
+  up.querySelectorAll("[data-uon]").forEach(b=>b.onclick=async()=>{
+    try{await setDoc(doc(db,UCOL,b.dataset.uon),{active:true},{merge:true});uMsg={t:"Acceso restaurado.",err:false}}
+    catch(e){uMsg={t:"No se pudo restaurar ("+(e.code||e.message)+").",err:true}}loadUsers()});
+  up.querySelectorAll("[data-ureset]").forEach(b=>b.onclick=async()=>{
+    try{await sendPasswordResetEmail(auth,b.dataset.ureset);setMsg("Se envió un correo a "+b.dataset.ureset+" para cambiar la contraseña.",false)}
+    catch(e){setMsg("No se pudo enviar el correo ("+(e.code||e.message)+").",true)}});
+}
+async function createUser(e){e.preventDefault();
+  const name=$("u-name").value.trim(),email=$("u-email").value.trim().toLowerCase(),pass=$("u-pass").value,role=$("u-role").value;
+  if(!name)return setMsg("Falta el nombre.",true);
+  if(!/^[^@\s]+@usach\.cl$/.test(email))return setMsg("Solo se permiten correos @usach.cl.",true);
+  if(pass.length<6)return setMsg("La contraseña debe tener al menos 6 caracteres.",true);
+  const prev=USERS.find(u=>(u.email||"").toLowerCase()===email);
+  if(prev){if(prev.active===false){try{await setDoc(doc(db,UCOL,prev.uid),{active:true,name,role},{merge:true});uMsg={t:email+" ya tenía cuenta: se restauró su acceso con su contraseña anterior.",err:false}}catch(err){uMsg={t:"No se pudo restaurar ("+err.code+").",err:true}}return loadUsers()}
+    return setMsg("Ese correo ya está en la lista.",true)}
+  $("u-go").disabled=true;
+  const sec=initializeApp(CFG,"alta-"+Date.now());
+  try{const sa=getAuth(sec);const cred=await createUserWithEmailAndPassword(sa,email,pass);
+    await setDoc(doc(db,UCOL,cred.user.uid),{email,name,role,createdAt:new Date().toISOString()});
+    await signOut(sa);uMsg={t:"Usuario creado: "+email+".",err:false};await loadUsers()}
+  catch(err){setMsg(err.code==="auth/email-already-in-use"?"Ese correo ya tiene una cuenta antigua sin registro en la lista. Bórrala en Firebase (Authentication → Users) y vuelve a crearla aquí.":"No se pudo crear el usuario ("+(err.code||err.message)+").",true);
+    const g=$("u-go");if(g)g.disabled=false}
+  finally{deleteApp(sec).catch(()=>{})}}
+$("usersBtn").onclick=openUsers;
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("lg-err").textContent="";$("lg-btn").disabled=true;
   try{await signInWithEmailAndPassword(auth,$("lg-email").value.trim(),$("lg-pass").value)}
   catch(err){$("lg-err").textContent=/invalid-credential|wrong-password|user-not-found/.test(err.code)?"Correo o contraseña incorrectos.":"No se pudo iniciar sesión ("+err.code+")."}
