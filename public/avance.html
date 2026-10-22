@@ -40,7 +40,7 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .today{text-align:right;color:var(--muted)}
 .today b{display:block;color:var(--fg);font-size:18px;font-weight:600}
 
-.stages{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.stages{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--line)}
 .stage{background:none;border:0;border-right:1px solid var(--line);text-align:left;padding:18px 16px 16px;display:grid;gap:4px;position:relative}
 .stage:last-child{border-right:0}
 .stage:hover{background:var(--soft)}
@@ -299,7 +299,8 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   .wrap{padding:24px 16px 64px}
   .stages{grid-template-columns:repeat(2,1fr)}
   .stage:nth-child(2){border-right:0}
-  .stage:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .stage:nth-child(-n+4){border-bottom:1px solid var(--line)}
+  .stage:nth-child(4){border-right:0}.stage:nth-child(5){grid-column:1/-1}
   .cols{display:none}
   .row{grid-template-columns:1fr auto;gap:8px 16px}
   .row>.c-name,.row>.c-prog,.row>.c-estado{grid-column:1/-1}
@@ -584,7 +585,11 @@ function render(){
   st.innerHTML=STAGES.map((n,k)=>{
     const g=I.filter(x=>x.i.stage===k&&!x.i.paused),l=g.filter(x=>x.i.status==="late").length,r=g.filter(x=>x.i.status==="risk").length;
     return`<button class="stage" data-k="${k}" aria-pressed="${F.stage===k}"><span class="k">${k+1} · ${n}</span><span class="n num">${g.length}</span>
-      <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("");
+      <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("")+(()=>{
+    /* Terminados: obras con la entrega al usuario cumplida o cerradas con candado */
+    const g=I.filter(x=>x.i.stage===4&&!x.i.paused),c=g.filter(x=>x.i.closed).length,e=g.length-c;
+    return`<button class="stage" data-k="4" aria-pressed="${F.stage===4}"><span class="k">5 · Terminados</span><span class="n num">${g.length}</span>
+      <span class="s num">${e} entregado${e===1?"":"s"} · ${c} cerrado${c===1?"":"s"}</span></button>`})();
   st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
   const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
   const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(!F.pri||p.prioridad)&&(!F.cl||p.cerrado)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
