@@ -12,18 +12,18 @@
 :root{
   --bg:#ffffff; --fg:#111111; --muted:#6e6e6a; --line:#dcdcd8; --soft:#f3f3f1; --plan:#cfcfca;
   --st0:#e6e6e2; --st1:#b9b9b3; --st2:#7a7a75; --st3:#45453f;
-  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3; --sunf:#fdf0b3; --suns:#c9a227; --verbg:#fff8d6; --verbgh:#fdf0b3;
+  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3; --sunf:#fdf0b3; --suns:#c9a227; --verbg:#fff8d6; --frzs:#3b82c4; --verbgh:#fdf0b3;
   --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --verbgh:#3a3418; color-scheme:dark}}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --frzs:#7db4e6; --verbgh:#3a3418; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --verbgh:#3a3418; color-scheme:dark}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --frzs:#7db4e6; --verbgh:#3a3418; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
@@ -183,6 +183,10 @@ button.mx-r:hover{background:var(--soft)}
 .sun svg{width:16px;height:16px;fill:none;stroke:var(--line);stroke-width:1.6}
 .sun:hover svg{stroke:var(--suns)}
 .sun.on svg{fill:var(--sunf);stroke:var(--suns)}
+.frz{display:inline-flex;vertical-align:-3px;margin-right:6px;cursor:pointer;line-height:0}
+.frz svg{width:16px;height:16px;fill:none;stroke:var(--line);stroke-width:1.6;stroke-linecap:round}
+.frz:hover svg{stroke:var(--frzs)}.frz.on svg{stroke:var(--frzs);stroke-width:2}
+.frz:focus-visible{outline:2px solid var(--fg);outline-offset:1px}h2 .frz svg{width:20px;height:20px}
 .sun:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
 h2 .sun svg{width:20px;height:20px}
 .seg button.vb[aria-pressed="true"]{background:var(--sunf);color:var(--fg)}
@@ -340,10 +344,9 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="late">Atrasados</button>
       <button data-v="risk">En riesgo</button>
       <button data-v="ok">En plazo</button>
-      <button data-v="paused">En pausa</button>
     </div>
     <input class="search" id="q" type="search" placeholder="Buscar proyecto, código o unidad">
-    <div class="seg"><button class="vb" id="verF" aria-pressed="false" title="Mostrar solo obras de verano">☀ Verano</button></div>
+    <div class="seg"><button class="vb" id="verF" aria-pressed="false" title="Mostrar solo obras de verano">☀ Verano</button><button class="vb" id="frzF" aria-pressed="false" title="Mostrar solo proyectos congelados">❄ Congelados</button></div>
     <button class="btn" id="add">+ Proyecto</button>
   </div>
 
@@ -515,8 +518,8 @@ function info(p){
   if(stage===1&&mainObs.length>=2&&status==="ok")status="risk";
   const mstatus=status;
   if(status!=="none"&&cx.n)status=worse(status,cst);
-  /* Proyecto en pausa (congelado): conserva su etapa, pero sale de semáforos, conteos y cuellos */
-  if(p.pausa)return{pl,next,stage,estado:"En pausa",hito:H[next].n,target,status:"paused",mstatus:"paused",delta:null,acum,nOk,
+  /* Proyecto congelado: conserva su etapa, pero sale de semáforos, conteos y cuellos */
+  if(p.pausa)return{pl,next,stage,estado:"Congelado",hito:H[next].n,target,status:"paused",mstatus:"paused",delta:null,acum,nOk,
     note:[p.pausaMotivo,p.pausaDesde?"desde "+fmt(p.pausaDesde):""].filter(Boolean).join(" · "),wait:null,cx,paused:true};
   return{pl,next,stage,estado,hito:H[next].n,target,status,mstatus,delta,acum,nOk,note,wait,cx}
 }
@@ -569,7 +572,7 @@ function render(){
       <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("");
   st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
   const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
-  const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
+  const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
       &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q)))
     .sort((a,b)=>order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
   const M=document.getElementById("main");
@@ -584,7 +587,7 @@ function render(){
     rows.map(({p,i})=>{
       const bars=H.map((h,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}${k&&h.s!==H[k-1].s?" sep":""}"></i>`).join("");
       const dl=i.paused?"‖":i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
-      const dlab=i.paused?"en pausa":i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
+      const dlab=i.paused?"congelado":i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
       return`<button class="row${p.verano?" ver":""}${i.paused?" pz":""}" data-id="${p.id}">
         <div class="c-name"><div class="p-name">${sun(p)}${esc(p.nombre)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
         <div class="c-estado estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
@@ -616,7 +619,13 @@ function cuellos(I){
 
 /* ---------- Obras de verano: sol al lado del nombre ---------- */
 const SUN_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>';
-const sun=p=>`<span class="sun ${p.verano?"on":""}" role="button" tabindex="0" data-sun="${p.id}" aria-pressed="${!!p.verano}" title="${p.verano?"Obra de verano (clic para quitar)":"Marcar como obra de verano"}">${SUN_SVG}</span>`;
+const sun1=p=>`<span class="sun ${p.verano?"on":""}" role="button" tabindex="0" data-sun="${p.id}" aria-pressed="${!!p.verano}" title="${p.verano?"Obra de verano (clic para quitar)":"Marcar como obra de verano"}">${SUN_SVG}</span>`;
+const FRZ_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5M9.4 3.9 12 6.3l2.6-2.4M9.4 20.1 12 17.7l2.6 2.4M3.6 10.6l3.4.9-.8-3.4M20.4 13.4l-3.4-.9.8 3.4M3.6 13.4l3.4-.9-.8 3.4M20.4 10.6l-3.4.9.8-3.4"/></svg>';
+const frz=p=>`<span class="frz ${p.pausa?"on":""}" role="button" tabindex="0" data-frz="${p.id}" aria-pressed="${!!p.pausa}" title="${p.pausa?"Proyecto congelado (clic para reactivar)":"Congelar proyecto (sale de los indicadores)"}">${FRZ_SVG}</span>`;
+const sun=p=>sun1(p)+frz(p);
+function toggleFrz(id){const p=data.find(x=>x.id===id);if(!p)return;p.pausa=!p.pausa;p.pausaDesde=p.pausa?TODAY:"";save();render()}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-frz]");if(!t)return;e.stopPropagation();e.preventDefault();toggleFrz(t.dataset.frz)},true);
+document.addEventListener("keydown",e=>{const t=e.target.closest&&e.target.closest("[data-frz]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopPropagation();toggleFrz(t.dataset.frz)}},true);
 function toggleSun(id){const p=data.find(x=>x.id===id);if(!p)return;p.verano=!p.verano;save();render()}
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-sun]");if(!t)return;e.stopPropagation();e.preventDefault();toggleSun(t.dataset.sun)},true);
 document.addEventListener("keydown",e=>{const t=e.target.closest&&e.target.closest("[data-sun]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopPropagation();toggleSun(t.dataset.sun)}},true);
@@ -651,7 +660,7 @@ function finanzas(rows){
       <div><b>${clpM(com)}</b><span>Adjudicado (contratos)</span><i>${pct(com,tot)} del total${adjE&&varA?` · ${varA>0?"+":"−"}${clpM(Math.abs(varA))} vs estimado`:""}</i></div>
       <div><b>${clpM(pro)}</b><span>Estimado (sin adjudicar)</span><i>${pct(pro,tot)} del total</i></div>
       <div><b>${sinM}</b><span>Obras sin monto cargado</span><i>de ${rows.length} en vista</i></div></div>
-    <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (contrato)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin adjudicar)</span>${F.ver||F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
+    <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (contrato)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin adjudicar)</span>${F.ver||F.frz||F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
     <div class="sum-h"><h2>Por unidad</h2></div>${bars(byUnit)}
     ${byType.length?`<div class="sum-h"><h2>Por tipo de compra</h2></div>${bars(byType)}`:""}
     ${byStage.length?`<div class="sum-h"><h2>Por etapa de la obra</h2></div>${bars(byStage)}`:""}
@@ -669,10 +678,10 @@ function resumen(rows,I){
   const tot=cnt(I);
   const ubars=UNITS.map(u=>{const g=I.filter(x=>x.p.resp===u.k);const c=cnt(g);
     const pz=g.filter(x=>x.i.paused).length;
-    const segs=[0,1,2,3,4].map(k=>{const n=g.filter(x=>x.i.stage===k&&!x.i.paused).length;return n?`<i class="s${k}" style="flex:${n}" title="${SL[k]}: ${n}">${n}</i>`:""}).join("")+(pz?`<i class="sp" style="flex:${pz}" title="En pausa: ${pz}">${pz}</i>`:"");
+    const segs=[0,1,2,3,4].map(k=>{const n=g.filter(x=>x.i.stage===k&&!x.i.paused).length;return n?`<i class="s${k}" style="flex:${n}" title="${SL[k]}: ${n}">${n}</i>`:""}).join("")+(pz?`<i class="sp" style="flex:${pz}" title="Congelados: ${pz}">${pz}</i>`:"");
     return`<div class="u-row"><b>${u.n}</b><div class="u-bar">${g.length?segs:`<i class="e">Sin proyectos asignados</i>`}</div>
-      <span class="u-n num">${g.length} obra${g.length===1?"":"s"}${g.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(g.reduce((a,x)=>a+montoTotal(x.p),0)):""}${c.l?` · <span class="l">${c.l} atrasada${c.l>1?"s":""}</span>`:""}${c.n?` · ${c.n} sin fechas`:""}${pz?` · ${pz} en pausa`:""}</span></div>`}).join("");
-  const legend=`<div class="legend">${SL.map((n,k)=>`<span><i class="s${k}" style="height:12px"></i>${n}</span>`).join("")}<span><i class="sp" style="height:12px"></i>En pausa</span></div>`;
+      <span class="u-n num">${g.length} obra${g.length===1?"":"s"}${g.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(g.reduce((a,x)=>a+montoTotal(x.p),0)):""}${c.l?` · <span class="l">${c.l} atrasada${c.l>1?"s":""}</span>`:""}${c.n?` · ${c.n} sin fechas`:""}${pz?` · ${pz} congelada${pz>1?"s":""}`:""}</span></div>`}).join("");
+  const legend=`<div class="legend">${SL.map((n,k)=>`<span><i class="s${k}" style="height:12px"></i>${n}</span>`).join("")}<span><i class="sp" style="height:12px"></i>Congelado</span></div>`;
   const head=`<div class="mx-r mx-h"><span>Obra</span><div class="cells"><span style="grid-column:1/3">Diseño</span><span style="grid-column:4/9">Compra</span><span style="grid-column:10/13">Ejecución</span><span style="grid-column:14/15">Entrega</span></div><span>Estado</span><span>Próximo hito</span></div>`;
   const cell=(p,i,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}" title="${H[k].n}${p.r[k]?": "+fmt(p.r[k]):i.pl[k]?" · plan "+fmt(i.pl[k]):""}"></i>`;
   const cells=(p,i)=>[0,1,"g",2,3,4,5,6,"g",7,8,9,"g",10].map(k=>k==="g"?`<b class="gap"></b>`:cell(p,i,k)).join("");
@@ -681,8 +690,8 @@ function resumen(rows,I){
     g.map(({p,i})=>`<button class="mx-r${p.verano?" ver":""}${i.paused?" pz":""}" data-id="${p.id}"><div class="mx-name"><b>${sun(p)}${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
       <div class="cells">${cells(p,i)}</div>
       <div class="estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
-      <div class="mx-nx">${i.paused?"<b>En pausa</b>Fuera de los indicadores":i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
-  return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin fechas${I.filter(x=>x.i.paused).length?" · "+I.filter(x=>x.i.paused).length+" en pausa":""}</span></div>
+      <div class="mx-nx">${i.paused?"<b>Congelado</b>Fuera de los indicadores":i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
+  return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin fechas${I.filter(x=>x.i.paused).length?" · "+I.filter(x=>x.i.paused).length+" congeladas":""}</span></div>
     <div class="units">${ubars}</div>${legend}
     ${cuellos(I)}
     <div class="sum-h"><h2>Avance por hito</h2><span>■ cumplido · □ pendiente · borde de color = próximo hito según semáforo</span></div>
@@ -768,8 +777,8 @@ function drawPanel(){
   <div class="grid2">
     <div class="f full"><label for="f-nombre">Nombre</label><input type="text" id="f-nombre" data-k="nombre" value="${esc(p.nombre)}"></div>
     <div class="f"><label for="f-resp">Unidad responsable</label><select id="f-resp" data-k="resp">${UNITS.map(u=>`<option value="${u.k}" ${p.resp===u.k?"selected":""}>${u.n}</option>`).join("")}</select></div>
-    <div class="f pz-f"><label class="pz-chk"><input type="checkbox" id="f-pausa" ${p.pausa?"checked":""}><span><b>Proyecto en pausa (congelado)</b><small>Sale de semáforos, conteos y cuellos de botella. Sus fechas y datos se conservan.</small></span></label></div>
-    ${p.pausa?`<div class="f full"><label for="f-pmot">Motivo de la pausa</label><input type="text" id="f-pmot" data-k="pausaMotivo" value="${esc(p.pausaMotivo||"")}" placeholder="Ej. sin financiamiento, a la espera de definición del usuario"></div>`:""}
+    <div class="f pz-f"><label class="pz-chk"><input type="checkbox" id="f-pausa" ${p.pausa?"checked":""}><span><b>Proyecto congelado</b><small>Sale de semáforos, conteos y cuellos de botella. Sus fechas y datos se conservan.</small></span></label></div>
+    ${p.pausa?`<div class="f full"><label for="f-pmot">Motivo del congelamiento</label><input type="text" id="f-pmot" data-k="pausaMotivo" value="${esc(p.pausaMotivo||"")}" placeholder="Ej. sin financiamiento, a la espera de definición del usuario"></div>`:""}
   </div></div>
   ${hit}
   <div class="danger">${confirmDel?`<span>¿Eliminar este proyecto?</span><button data-del="yes">Sí, eliminar</button><button data-del="no" style="color:var(--fg)">Cancelar</button>`:`<button data-del="ask">Eliminar proyecto</button>`}</div>`;
@@ -820,6 +829,7 @@ function seg(id,key){document.getElementById(id).querySelectorAll("button").forE
   F[key]=b.dataset.v;document.querySelectorAll(`#${id} button`).forEach(x=>x.setAttribute("aria-pressed",x===b));render()})}
 seg("view","view");seg("semaf","sem");
 document.getElementById("q").oninput=e=>{F.q=e.target.value;render()};
+document.getElementById("frzF").onclick=e=>{F.frz=!F.frz;e.currentTarget.setAttribute("aria-pressed",F.frz);render()};
 document.getElementById("verF").onclick=e=>{F.ver=!F.ver;e.currentTarget.setAttribute("aria-pressed",F.ver);render()};
 document.getElementById("add").onclick=()=>{const p=blank();p.orden=Math.min(0,...data.map(x=>x.orden??0))-1;data.unshift(p);save();render();openPanel(p.id)};
 document.getElementById("copy").onclick=async e=>{const t=JSON.stringify(data);
