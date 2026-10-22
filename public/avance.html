@@ -70,6 +70,10 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .p-resp{color:var(--muted);font-size:12px}
 .estado{display:flex;align-items:center;gap:8px}
 .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--none)}
+.dot.paused{background:none;border:1.5px solid var(--muted)}.row.pz .p-name,button.mx-r.pz .mx-name b,.row.pz .c-hito,.row.pz .c-delta{color:var(--muted)}
+.prog i.n.paused{background:var(--line)}.cells i.n.paused{border-color:var(--muted);border-style:dotted}
+.sp{background:repeating-linear-gradient(45deg,var(--st0),var(--st0) 3px,var(--bg) 3px,var(--bg) 6px);color:var(--fg)}
+.pz-chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.pz-chk input{width:17px;height:17px;accent-color:var(--fg);margin:2px 0 0}.pz-chk b{display:block;font-size:13px;font-weight:600;color:var(--fg)}.pz-chk small{display:block;color:var(--muted);font-size:11px}
 .dot.late{background:var(--late)}.dot.risk{background:var(--risk)}.dot.ok{background:var(--ok)}.dot.done{background:var(--fg)}
 .estado small,.hito small{display:block;color:var(--muted);font-size:12px}
 .prog{display:grid;grid-template-columns:repeat(11,1fr);gap:2px}
@@ -336,6 +340,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="late">Atrasados</button>
       <button data-v="risk">En riesgo</button>
       <button data-v="ok">En plazo</button>
+      <button data-v="paused">En pausa</button>
     </div>
     <input class="search" id="q" type="search" placeholder="Buscar proyecto, código o unidad">
     <div class="seg"><button class="vb" id="verF" aria-pressed="false" title="Mostrar solo obras de verano">☀ Verano</button></div>
@@ -510,6 +515,9 @@ function info(p){
   if(stage===1&&mainObs.length>=2&&status==="ok")status="risk";
   const mstatus=status;
   if(status!=="none"&&cx.n)status=worse(status,cst);
+  /* Proyecto en pausa (congelado): conserva su etapa, pero sale de semáforos, conteos y cuellos */
+  if(p.pausa)return{pl,next,stage,estado:"En pausa",hito:H[next].n,target,status:"paused",mstatus:"paused",delta:null,acum,nOk,
+    note:[p.pausaMotivo,p.pausaDesde?"desde "+fmt(p.pausaDesde):""].filter(Boolean).join(" · "),wait:null,cx,paused:true};
   return{pl,next,stage,estado,hito:H[next].n,target,status,mstatus,delta,acum,nOk,note,wait,cx}
 }
 
@@ -556,11 +564,11 @@ function render(){
   const I=data.map(p=>({p,i:info(p)}));
   const st=document.getElementById("stages");
   st.innerHTML=STAGES.map((n,k)=>{
-    const g=I.filter(x=>x.i.stage===k),l=g.filter(x=>x.i.status==="late").length,r=g.filter(x=>x.i.status==="risk").length;
+    const g=I.filter(x=>x.i.stage===k&&!x.i.paused),l=g.filter(x=>x.i.status==="late").length,r=g.filter(x=>x.i.status==="risk").length;
     return`<button class="stage" data-k="${k}" aria-pressed="${F.stage===k}"><span class="k">${k+1} · ${n}</span><span class="n num">${g.length}</span>
       <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("");
   st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
-  const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4};
+  const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
   const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
       &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q)))
     .sort((a,b)=>order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
@@ -575,13 +583,13 @@ function render(){
     M.innerHTML=`<div class="cols"><div>Proyecto</div><div>Estado</div><div>Avance</div><div>Próximo hito</div><div class="r">Días</div></div>`+
     rows.map(({p,i})=>{
       const bars=H.map((h,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}${k&&h.s!==H[k-1].s?" sep":""}"></i>`).join("");
-      const dl=i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
-      const dlab=i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
-      return`<button class="row${p.verano?" ver":""}" data-id="${p.id}">
+      const dl=i.paused?"‖":i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
+      const dlab=i.paused?"en pausa":i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
+      return`<button class="row${p.verano?" ver":""}${i.paused?" pz":""}" data-id="${p.id}">
         <div class="c-name"><div class="p-name">${sun(p)}${esc(p.nombre)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
         <div class="c-estado estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
         <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${STAGES[i.stage]||"Cerrado"}</span></div></div>
-        <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.status==="done"?"Entregado el ":"Plan "}${fmt(i.target)}</small></div>
+        <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.paused?"Congelado":(i.status==="done"?"Entregado el ":"Plan ")+fmt(i.target)}</small></div>
         <div class="c-delta r delta num ${i.status==="late"?"late":""}">${dl}<small>${dlab}</small></div></button>`}).join("");
   }
   M.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>openPanel(b.dataset.id));
@@ -590,7 +598,7 @@ function render(){
 
 /* ---------- Cuellos de botella ---------- */
 function cuellos(I){
-  const act=I.filter(x=>x.i.next!==-1&&x.i.mstatus!=="none");
+  const act=I.filter(x=>x.i.next!==-1&&x.i.mstatus!=="none"&&!x.i.paused);
   const per=H.map((h,k)=>{const g=act.filter(x=>x.i.next===k);const w=g.map(x=>x.i.wait).filter(v=>v!==null);
     return{k,h,n:g.length,l:g.filter(x=>x.i.mstatus==="late").length,r:g.filter(x=>x.i.mstatus==="risk").length,
       avg:w.length?Math.round(w.reduce((a,b)=>a+b,0)/w.length):null,names:g.map(x=>x.p.nombre)}});
@@ -660,20 +668,21 @@ function resumen(rows,I){
   const cnt=a=>({l:a.filter(x=>x.i.status==="late").length,r:a.filter(x=>x.i.status==="risk").length,n:a.filter(x=>x.i.status==="none").length});
   const tot=cnt(I);
   const ubars=UNITS.map(u=>{const g=I.filter(x=>x.p.resp===u.k);const c=cnt(g);
-    const segs=[0,1,2,3,4].map(k=>{const n=g.filter(x=>x.i.stage===k).length;return n?`<i class="s${k}" style="flex:${n}" title="${SL[k]}: ${n}">${n}</i>`:""}).join("");
+    const pz=g.filter(x=>x.i.paused).length;
+    const segs=[0,1,2,3,4].map(k=>{const n=g.filter(x=>x.i.stage===k&&!x.i.paused).length;return n?`<i class="s${k}" style="flex:${n}" title="${SL[k]}: ${n}">${n}</i>`:""}).join("")+(pz?`<i class="sp" style="flex:${pz}" title="En pausa: ${pz}">${pz}</i>`:"");
     return`<div class="u-row"><b>${u.n}</b><div class="u-bar">${g.length?segs:`<i class="e">Sin proyectos asignados</i>`}</div>
-      <span class="u-n num">${g.length} obra${g.length===1?"":"s"}${g.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(g.reduce((a,x)=>a+montoTotal(x.p),0)):""}${c.l?` · <span class="l">${c.l} atrasada${c.l>1?"s":""}</span>`:""}${c.n?` · ${c.n} sin fechas`:""}</span></div>`}).join("");
-  const legend=`<div class="legend">${SL.map((n,k)=>`<span><i class="s${k}" style="height:12px"></i>${n}</span>`).join("")}</div>`;
+      <span class="u-n num">${g.length} obra${g.length===1?"":"s"}${g.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(g.reduce((a,x)=>a+montoTotal(x.p),0)):""}${c.l?` · <span class="l">${c.l} atrasada${c.l>1?"s":""}</span>`:""}${c.n?` · ${c.n} sin fechas`:""}${pz?` · ${pz} en pausa`:""}</span></div>`}).join("");
+  const legend=`<div class="legend">${SL.map((n,k)=>`<span><i class="s${k}" style="height:12px"></i>${n}</span>`).join("")}<span><i class="sp" style="height:12px"></i>En pausa</span></div>`;
   const head=`<div class="mx-r mx-h"><span>Obra</span><div class="cells"><span style="grid-column:1/3">Diseño</span><span style="grid-column:4/9">Compra</span><span style="grid-column:10/13">Ejecución</span><span style="grid-column:14/15">Entrega</span></div><span>Estado</span><span>Próximo hito</span></div>`;
   const cell=(p,i,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}" title="${H[k].n}${p.r[k]?": "+fmt(p.r[k]):i.pl[k]?" · plan "+fmt(i.pl[k]):""}"></i>`;
   const cells=(p,i)=>[0,1,"g",2,3,4,5,6,"g",7,8,9,"g",10].map(k=>k==="g"?`<b class="gap"></b>`:cell(p,i,k)).join("");
   const groups=UNITS.map(u=>{const g=rows.filter(x=>x.p.resp===u.k);if(!g.length)return"";
     return`<div class="mx-u"><b>${u.n}</b><span class="num">${g.length} obra${g.length===1?"":"s"}</span></div>`+
-    g.map(({p,i})=>`<button class="mx-r${p.verano?" ver":""}" data-id="${p.id}"><div class="mx-name"><b>${sun(p)}${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
+    g.map(({p,i})=>`<button class="mx-r${p.verano?" ver":""}${i.paused?" pz":""}" data-id="${p.id}"><div class="mx-name"><b>${sun(p)}${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
       <div class="cells">${cells(p,i)}</div>
       <div class="estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
-      <div class="mx-nx">${i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
-  return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin fechas</span></div>
+      <div class="mx-nx">${i.paused?"<b>En pausa</b>Fuera de los indicadores":i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
+  return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin fechas${I.filter(x=>x.i.paused).length?" · "+I.filter(x=>x.i.paused).length+" en pausa":""}</span></div>
     <div class="units">${ubars}</div>${legend}
     ${cuellos(I)}
     <div class="sum-h"><h2>Avance por hito</h2><span>■ cumplido · □ pendiente · borde de color = próximo hito según semáforo</span></div>
@@ -759,6 +768,8 @@ function drawPanel(){
   <div class="grid2">
     <div class="f full"><label for="f-nombre">Nombre</label><input type="text" id="f-nombre" data-k="nombre" value="${esc(p.nombre)}"></div>
     <div class="f"><label for="f-resp">Unidad responsable</label><select id="f-resp" data-k="resp">${UNITS.map(u=>`<option value="${u.k}" ${p.resp===u.k?"selected":""}>${u.n}</option>`).join("")}</select></div>
+    <div class="f pz-f"><label class="pz-chk"><input type="checkbox" id="f-pausa" ${p.pausa?"checked":""}><span><b>Proyecto en pausa (congelado)</b><small>Sale de semáforos, conteos y cuellos de botella. Sus fechas y datos se conservan.</small></span></label></div>
+    ${p.pausa?`<div class="f full"><label for="f-pmot">Motivo de la pausa</label><input type="text" id="f-pmot" data-k="pausaMotivo" value="${esc(p.pausaMotivo||"")}" placeholder="Ej. sin financiamiento, a la espera de definición del usuario"></div>`:""}
   </div></div>
   ${hit}
   <div class="danger">${confirmDel?`<span>¿Eliminar este proyecto?</span><button data-del="yes">Sí, eliminar</button><button data-del="no" style="color:var(--fg)">Cancelar</button>`:`<button data-del="ask">Eliminar proyecto</button>`}</div>`;
@@ -777,6 +788,7 @@ function drawPanel(){
       let v=el.value;if(el.dataset.k==="plazo")v=Math.max(1,+v||1);
       p[el.dataset.k]=v;if(el.dataset.k==="plazo")reDone();upd();
     })});
+  panel.querySelector("#f-pausa").onchange=e=>{p.pausa=e.target.checked;p.pausaDesde=p.pausa?TODAY:"";upd()};
   panel.querySelectorAll("[data-h]").forEach(c=>c.onchange=()=>{const k=+c.dataset.h;p.r[k]=c.checked?doneAt(plan(p)[k]):"";upd()});
   panel.querySelectorAll("[data-pl]").forEach(c=>c.onchange=()=>{const k=+c.dataset.pl;
     if(c.value&&!okDate(c.value))return;
