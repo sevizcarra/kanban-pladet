@@ -12,18 +12,18 @@
 :root{
   --bg:#ffffff; --fg:#111111; --muted:#6e6e6a; --line:#dcdcd8; --soft:#f3f3f1; --plan:#cfcfca;
   --st0:#e6e6e2; --st1:#b9b9b3; --st2:#7a7a75; --st3:#45453f;
-  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3; --sunf:#fdf0b3; --suns:#c9a227; --verbg:#fff8d6; --frzs:#3b82c4; --verbgh:#fdf0b3;
+  --late:#e2231a; --risk:#d98a00; --ok:#1f8a4c; --none:#a8a8a3; --sunf:#fdf0b3; --suns:#c9a227; --verbg:#fff8d6; --verbgh:#fdf0b3; --frzs:#3b82c4; --frzf:#d6ebfa; --frzbg:#eaf4fc; --frzbgh:#d9ebf8; --pris:#d64545; --prif:#fbd5d5; --pribg:#fdeaea; --pribgh:#fadbdb; --cls:#2f8f4e; --clf:#cfeedd; --clbg:#e8f6ee; --clbgh:#d6efe0;
   --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --frzs:#7db4e6; --verbgh:#3a3418; color-scheme:dark}}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --verbgh:#3a3418; --frzs:#7db4e6; --frzf:#1c3348; --frzbg:#14222f; --frzbgh:#1b2d3d; --pris:#f07a7a; --prif:#4a1f1f; --pribg:#2c1616; --pribgh:#3a1d1d; --cls:#5cc985; --clf:#1d3a28; --clbg:#14261b; --clbgh:#1b3324; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121212; --fg:#f1f1ef; --muted:#9a9a95; --line:#2f2f2d; --soft:#1b1b1a; --plan:#3c3c39;
   --st0:#2e2e2b; --st1:#4f4f4b; --st2:#8a8a85; --st3:#c2c2bd;
-  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --frzs:#7db4e6; --verbgh:#3a3418; color-scheme:dark}
+  --late:#ff4a3d; --risk:#f0a92a; --ok:#3fbf75; --none:#5e5e5a; --sunf:#6b5a1e; --suns:#e8c75a; --verbg:#2e2a14; --verbgh:#3a3418; --frzs:#7db4e6; --frzf:#1c3348; --frzbg:#14222f; --frzbgh:#1b2d3d; --pris:#f07a7a; --prif:#4a1f1f; --pribg:#2c1616; --pribgh:#3a1d1d; --cls:#5cc985; --clf:#1d3a28; --clbg:#14261b; --clbgh:#1b3324; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
@@ -55,6 +55,7 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .seg button{background:none;border:0;padding:6px 12px;font-size:13px;border-right:1px solid var(--fg)}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.fbar{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}.fhint{color:var(--muted)}
 .search{flex:1;min-width:160px;border:0;border-bottom:1px solid var(--line);background:none;padding:6px 0;outline:none}
 .search:focus{border-bottom-color:var(--fg)}
 .btn{background:var(--fg);color:var(--bg);border:1px solid var(--fg);padding:7px 14px;font-weight:600;font-size:13px}
@@ -70,7 +71,7 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .p-resp{color:var(--muted);font-size:12px}
 .estado{display:flex;align-items:center;gap:8px}
 .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--none)}
-.dot.paused{background:none;border:1.5px solid var(--muted)}.row.pz .p-name,button.mx-r.pz .mx-name b,.row.pz .c-hito,.row.pz .c-delta{color:var(--muted)}
+.dot.paused{background:none;border:1.5px solid var(--frzs)}
 .prog i.n.paused{background:var(--line)}.cells i.n.paused{border-color:var(--muted);border-style:dotted}
 .sp{background:repeating-linear-gradient(45deg,var(--st0),var(--st0) 3px,var(--bg) 3px,var(--bg) 6px);color:var(--fg)}
 .pz-chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.pz-chk input{width:17px;height:17px;accent-color:var(--fg);margin:2px 0 0}.pz-chk b{display:block;font-size:13px;font-weight:600;color:var(--fg)}.pz-chk small{display:block;color:var(--muted);font-size:11px}
@@ -99,7 +100,7 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .g-row:hover{background:var(--soft)}
 .g-row.static{cursor:default}.g-row.static:hover{background:none}
 .g-name{padding:8px 12px 8px 0;min-width:0}
-.g-name b{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-name b{font-weight:600;font-size:13px}
 .g-name span{font-size:11px;color:var(--muted)}
 .g-track{height:44px}
 .g-grid{position:absolute;top:0;bottom:0;border-left:1px solid var(--soft)}
@@ -172,28 +173,39 @@ button.mx-r:hover{background:var(--soft)}
 .cells i.n.none{border-color:var(--none);border-style:dashed}
 .cells span{text-align:center;font-size:10px;letter-spacing:.06em;color:var(--muted)}
 .mx-name{min-width:0}
-.mx-name b{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-name b{font-weight:600;font-size:14px}
 .mx-name small{color:var(--muted);font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mx-nx{font-size:12px;color:var(--muted)}
 .mx-nx b{display:block;color:var(--fg);font-weight:600;font-size:13px}
 .mx-nx b.late{color:var(--late)}
 .note{font-size:12px;color:var(--muted);padding:10px 0}
-/* Obras de verano */
-.sun{display:inline-flex;vertical-align:-3px;margin-right:6px;cursor:pointer;border-radius:50%;line-height:0}
-.sun svg{width:16px;height:16px;fill:none;stroke:var(--line);stroke-width:1.6}
-.sun:hover svg{stroke:var(--suns)}
-.sun.on svg{fill:var(--sunf);stroke:var(--suns)}
-.frz{display:inline-flex;vertical-align:-3px;margin-right:6px;cursor:pointer;line-height:0}
-.frz svg{width:16px;height:16px;fill:none;stroke:var(--line);stroke-width:1.6;stroke-linecap:round}
-.frz:hover svg{stroke:var(--frzs)}.frz.on svg{stroke:var(--frzs);stroke-width:2}
-.frz:focus-visible{outline:2px solid var(--fg);outline-offset:1px}h2 .frz svg{width:20px;height:20px}
-.sun:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
-h2 .sun svg{width:20px;height:20px}
-.seg button.vb[aria-pressed="true"]{background:var(--sunf);color:var(--fg)}
-/* Fila completa en amarillo claro para obras de verano */
-.row.ver,button.mx-r.ver,.g-row.ver,.ft tr.ver td{background:var(--verbg)}
-.row.ver:hover,button.mx-r.ver:hover,.g-row.ver:hover,.ft tr.ver:hover td{background:var(--verbgh)}
-.ver .sun.on svg{fill:var(--bg)}
+/* Marcas por proyecto: verano, prioridad, congelado, cerrado */
+.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.g-name b,.mx-name b,.p-name,.ft td>b,.ph h2{display:flex;align-items:center;gap:8px;min-width:0}
+.flags{display:inline-flex;gap:2px;flex:none;align-items:center}
+.fl{display:inline-flex;cursor:pointer;line-height:0;padding:2px;border-radius:4px}
+.fl svg{width:15px;height:15px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.fl:hover{background:var(--soft)}
+.fl:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
+.flags .fl:not(.on){display:none}
+:is(.row,.mx-r,.g-row,tr):hover .flags .fl,:is(.row,.mx-r,.g-row,tr):focus-within .flags .fl,.flags.all .fl{display:inline-flex}
+@media (hover:none){.flags .fl{display:inline-flex}}
+.flags.all .fl svg{width:20px;height:20px}
+.fl.ver:hover svg{stroke:var(--suns)}.fl.ver.on svg{fill:var(--sunf);stroke:var(--suns)}
+.fl.pri:hover svg{stroke:var(--pris)}.fl.pri.on svg{fill:var(--prif);stroke:var(--pris)}
+.fl.frz:hover svg{stroke:var(--frzs)}.fl.frz.on svg{stroke:var(--frzs);stroke-width:2}
+.fl.cl:hover svg{stroke:var(--cls)}.fl.cl.on svg{fill:var(--clf);stroke:var(--cls)}
+.seg button.vb{display:inline-flex;align-items:center;gap:6px}.seg button.vb svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.seg button.vb.ver[aria-pressed="true"]{background:var(--sunf);color:var(--fg)}
+.seg button.vb.pri[aria-pressed="true"]{background:var(--prif);color:var(--fg)}
+.seg button.vb.frz[aria-pressed="true"]{background:var(--frzf);color:var(--fg)}
+.seg button.vb.cl[aria-pressed="true"]{background:var(--clf);color:var(--fg)}
+/* Fila completa en color pastel según la marca */
+:is(.row,button.mx-r,.g-row).ver,.ft tr.ver td{background:var(--verbg)}:is(.row,button.mx-r,.g-row).ver:hover,.ft tr.ver:hover td{background:var(--verbgh)}
+:is(.row,button.mx-r,.g-row).pri,.ft tr.pri td{background:var(--pribg)}:is(.row,button.mx-r,.g-row).pri:hover,.ft tr.pri:hover td{background:var(--pribgh)}
+:is(.row,button.mx-r,.g-row).fz,.ft tr.fz td{background:var(--frzbg)}:is(.row,button.mx-r,.g-row).fz:hover,.ft tr.fz:hover td{background:var(--frzbgh)}
+:is(.row,button.mx-r,.g-row).cl,.ft tr.cl td{background:var(--clbg)}:is(.row,button.mx-r,.g-row).cl:hover,.ft tr.cl:hover td{background:var(--clbgh)}
+.dot.closed{background:var(--cls)}
 /* Finanzas */
 .fk{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--fg);border-bottom:1px solid var(--line);margin-top:24px}
 .fk div{padding:14px 16px 14px 0}
@@ -346,8 +358,8 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="ok">En plazo</button>
     </div>
     <input class="search" id="q" type="search" placeholder="Buscar proyecto, código o unidad">
-    <div class="seg"><button class="vb" id="verF" aria-pressed="false" title="Mostrar solo obras de verano">☀ Verano</button><button class="vb" id="frzF" aria-pressed="false" title="Mostrar solo proyectos congelados">❄ Congelados</button></div>
     <button class="btn" id="add">+ Proyecto</button>
+    <div class="fbar"><span class="lbl">Filtrar por marca</span><div class="seg" id="flagF" role="group" aria-label="Filtrar por marca"></div><span class="lbl fhint">Para marcar un proyecto, pasa el mouse sobre su nombre y haz clic en el ícono.</span></div>
   </div>
 
   <div id="main"></div>
@@ -518,6 +530,9 @@ function info(p){
   if(stage===1&&mainObs.length>=2&&status==="ok")status="risk";
   const mstatus=status;
   if(status!=="none"&&cx.n)status=worse(status,cst);
+  /* Proyecto cerrado manualmente: cuenta como cerrado y sale de los indicadores activos */
+  if(p.cerrado)return{pl,next:-1,stage:4,estado:"Cerrado",hito:"Cerrado",target:p.cerradoDesde||TODAY,status:"done",mstatus:"done",delta:null,acum,nOk,
+    note:p.cerradoDesde?"cerrado el "+fmt(p.cerradoDesde):"",wait:null,cx,closed:true};
   /* Proyecto congelado: conserva su etapa, pero sale de semáforos, conteos y cuellos */
   if(p.pausa)return{pl,next,stage,estado:"Congelado",hito:H[next].n,target,status:"paused",mstatus:"paused",delta:null,acum,nOk,
     note:[p.pausaMotivo,p.pausaDesde?"desde "+fmt(p.pausaDesde):""].filter(Boolean).join(" · "),wait:null,cx,paused:true};
@@ -552,7 +567,7 @@ function gantt(list,mode){
       return`<div class="g-row static"><div class="g-name"><b>${n}</b><span class="num">${fmt(i.pl[s])} → ${fmt(i.pl[e])}</span></div>
       <div class="g-track">${grid}${planSeg(p,i,k)}${pts.join("")}${today}</div></div>`}).join("");
   }else{
-    rows=list.map(({p,i})=>`<button class="g-row${p.verano?" ver":""}" data-id="${p.id}"><div class="g-name"><b>${sun(p)}${esc(p.nombre)}</b><span>${esc(i.estado)}</span></div>
+    rows=list.map(({p,i})=>`<button class="g-row${rowCls(p)}" data-id="${p.id}"><div class="g-name"><b>${nm(p)}</b><span>${esc(i.estado)}</span></div>
       <div class="g-track">${grid}${[0,1,2,3].map(k=>planSeg(p,i,k)).join("")}${today}</div></button>`).join("");
   }
   return`<div class="gwrap"><div class="gantt">
@@ -572,9 +587,9 @@ function render(){
       <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("");
   st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
   const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
-  const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
+  const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(!F.pri||p.prioridad)&&(!F.cl||p.cerrado)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
       &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q)))
-    .sort((a,b)=>order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
+    .sort((a,b)=>(!!b.p.prioridad-!!a.p.prioridad)||order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
   const M=document.getElementById("main");
   if(F.view==="sum"){M.innerHTML=resumen(rows,I)}
   else if(F.view==="fin"){M.innerHTML=finanzas(rows)}
@@ -588,11 +603,11 @@ function render(){
       const bars=H.map((h,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}${k&&h.s!==H[k-1].s?" sep":""}"></i>`).join("");
       const dl=i.paused?"‖":i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
       const dlab=i.paused?"congelado":i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
-      return`<button class="row${p.verano?" ver":""}${i.paused?" pz":""}" data-id="${p.id}">
-        <div class="c-name"><div class="p-name">${sun(p)}${esc(p.nombre)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
-        <div class="c-estado estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
+      return`<button class="row${rowCls(p)}" data-id="${p.id}">
+        <div class="c-name"><div class="p-name">${nm(p)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
+        <div class="c-estado estado"><span class="dot ${i.closed?"closed":i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
         <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${STAGES[i.stage]||"Cerrado"}</span></div></div>
-        <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.paused?"Congelado":(i.status==="done"?"Entregado el ":"Plan ")+fmt(i.target)}</small></div>
+        <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.paused?"Congelado":(i.closed?"Cerrado el ":i.status==="done"?"Entregado el ":"Plan ")+fmt(i.target)}</small></div>
         <div class="c-delta r delta num ${i.status==="late"?"late":""}">${dl}<small>${dlab}</small></div></button>`}).join("");
   }
   M.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>openPanel(b.dataset.id));
@@ -618,17 +633,28 @@ function cuellos(I){
 }
 
 /* ---------- Obras de verano: sol al lado del nombre ---------- */
-const SUN_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>';
-const sun1=p=>`<span class="sun ${p.verano?"on":""}" role="button" tabindex="0" data-sun="${p.id}" aria-pressed="${!!p.verano}" title="${p.verano?"Obra de verano (clic para quitar)":"Marcar como obra de verano"}">${SUN_SVG}</span>`;
-const FRZ_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5M9.4 3.9 12 6.3l2.6-2.4M9.4 20.1 12 17.7l2.6 2.4M3.6 10.6l3.4.9-.8-3.4M20.4 13.4l-3.4-.9.8 3.4M3.6 13.4l3.4-.9-.8 3.4M20.4 10.6l-3.4.9.8-3.4"/></svg>';
-const frz=p=>`<span class="frz ${p.pausa?"on":""}" role="button" tabindex="0" data-frz="${p.id}" aria-pressed="${!!p.pausa}" title="${p.pausa?"Proyecto congelado (clic para reactivar)":"Congelar proyecto (sale de los indicadores)"}">${FRZ_SVG}</span>`;
-const sun=p=>sun1(p)+frz(p);
-function toggleFrz(id){const p=data.find(x=>x.id===id);if(!p)return;p.pausa=!p.pausa;p.pausaDesde=p.pausa?TODAY:"";save();render()}
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-frz]");if(!t)return;e.stopPropagation();e.preventDefault();toggleFrz(t.dataset.frz)},true);
-document.addEventListener("keydown",e=>{const t=e.target.closest&&e.target.closest("[data-frz]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopPropagation();toggleFrz(t.dataset.frz)}},true);
-function toggleSun(id){const p=data.find(x=>x.id===id);if(!p)return;p.verano=!p.verano;save();render()}
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-sun]");if(!t)return;e.stopPropagation();e.preventDefault();toggleSun(t.dataset.sun)},true);
-document.addEventListener("keydown",e=>{const t=e.target.closest&&e.target.closest("[data-sun]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopPropagation();toggleSun(t.dataset.sun)}},true);
+const ICO={
+  ver:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>',
+  pri:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17V12a5 5 0 0 1 10 0v5z"/><path d="M5 20.5h14M12 2.5v2M4.2 5.6l1.5 1.5M19.8 5.6l-1.5 1.5M2.5 12h1.8M19.7 12h1.8M5 17h14v3.5H5z"/></svg>',
+  frz:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5M9.4 3.9 12 6.3l2.6-2.4M9.4 20.1 12 17.7l2.6 2.4M3.6 10.6l3.4.9-.8-3.4M20.4 13.4l-3.4-.9.8 3.4M3.6 13.4l3.4-.9-.8 3.4M20.4 10.6l-3.4.9.8-3.4"/></svg>',
+  cl:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>'};
+/* k = clase/ícono, f = campo del proyecto */
+const FLAGS=[
+  {k:"ver",f:"verano",on:"Obra de verano (clic para quitar)",off:"Marcar como obra de verano"},
+  {k:"pri",f:"prioridad",on:"Proyecto prioritario (clic para quitar)",off:"Marcar como prioritario"},
+  {k:"frz",f:"pausa",on:"Proyecto congelado (clic para reactivar)",off:"Congelar proyecto (sale de los indicadores)"},
+  {k:"cl",f:"cerrado",on:"Proyecto cerrado (clic para reabrir)",off:"Cerrar proyecto"}];
+const flg=(p,all)=>`<span class="flags${all?" all":""}">${FLAGS.map(x=>`<span class="fl ${x.k}${p[x.f]?" on":""}" role="button" tabindex="0" data-flag="${x.f}" data-pid="${p.id}" aria-pressed="${!!p[x.f]}" title="${p[x.f]?x.on:x.off}">${ICO[x.k]}</span>`).join("")}</span>`;
+const nm=p=>`<span class="nm">${esc(p.nombre)}</span>${flg(p)}`;
+/* Color de fila: cerrado > congelado > prioridad > verano */
+const rowCls=p=>p.cerrado?" cl":p.pausa?" fz":p.prioridad?" pri":p.verano?" ver":"";
+/* Prioridad, congelado y cerrado son excluyentes entre sí; verano se combina con cualquiera */
+function setFlag(p,f,on){p[f]=on;
+  if(on&&f!=="verano")["prioridad","pausa","cerrado"].filter(x=>x!==f).forEach(x=>p[x]=false);
+  p.pausaDesde=p.pausa?(p.pausaDesde||TODAY):"";p.cerradoDesde=p.cerrado?(p.cerradoDesde||TODAY):""}
+function toggleFlag(id,f){const p=data.find(x=>x.id===id);if(!p)return;setFlag(p,f,!p[f]);save();render()}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-flag]");if(!t)return;e.stopPropagation();e.preventDefault();toggleFlag(t.dataset.pid,t.dataset.flag)},true);
+document.addEventListener("keydown",e=>{const t=e.target.closest&&e.target.closest("[data-flag]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopPropagation();toggleFlag(t.dataset.pid,t.dataset.flag)}},true);
 
 /* ---------- Finanzas ----------
    Cada compra tiene su monto estimado (en Compra) y su monto adjudicado (en Ejecución).
@@ -650,7 +676,7 @@ function finanzas(rows){
   const byStage=["Diseño","Compra","Ejecución","Entrega","Cerrado"].map((n,k)=>{const g=all.filter(x=>x.i.stage===k);return{n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:new Set(g.map(x=>x.p.id)).size+" obras"}}).filter(g=>g.t);
   const tab=[...rows].sort((a,b)=>montoTotal(b.p)-montoTotal(a.p)).map(({p,i})=>{
     const c=sum(p.compras.filter(x=>madjOf(x)!==null).map(x=>({m:madjOf(x)}))),t=montoTotal(p);
-    return`<tr class="click${p.verano?" ver":""}" data-id="${p.id}"><td><b>${sun(p)}${esc(p.nombre)}</b><small>${esc(uName(p.resp))}</small></td>
+    return`<tr class="click${rowCls(p)}" data-id="${p.id}"><td><b>${nm(p)}</b><small>${esc(uName(p.resp))}</small></td>
       <td>${p.compras.map(x=>`${x.tipo||"s/t"}${x.desc?" · "+esc(x.desc):""}`).join("<br>")}</td>
       <td>${STAGES[i.stage]||"Cerrado"}</td>
       <td class="r num">${t?clp(c):"—"}</td><td class="r num">${t?clp(t-c):"—"}</td><td class="r num"><b>${clp(t)}</b></td></tr>`}).join("");
@@ -660,7 +686,7 @@ function finanzas(rows){
       <div><b>${clpM(com)}</b><span>Adjudicado (contratos)</span><i>${pct(com,tot)} del total${adjE&&varA?` · ${varA>0?"+":"−"}${clpM(Math.abs(varA))} vs estimado`:""}</i></div>
       <div><b>${clpM(pro)}</b><span>Estimado (sin adjudicar)</span><i>${pct(pro,tot)} del total</i></div>
       <div><b>${sinM}</b><span>Obras sin monto cargado</span><i>de ${rows.length} en vista</i></div></div>
-    <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (contrato)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin adjudicar)</span>${F.ver||F.frz||F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
+    <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (contrato)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin adjudicar)</span>${F.ver||F.frz||F.pri||F.cl||F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
     <div class="sum-h"><h2>Por unidad</h2></div>${bars(byUnit)}
     ${byType.length?`<div class="sum-h"><h2>Por tipo de compra</h2></div>${bars(byType)}`:""}
     ${byStage.length?`<div class="sum-h"><h2>Por etapa de la obra</h2></div>${bars(byStage)}`:""}
@@ -687,10 +713,10 @@ function resumen(rows,I){
   const cells=(p,i)=>[0,1,"g",2,3,4,5,6,"g",7,8,9,"g",10].map(k=>k==="g"?`<b class="gap"></b>`:cell(p,i,k)).join("");
   const groups=UNITS.map(u=>{const g=rows.filter(x=>x.p.resp===u.k);if(!g.length)return"";
     return`<div class="mx-u"><b>${u.n}</b><span class="num">${g.length} obra${g.length===1?"":"s"}</span></div>`+
-    g.map(({p,i})=>`<button class="mx-r${p.verano?" ver":""}${i.paused?" pz":""}" data-id="${p.id}"><div class="mx-name"><b>${sun(p)}${esc(p.nombre)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
+    g.map(({p,i})=>`<button class="mx-r${rowCls(p)}" data-id="${p.id}"><div class="mx-name"><b>${nm(p)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
       <div class="cells">${cells(p,i)}</div>
-      <div class="estado"><span class="dot ${i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
-      <div class="mx-nx">${i.paused?"<b>Congelado</b>Fuera de los indicadores":i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
+      <div class="estado"><span class="dot ${i.closed?"closed":i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
+      <div class="mx-nx">${i.paused?"<b>Congelado</b>Fuera de los indicadores":i.closed?"<b>Cerrado</b>"+(p.cerradoDesde?fmt(p.cerradoDesde):""):i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
   return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin fechas${I.filter(x=>x.i.paused).length?" · "+I.filter(x=>x.i.paused).length+" congeladas":""}</span></div>
     <div class="units">${ubars}</div>${legend}
     ${cuellos(I)}
@@ -765,7 +791,7 @@ function drawPanel(){
     </div>${close}`}).join("");
 
   panel.innerHTML=`
-  <div class="ph"><div><div class="eyebrow">${esc(uName(p.resp))}</div><h2>${sun(p)}${esc(p.nombre)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
+  <div class="ph"><div><div class="eyebrow">${esc(uName(p.resp))}</div><h2><span class="nm">${esc(p.nombre)}</span>${flg(p,true)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
   <div class="kpis num">
     <div class="kpi"><b>${i.nOk}/${NH}</b><span>Hitos cumplidos</span></div>
     <div class="kpi"><b class="${i.status==="late"?"late":""}">${i.wait===null?"—":i.wait+" d"}</b><span>Detenido en el hito actual</span></div>
@@ -797,7 +823,7 @@ function drawPanel(){
       let v=el.value;if(el.dataset.k==="plazo")v=Math.max(1,+v||1);
       p[el.dataset.k]=v;if(el.dataset.k==="plazo")reDone();upd();
     })});
-  panel.querySelector("#f-pausa").onchange=e=>{p.pausa=e.target.checked;p.pausaDesde=p.pausa?TODAY:"";upd()};
+  panel.querySelector("#f-pausa").onchange=e=>{setFlag(p,"pausa",e.target.checked);upd()};
   panel.querySelectorAll("[data-h]").forEach(c=>c.onchange=()=>{const k=+c.dataset.h;p.r[k]=c.checked?doneAt(plan(p)[k]):"";upd()});
   panel.querySelectorAll("[data-pl]").forEach(c=>c.onchange=()=>{const k=+c.dataset.pl;
     if(c.value&&!okDate(c.value))return;
@@ -829,8 +855,10 @@ function seg(id,key){document.getElementById(id).querySelectorAll("button").forE
   F[key]=b.dataset.v;document.querySelectorAll(`#${id} button`).forEach(x=>x.setAttribute("aria-pressed",x===b));render()})}
 seg("view","view");seg("semaf","sem");
 document.getElementById("q").oninput=e=>{F.q=e.target.value;render()};
-document.getElementById("frzF").onclick=e=>{F.frz=!F.frz;e.currentTarget.setAttribute("aria-pressed",F.frz);render()};
-document.getElementById("verF").onclick=e=>{F.ver=!F.ver;e.currentTarget.setAttribute("aria-pressed",F.ver);render()};
+/* Filtros por marca (se pueden combinar) */
+(()=>{const box=document.getElementById("flagF"),FF=[["ver","ver","Verano","obras de verano"],["pri","pri","Prioridad","proyectos prioritarios"],["frz","frz","Congelados","proyectos congelados"],["cl","cl","Cerrados","proyectos cerrados"]];
+  box.innerHTML=FF.map(([k,c,l,t])=>`<button class="vb ${c}" data-ff="${k}" aria-pressed="false" title="Mostrar solo ${t}">${ICO[c]}<span>${l}</span></button>`).join("");
+  box.querySelectorAll("[data-ff]").forEach(b=>b.onclick=()=>{const k=b.dataset.ff;F[k]=!F[k];b.setAttribute("aria-pressed",!!F[k]);render()})})();
 document.getElementById("add").onclick=()=>{const p=blank();p.orden=Math.min(0,...data.map(x=>x.orden??0))-1;data.unshift(p);save();render();openPanel(p.id)};
 document.getElementById("copy").onclick=async e=>{const t=JSON.stringify(data);
   try{await navigator.clipboard.writeText(t);e.target.textContent="Respaldo copiado"}catch(_){e.target.textContent="No se pudo copiar"}
