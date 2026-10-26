@@ -505,24 +505,31 @@ function norm(p){
   backMontos(p);if(p.v===2)p.v=1;
   sync(p);return p}
 function save(){clearTimeout(saveT);saveT=setTimeout(flushSave,300)}
+/* JSON con claves ordenadas: Firestore devuelve los campos en otro orden y eso no debe contar como cambio */
+const sj=v=>JSON.stringify(v,(k,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,q)=>(o[q]=x[q],o),{}):x);
 function flushSave(){if(!window.FB||!ready)return;const ids=new Set();
-  data.forEach((p,k)=>{ids.add(p.id);const j=JSON.stringify(p);if(lastSaved[p.id]!==j){lastSaved[p.id]=j;FB.put(p.id,JSON.parse(j))}});
+  data.forEach((p,k)=>{ids.add(p.id);const j=sj(p);if(lastSaved[p.id]!==j){lastSaved[p.id]=j;FB.put(p.id,JSON.parse(j))}});
   Object.keys(lastSaved).forEach(id=>{if(!ids.has(id)){delete lastSaved[id];FB.del(id)}})}
 /* Cambios que llegan desde Firestore (de esta u otra persona) */
 window.onRemote=docs=>{
   if(!ready&&!docs.length){data=sample().map((p,k)=>Object.assign(p,{orden:k}));data.forEach(norm);ready=true;save();render();return}
-  const byId=new Map(data.map(p=>[p.id,p]));const seen=new Set();let mig=false;
-  docs.forEach(d=>{seen.add(d.id);const j=JSON.stringify(d);const cur=byId.get(d.id);if(d.v===2)mig=true;
+  const byId=new Map(data.map(p=>[p.id,p]));const seen=new Set();let mig=false,changed=!ready;
+  docs.forEach(d=>{seen.add(d.id);const cur=byId.get(d.id);
     /* Si esta obra tiene cambios locales aún sin guardar, no se pisan con la versión remota */
-    const dirty=cur&&lastSaved[d.id]!==undefined&&JSON.stringify(cur)!==lastSaved[d.id];
-    if(!dirty)lastSaved[d.id]=j;
-    if(cur){if(!dirty&&JSON.stringify(cur)!==j){Object.keys(cur).forEach(k=>delete cur[k]);Object.assign(cur,d);norm(cur)}}
-    else data.push(norm(d))});
-  data=data.filter(p=>seen.has(p.id)||!(p.id in lastSaved));
+    if(cur&&lastSaved[d.id]!==undefined&&sj(cur)!==lastSaved[d.id])return;
+    const raw=sj(d),old=d.v===2,n=norm(JSON.parse(raw)),nj=sj(n);
+    /* Lo guardado es la versión normalizada; solo se reescribe en la base si venía de la versión por semanas */
+    if(old&&nj!==raw){mig=true;lastSaved[d.id]=raw}else lastSaved[d.id]=nj;
+    if(cur){if(sj(cur)!==nj){Object.keys(cur).forEach(k=>delete cur[k]);Object.assign(cur,n);changed=true}}
+    else{data.push(n);changed=true}});
+  const before=data.length;
+  data=data.filter(p=>seen.has(p.id)||!(p.id in lastSaved));if(data.length!==before)changed=true;
   Object.keys(lastSaved).forEach(id=>{if(!seen.has(id))delete lastSaved[id]});
   data.sort((x,y)=>(x.orden??0)-(y.orden??0));
   if(openId&&!data.find(p=>p.id===openId))closePanel();
-  ready=true;if(mig)save();render()};
+  ready=true;if(mig)save();
+  /* Solo se redibuja si algo cambió, y nunca con el botón del mouse apretado (se perdería el clic) */
+  if(changed){if(ptrDown)needRender=true;else render()}};
 
 function info(p){
   const pl=plan(p),next=p.r.findIndex(x=>!x);
@@ -631,7 +638,7 @@ function render(){
         <div class="c-delta r delta num ${i.status==="late"?"late":""}">${dl}<small>${dlab}</small></div></button>`}).join("");
   }
   M.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>openPanel(b.dataset.id));
-  if(openId){if(editingDate)pending=true;else drawPanel()}
+  if(openId){if(editingDate||ptrDown)pending=true;else drawPanel()}
 }
 
 /* ---------- Cuellos de botella ---------- */
@@ -750,12 +757,13 @@ const panel=document.getElementById("panel"),scrim=document.getElementById("scri
 /* Fecha completa: año de 4 cifras desde 2000. Evita guardar mientras se escribe el año */
 const okDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000&&+v.slice(0,4)<=2100;
 /* El panel no se redibuja mientras se escribe en un campo (texto, número o fecha); se redibuja al salir */
-let delC=-1,pending=false,ptrDown=false,editingDate=false;
-function flush(){if(pending&&openId&&!ptrDown&&!editingDate){pending=false;drawPanel()}}
+let delC=-1,pending=false,ptrDown=false,editingDate=false,needRender=false;
+function flush(){if(ptrDown)return;if(needRender){needRender=false;render()}if(pending&&openId&&!editingDate){pending=false;drawPanel()}}
 const isEd=t=>t&&(t.tagName==="TEXTAREA"||["date","text","number","search"].includes(t.type));
 panel.addEventListener("focusin",e=>{if(isEd(e.target))editingDate=true});
 document.addEventListener("pointerdown",()=>{ptrDown=true},true);
-document.addEventListener("pointerup",()=>{setTimeout(()=>{ptrDown=false;flush()},0)},true);
+const ptrUp=()=>{setTimeout(()=>{ptrDown=false;flush()},0)};
+document.addEventListener("pointerup",ptrUp,true);document.addEventListener("pointercancel",ptrUp,true);window.addEventListener("blur",ptrUp);
 panel.addEventListener("focusout",e=>{if(isEd(e.target)){editingDate=false;setTimeout(flush,0)}});
 function openPanel(id){openId=id;confirmDel=false;delC=-1;drawPanel();panel.hidden=false;scrim.hidden=false;panel.scrollTop=0;setTimeout(()=>panel.querySelector(".x")?.focus(),0)}
 function closePanel(){openId=null;panel.hidden=true;scrim.hidden=true}
