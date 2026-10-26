@@ -40,7 +40,7 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .today{text-align:right;color:var(--muted)}
 .today b{display:block;color:var(--fg);font-size:18px;font-weight:600}
 
-.stages{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.stages{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--line)}
 .stage{background:none;border:0;border-right:1px solid var(--line);text-align:left;padding:18px 16px 16px;display:grid;gap:4px;position:relative}
 .stage:last-child{border-right:0}
 .stage:hover{background:var(--soft)}
@@ -77,10 +77,9 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .pz-chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.pz-chk input{width:17px;height:17px;accent-color:var(--fg);margin:2px 0 0}.pz-chk b{display:block;font-size:13px;font-weight:600;color:var(--fg)}.pz-chk small{display:block;color:var(--muted);font-size:11px}
 .dot.late{background:var(--late)}.dot.risk{background:var(--risk)}.dot.ok{background:var(--ok)}.dot.done{background:var(--fg)}
 .estado small,.hito small{display:block;color:var(--muted);font-size:12px}
-.prog{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.prog{display:grid;grid-template-columns:repeat(11,1fr);gap:2px}
 .prog i{height:6px;background:var(--line)}
 .prog i.d{background:var(--fg)}
-.prog i.n.obra,.dot.obra{background:var(--st2)}.g-plan.c.obra{background:var(--st2)}
 .prog i.n.late{background:var(--late)}.prog i.n.risk{background:var(--risk)}.prog i.n.ok{background:var(--ok)}.prog i.n.none{background:var(--none)}
 .prog i.sep{margin-left:4px}
 .prog-l{font-size:11px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between}
@@ -156,33 +155,13 @@ h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.035em;font-we
 .u-bar i.e{flex:1;border:1px dashed var(--line);color:var(--muted);font-weight:400}
 .s0{background:var(--st0);color:var(--fg)}.s1{background:var(--st1);color:var(--fg)}.s2{background:var(--st2);color:var(--bg)}.s3{background:var(--st3);color:var(--bg)}.s4{background:var(--fg);color:var(--bg)}
 .mx{min-width:820px}
-.mx-r{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(3,92px) minmax(150px,1fr) 150px;gap:16px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.mx-r{display:grid;grid-template-columns:260px minmax(340px,1fr) 170px 120px;gap:16px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 button.mx-r{background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;cursor:pointer}
 button.mx-r:hover{background:var(--soft)}
 .mx-h{border-bottom:1px solid var(--fg);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 0}
 .mx-u{padding:18px 0 6px;border-bottom:2px solid var(--fg);display:flex;justify-content:space-between;align-items:baseline}
 .mx-u b{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
 .mx-u span{font-size:12px;color:var(--muted)}
-.mx-h .c{text-align:center}
-.wk{justify-self:center;font-size:12px;font-weight:500;padding:3px 0;border:1.5px solid var(--line);color:var(--muted);width:76px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
-.wk.d{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:600}
-.wk.d sup{color:#ff8a80;font-size:10px;margin-left:2px}
-.wk.e{border-style:dashed}
-.wk.n{border-width:2px;color:var(--fg);font-weight:600}
-.wk.n.late{border-color:var(--late);color:var(--late);background:color-mix(in srgb,var(--late) 12%,transparent)}
-.wk.n.risk{border-color:var(--risk);background:color-mix(in srgb,var(--risk) 14%,transparent)}
-.wk.n.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
-.wk.n.none{border-color:var(--none);border-style:dashed}
-.g-pt.m{background:var(--bg)}
-.wp{display:flex;align-items:center;gap:6px;min-width:0}
-.wp select{width:auto;flex:1 1 0;min-width:0;font-variant-numeric:tabular-nums}
-.wp .wl{display:none;font-size:11px;color:var(--muted)}
-.wp.wnone{color:var(--muted);padding-left:2px}
-.hrow .nm small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
-.hrow .nm small b{font-weight:600;color:var(--fg)}.hrow .nm small b.late,.hrow .nm small .late{color:var(--late)}
-.du{display:grid;grid-template-columns:minmax(0,1fr) 110px 110px 110px;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
-.du.head{font-size:11px;color:var(--muted);letter-spacing:.04em;border-bottom:1px solid var(--fg);margin-top:12px}
-.du .late{color:var(--late);font-weight:600}
 .cells{display:grid;grid-template-columns:repeat(2,1fr) 10px repeat(5,1fr) 10px repeat(3,1fr) 10px 1fr;align-items:center}
 .cells .gap{width:10px}
 .cells i{justify-self:center;width:15px;height:15px;border:1.5px solid var(--line)}
@@ -287,10 +266,10 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .mc-r{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px;align-items:end;padding:8px 0;border-bottom:1px solid var(--line)}.mc-r:last-child{border-bottom:0}
 .mc-r label{font-size:13px}.mc-r label b{display:block;font-weight:600}.mc-r small{color:var(--muted);font-size:11px}
 @media (max-width:640px){.mc-r{grid-template-columns:1fr}}
-.hrow{display:grid;grid-template-columns:22px minmax(0,1fr) 150px 150px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.hrow{display:grid;grid-template-columns:22px minmax(0,1fr) 128px 128px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
 .hrow.head{border-bottom:1px solid var(--fg);padding:4px 0;font-size:11px;color:var(--muted);letter-spacing:.04em}
 .hrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--fg);margin:0}
-.hrow .nm{font-size:14px;white-space:normal}
+.hrow .nm{font-size:14px}
 .hrow.done .nm{font-weight:600}
 .hrow .pl{display:flex;align-items:center;gap:4px}
 .hrow .pl input{color:var(--muted)}
@@ -320,7 +299,8 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   .wrap{padding:24px 16px 64px}
   .stages{grid-template-columns:repeat(2,1fr)}
   .stage:nth-child(2){border-right:0}
-  .stage:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .stage:nth-child(-n+4){border-bottom:1px solid var(--line)}
+  .stage:nth-child(4){border-right:0}.stage:nth-child(5){grid-column:1/-1}
   .cols{display:none}
   .row{grid-template-columns:1fr auto;gap:8px 16px}
   .row>.c-name,.row>.c-prog,.row>.c-estado{grid-column:1/-1}
@@ -330,12 +310,9 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   .grid2{grid-template-columns:1fr}
   .cp-h{grid-template-columns:22px 1fr 20px}.cp-h .f{grid-column:2}
   .kpis{grid-template-columns:repeat(2,1fr)}
-  .hrow{grid-template-columns:22px 1fr 1fr}
-  .hrow:not(.head) .nm{grid-column:2/4}
-  .hrow .wpm{grid-column:2}.hrow .wpr{grid-column:3}
-  .hrow.head{display:none}
-  .wp .wl{display:inline}
-  .du{grid-template-columns:1fr 1fr 1fr;}.du>:first-child{grid-column:1/-1}.du.head{display:none}
+  .hrow{grid-template-columns:22px minmax(0,1fr) 112px;}
+  .hrow .pl{grid-column:2/4}
+  .hrow.head .ph2{display:none}
   .obs{margin-left:0}
   .obs-r{grid-template-columns:auto 1fr;}
 }
@@ -389,7 +366,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   <div id="main"></div>
 
   <div class="foot">
-    <span>Cada obra se controla con tres hitos por semana del año (lunes a domingo): asignación del requerimiento, entrega del diseño e inicio de obra. Atrasado = la semana meta del próximo hito ya pasó; en riesgo = vence esta semana o la próxima. La obra se cierra con el candado.</span>
+    <span>Las fechas estimadas se generan desde el inicio de diseño y se pueden editar. La compra principal define el paso a Ejecución; las complementarias corren en paralelo y, si se atrasan, encienden el semáforo de la obra. El costo total es la suma de todas las compras.</span>
     <span class="foot-act"><button id="copy">Copiar respaldo</button> · <button id="imp">Importar datos</button></span>
   </div>
   <div class="imp" id="impBox" hidden>
@@ -404,93 +381,138 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 <aside class="panel" id="upanel" hidden aria-label="Usuarios"></aside>
 
 <script>
-/* ===== Modelo: 3 hitos por obra, controlados por semana del año (ISO, lunes a domingo) ===== */
-const STAGES=["Diseño","Compra","Ejecución"];
-const H=[{n:"Asignación del requerimiento",c:"Asignación"},{n:"Entrega del diseño",c:"Diseño entregado"},{n:"Inicio de obra",c:"Inicio de obra"}];
+const STAGES=["Diseño","Compra","Ejecución","Entrega"];
+const H=[
+  {n:"Inicio de diseño",s:0},
+  {n:"Envío a gestión de compra",s:0},
+  {n:"Bases enviadas a tramitación",s:1},
+  {n:"Publicado",s:1},
+  {n:"Apertura",s:1},
+  {n:"Adjudicación enviada a tramitación",s:1},
+  {n:"OC emitida",s:1},
+  {n:"Antecedentes de arranque",s:2},
+  {n:"Entrega de terreno",s:2},
+  {n:"Recepción provisoria",s:2},
+  {n:"Entrega a usuario",s:3}];
 const NH=H.length;
-const DAY=864e5,WK=7*DAY;
+const SPAN=[[0,1],[1,6],[6,9],[9,10]];
+/* Días entre hitos consecutivos. null = plazo contractual de la oferta */
+const TPL={menor:{n:"Obra menor",d:[0,45,20,15,20,10,15,10,10,null,14],plazo:60},
+           mayor:{n:"Obra mayor",d:[0,90,30,20,30,15,20,15,15,null,14],plazo:180}};
+const KEY="pladet-avance-v5",DAY=864e5;
 const T=new Date();T.setHours(12,0,0,0);
-const pad=n=>String(n).padStart(2,"0");
-const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const iso=d=>d.toISOString().slice(0,10);
 const TODAY=iso(T);
 const pd=s=>s?new Date(s+"T12:00:00"):null;
 const add=(s,n)=>s?iso(new Date(pd(s).getTime()+n*DAY)):"";
+const off=n=>iso(new Date(T.getTime()+n*DAY));
+const diff=(a,b)=>Math.round((pd(a)-pd(b))/DAY);
+const fmt=s=>s?pd(s).toLocaleDateString("es-CL",{day:"2-digit",month:"short",year:"2-digit"}).replace(".",""):"—";
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-/* ---------- Semanas ---------- */
-function wOf(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const wd=t.getUTCDay()||7;
-  t.setUTCDate(t.getUTCDate()+4-wd);const y=t.getUTCFullYear();return y+"-W"+pad(Math.ceil(((t-Date.UTC(y,0,1))/DAY+1)/7))}
-const wParse=s=>{const m=/^(\d{4})-W(\d{2})$/.exec(s||"");return m?{y:+m[1],w:+m[2]}:null};
-function wMon(s){const p=wParse(s);if(!p)return null;const j4=new Date(Date.UTC(p.y,0,4));return Date.UTC(p.y,0,4-((j4.getUTCDay()||7)-1)+(p.w-1)*7)}
-/* Índice correlativo de semana: permite restar semanas aunque crucen de año */
-const wIdx=s=>{const m=wMon(s);return m===null?null:Math.round((m-4*DAY)/WK)};
-const wFromIdx=i=>{const t=new Date(i*WK+7*DAY);return wOf(new Date(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate(),12))};
-const weeksIn=y=>wParse(wOf(new Date(y,11,28,12))).w;
-const CW=wOf(T),CWI=wIdx(CW),CY=wParse(CW).y;
-const dW=d=>d?wOf(pd(d)):"";
-const wFmt=s=>{const p=wParse(s);return p?"S"+p.w+(p.y!==CY?" · "+p.y:""):"—"};
-const wRange=s=>{const m=wMon(s);if(m===null)return"";const a=new Date(m),b=new Date(m+6*DAY),f=d=>d.getUTCDate()+" "+d.toLocaleDateString("es-CL",{month:"short",timeZone:"UTC"}).replace(".","");
-  return"lunes "+f(a)+" a domingo "+f(b)+" "+b.getUTCFullYear()};
-const sem=n=>n+(Math.abs(n)===1?" semana":" semanas");
-
-/* ---------- Montos: estimado y adjudicado (contrato). Vigente = adjudicado si existe ---------- */
-const vig=p=>p.madj!==null&&p.madj!==undefined?+p.madj:(+p.mest||0);
-const montoTotal=vig;
+/* ---------- Compras ---------- */
+const CTYPES=[{k:"",n:"Tipo por definir",lic:true},{k:"L1",n:"L1 · Licitación",lic:true},{k:"LE",n:"LE · Licitación",lic:true},
+  {k:"LQ",n:"LQ · Licitación",lic:true},{k:"LR",n:"LR · Licitación",lic:true},{k:"LS",n:"LS · Licitación",lic:true},
+  {k:"CM",n:"CM · Convenio marco",lic:false},{k:"CA",n:"CA · Compra ágil",lic:false}];
+const ctype=k=>CTYPES.find(t=>t.k===k)||CTYPES[0];
+/* Pasos de compra (posiciones 2–6 del proyecto). CM y CA solo tienen envío y OC */
+const CSTEP=["Bases enviadas a tramitación","Publicado","Apertura","Adjudicación enviada a tramitación","OC emitida"];
+const CDUR={lic:[20,15,20,10,15],CM:[20,0,0,0,15],CA:[15,0,0,0,10]};
+const applies=(c,k)=>ctype(c.tipo).lic||k===0||k===4;
+const stepName=(c,k)=>!ctype(c.tipo).lic&&k===0?"Solicitud enviada a tramitación":CSTEP[k];
+function blankCompra(){return{id:"k"+Date.now()+Math.random().toString(36).slice(2,6),tipo:"",desc:"",monto:0,madj:null,r:Array(5).fill(""),ov:Array(5).fill(""),obs:[]}}
+function compraPlan(c,base){const d=ctype(c.tipo).lic?CDUR.lic:CDUR[c.tipo],out=[];let prev=base;
+  for(let k=0;k<5;k++){if(applies(c,k)){out[k]=c.ov[k]||add(prev,d[k]);prev=out[k]}else out[k]=""}return out}
+const maxD=a=>a.filter(Boolean).sort().pop()||"";
+/* Montos: c.monto = estimado; c.madj = adjudicado (monto del contrato), se carga en Ejecución.
+   El costo vigente usa el adjudicado si existe; si no, el estimado. */
+const madjOf=c=>c.madj===null||c.madj===undefined||c.madj===""?null:+c.madj;
+const vig=c=>{const a=madjOf(c);return a!==null?a:(+c.monto||0)};
+const montoTotal=p=>(p.compras||[]).reduce((a,c)=>a+vig(c),0);
 const clp=n=>n?"$ "+Math.round(n).toLocaleString("es-CL"):"—";
 const clpM=n=>n?"$ "+(n/1e6).toLocaleString("es-CL",{maximumFractionDigits:n<1e8?1:0})+" M":"—";
 
-function blank(){return{id:"p"+Date.now(),nombre:"Nuevo proyecto",resp:"SD",v:2,wm:["","",""],wr:["","",""],mest:0,madj:null}}
+function blank(){return{id:"p"+Date.now(),nombre:"Nuevo proyecto",resp:"SD",
+  inicio:TODAY,plazo:TPL.menor.plazo,ov:Array(NH).fill(""),r:Array(NH).fill(""),obs:[],compras:[blankCompra()]}}
 
-/* ---------- Migración desde el modelo anterior (11 hitos con fechas) ----------
-   Inicio de diseño → Asignación · Envío a gestión de compra → Entrega del diseño · Entrega de terreno → Inicio de obra.
-   Los campos antiguos (r, ov, compras…) se conservan en el registro, sin usarse. */
-const L_TPL=[0,45,20,15,20,10,15,10,10,null,14],L_CDUR={lic:[20,15,20,10,15],CM:[20,0,0,0,15],CA:[15,0,0,0,10]};
-const L_lic=c=>!["CM","CA"].includes(c&&c.tipo);
-const L_app=(c,k)=>L_lic(c)||k===0||k===4;
-function L_plan(p){const ov=Array.isArray(p.ov)?p.ov:[],a=[];a[0]=ov[0]||p.inicio||"";a[1]=ov[1]||add(a[0],L_TPL[1]);
-  const c=(Array.isArray(p.compras)&&p.compras[0])||{tipo:"",ov:[]},d=L_lic(c)?L_CDUR.lic:L_CDUR[c.tipo],cp=[];let prev=a[1];
-  for(let k=0;k<5;k++){if(L_app(c,k)){cp[k]=(c.ov&&c.ov[k])||add(prev,d[k]);prev=cp[k]}else cp[k]=""}
-  for(let k=0;k<5;k++)a[2+k]=(L_app(c,k)&&cp[k])||a[1+k];
-  for(let i=7;i<11;i++)a[i]=ov[i]||add(a[i-1],L_TPL[i]??(+p.plazo||60));return a}
-function migrate(p){
-  const ok=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000&&+v.slice(0,4)<=2100;
-  const W=v=>ok(v)?dW(v):"",r=Array.isArray(p.r)?p.r:[],pl=L_plan(p);
-  p.wm=[W(pl[0]),W(pl[1]),W(pl[8])];
-  p.wr=[W(r[0]),W(r[1]||r[2]),W(r[8]||r[9]||r[10])];
-  const cs=Array.isArray(p.compras)?p.compras:[],mo=c=>+c.monto||0,
-    ma=c=>c.madj===null||c.madj===undefined||c.madj===""?(c.adj?mo(c):null):+c.madj;
-  p.mest=cs.reduce((a,c)=>a+mo(c),0);
-  p.madj=cs.some(c=>ma(c)!==null)?cs.reduce((a,c)=>a+(ma(c)??mo(c)),0):null;
-  /* Las obras ya entregadas al usuario quedan cerradas */
-  if(ok(r[10])&&!p.cerrado&&!p.pausa){p.cerrado=true;p.prioridad=false;p.cerradoDesde=r[10]}
-  p.v=2;return p}
-function norm(p){if(p.v!==2)migrate(p);
-  const okW=v=>typeof v==="string"&&!!wParse(v);
-  ["wm","wr"].forEach(k=>{const a=Array.isArray(p[k])?p[k]:[];p[k]=[0,1,2].map(i=>okW(a[i])?a[i]:"")});
-  p.mest=+p.mest||0;p.madj=p.madj===undefined||p.madj===""||p.madj===null?null:(+p.madj||0);
-  if(!p.resp)p.resp="SD";return p}
+function plan(p){const t=TPL.menor,a=[];
+  a[0]=p.ov[0]||p.inicio;a[1]=p.ov[1]||add(a[0],t.d[1]);
+  const cps=(p.compras||[]).map(c=>compraPlan(c,a[1]));
+  /* Solo la compra principal (la n.º 1) marca el camino del proyecto; las complementarias corren en paralelo */
+  for(let k=0;k<5;k++)a[2+k]=(applies(p.compras[0],k)&&cps[0][k])||a[1+k];
+  for(let i=7;i<NH;i++)a[i]=p.ov[i]||add(a[i-1],t.d[i]??(+p.plazo||t.plazo));
+  a.cps=cps;return a}
+/* Los pasos de compra del proyecto se cumplen cuando todas las compras que los tienen están cumplidas */
+function sync(p){if(!p.compras||!p.compras.length)p.compras=[blankCompra()];
+  const c=p.compras[0];
+  for(let k=0;k<5;k++)p.r[2+k]=applies(c,k)?(c.r[k]||""):(p.r[1+k]||"")}
+/* Estado de las compras complementarias pendientes */
+function compl(p,pl){const out={n:0,late:0,risk:0,worst:null};
+  p.compras.slice(1).forEach((c,j)=>{if(c.r[4])return;out.n++;const cp=pl.cps[j+1],nx=[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]);
+    const t=cp[nx];if(!t)return;const d=diff(t,TODAY);if(d<0)out.late++;else if(d<=14)out.risk++;
+    if(out.worst===null||d<out.worst)out.worst=d});return out}
 
 const UNITS=[{k:"UOI",n:"Unidad de Obras Institucionales"},{k:"UPM",n:"Unidad de Proyectos y Mejoramiento"},
   {k:"UOG",n:"Unidad de Operación y Gestión"},{k:"MANT",n:"Dpto. Mantenimiento"},{k:"SD",n:"Sin definir"}];
 const uName=k=>(UNITS.find(u=>u.k===k)||{n:k||"Sin definir"}).n;
-/* Cartera inicial (solo si la base está vacía) */
+/* Cartera inicial: sin fechas ni hitos cargados */
 function sample(){
-  const mk=(i,nombre,resp)=>Object.assign(blank(),{id:"c"+i,nombre,resp});
-  return[mk(1,"Pabellón FORMA","UOI"),mk(2,"Pabellón ESTADIO","UOI"),mk(3,"Casino Casa Estadio y baños","MANT"),mk(4,"Edificio Vinculación","SD"),
-    mk(5,"Auditorio Bachillerato","UPM"),mk(6,"Teatro Víctor Jara","UPM"),mk(7,"Paraninfo","UPM"),mk(8,"Salón de Honor","UOI")]}
+  const mk=(i,nombre,resp,tipo,usuario="")=>Object.assign(blank(),{id:"c"+i,nombre,resp,tipo,usuario,inicio:"",plazo:TPL[tipo].plazo});
+  return[
+    mk(1,"Pabellón FORMA","UOI","mayor"),
+    mk(2,"Pabellón ESTADIO","UOI","mayor"),
+    mk(3,"Casino Casa Estadio y baños","MANT","menor"),
+    mk(4,"Edificio Vinculación","SD","mayor","Admisión · Of. de Partes · Inclusión · Tienda USACH"),
+    mk(5,"Auditorio Bachillerato","UPM","menor"),
+    mk(6,"Teatro Víctor Jara","UPM","menor"),
+    mk(7,"Paraninfo","UPM","menor"),
+    mk(8,"Salón de Honor","UOI","menor"),
+    mk(9,"Plaza Nodo (ex FACIMED)","UOI","menor"),
+    mk(10,"Baños Admisión 2027","MANT","menor"),
+    mk(11,"Acceso Estadio–DIINF","UOI","menor"),
+    mk(12,"Kioscos FAE","UPM","menor"),
+    mk(13,"Plaza de la Memoria (Romería)","SD","menor"),
+    mk(14,"Paisajismo Frontis","UOI","menor"),
+    mk(15,"Pavimentos FQyB","UPM","menor")
+  ]}
 
 let data=[],F={stage:null,sem:"all",q:"",view:"sum"},openId=null,confirmDel=false;
+/* Migra versiones anteriores: posición vieja -> posición nueva del hito */
+function remap(list,map){return list.map(p=>{const r=Array(NH).fill(""),ov=Array(NH).fill("");
+  map.forEach((n,k)=>{r[n]=p.r[k]||"";ov[n]=p.ov[k]||""});return Object.assign(p,{r,ov})})}
 /* ---------- Datos compartidos (Firestore, colección "avance") ---------- */
 let lastSaved={},ready=false,saveT=null;
+/* Vuelta desde la versión por semanas (v2): recupera lo cargado allí sin pisar fechas existentes */
+function wMonday(s){const m=/^(\d{4})-W(\d{2})$/.exec(s||"");if(!m)return"";const y=+m[1],w=+m[2],j4=new Date(Date.UTC(y,0,4));
+  return new Date(Date.UTC(y,0,4-((j4.getUTCDay()||7)-1)+(w-1)*7)).toISOString().slice(0,10)}
+function backW(p){const nuevo=p.inicio===undefined,wr=Array.isArray(p.wr)?p.wr:[],wm=Array.isArray(p.wm)?p.wm:[];
+  if(!Array.isArray(p.r))p.r=Array(NH).fill("");if(!Array.isArray(p.ov))p.ov=Array(NH).fill("");
+  [[0,0],[1,1],[2,8]].forEach(([k,i])=>{const d=wMonday(wr[k]);if(d&&!p.r[i])p.r[i]=d});
+  if(nuevo){p.inicio=wMonday(wm[0]);p.plazo=p.plazo||60;[[1,1],[2,8]].forEach(([k,i])=>{const d=wMonday(wm[k]);if(d&&!p.ov[i])p.ov[i]=d})}
+  /* Obras cerradas automáticamente al pasar a semanas: vuelven a "Entregado" */
+  if(p.cerrado&&p.cerradoDesde&&p.cerradoDesde===p.r[10]){p.cerrado=false;p.cerradoDesde=""}
+  return p}
+function backMontos(p){if(p.v!==2)return;const cs=p.compras;
+  if(+p.mest&&!cs.some(c=>+c.monto))cs[0].monto=+p.mest;
+  if(p.madj!==null&&p.madj!==undefined&&cs.length===1&&cs[0].madj===null)cs[0].madj=+p.madj}
+function norm(p){
+  if(p.v===2)backW(p);
+  if(!Array.isArray(p.r))p.r=Array(NH).fill("");if(!Array.isArray(p.ov))p.ov=Array(NH).fill("");if(!p.obs)p.obs=[];
+  if(!p.compras){const c=blankCompra();c.r=p.r.slice(2,7);c.ov=p.ov.slice(2,7);c.obs=p.obs||[];p.compras=[c];p.obs=[];for(let k=2;k<7;k++)p.ov[k]=""}
+  const ok=v=>!v||/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000;
+  ["ov","r"].forEach(k=>p[k]=p[k].map(v=>ok(v)?v:""));if(!ok(p.inicio))p.inicio="";
+  p.compras.forEach(c=>{if(c.adj&&c.madj===undefined)c.madj=+c.monto||0;delete c.adj;if(c.madj===undefined)c.madj=null;c.r=c.r.map(v=>ok(v)?v:"");c.ov=c.ov.map(v=>ok(v)?v:"");c.obs=(c.obs||[]).filter(o=>ok(o.d))});
+  backMontos(p);if(p.v===2)p.v=1;
+  sync(p);return p}
 function save(){clearTimeout(saveT);saveT=setTimeout(flushSave,300)}
 function flushSave(){if(!window.FB||!ready)return;const ids=new Set();
-  data.forEach(p=>{ids.add(p.id);const j=JSON.stringify(p);if(lastSaved[p.id]!==j){lastSaved[p.id]=j;FB.put(p.id,JSON.parse(j))}});
+  data.forEach((p,k)=>{ids.add(p.id);const j=JSON.stringify(p);if(lastSaved[p.id]!==j){lastSaved[p.id]=j;FB.put(p.id,JSON.parse(j))}});
   Object.keys(lastSaved).forEach(id=>{if(!ids.has(id)){delete lastSaved[id];FB.del(id)}})}
 /* Cambios que llegan desde Firestore (de esta u otra persona) */
 window.onRemote=docs=>{
   if(!ready&&!docs.length){data=sample().map((p,k)=>Object.assign(p,{orden:k}));data.forEach(norm);ready=true;save();render();return}
   const byId=new Map(data.map(p=>[p.id,p]));const seen=new Set();let mig=false;
-  docs.forEach(d=>{seen.add(d.id);const j=JSON.stringify(d);const cur=byId.get(d.id);if(d.v!==2)mig=true;
+  docs.forEach(d=>{seen.add(d.id);const j=JSON.stringify(d);const cur=byId.get(d.id);if(d.v===2)mig=true;
     /* Si esta obra tiene cambios locales aún sin guardar, no se pisan con la versión remota */
     const dirty=cur&&lastSaved[d.id]!==undefined&&JSON.stringify(cur)!==lastSaved[d.id];
     if(!dirty)lastSaved[d.id]=j;
@@ -502,75 +524,89 @@ window.onRemote=docs=>{
   if(openId&&!data.find(p=>p.id===openId))closePanel();
   ready=true;if(mig)save();render()};
 
-/* ---------- Estado de cada obra ----------
-   Semáforo del próximo hito: atrasado si su semana meta ya pasó; en riesgo si vence esta semana o la próxima. */
 function info(p){
-  const nOk=p.wr.filter(Boolean).length,next=p.wr.findIndex(x=>!x);
-  if(p.cerrado)return{next:-1,stage:3,estado:"Cerrado",hito:"Cerrado",target:"",status:"done",delta:null,nOk,
-    note:p.cerradoDesde?"cerrado en "+wFmt(dW(p.cerradoDesde)):"",wait:null,closed:true};
-  let stage=2,estado="En obra",target="",delta=null,status="obra",hito="Cierre con candado";
-  if(next>=0){stage=next<2?0:1;estado=["Por asignar","Diseño en curso","En proceso de compra"][next];hito=H[next].n;
-    target=p.wm[next];if(target){delta=wIdx(target)-CWI;status=delta<0?"late":delta<=1?"risk":"ok"}else status="none"}
-  const since=next===-1?p.wr[2]:next>0?p.wr[next-1]:"",wait=since?CWI-wIdx(since):null;
-  if(p.pausa)return{next,stage,estado:"Congelado",hito,target,status:"paused",delta:null,nOk,
-    note:[p.pausaMotivo,p.pausaDesde?"desde "+wFmt(dW(p.pausaDesde)):""].filter(Boolean).join(" · "),wait:null,paused:true};
-  const note=next===-1?"desde "+wFmt(p.wr[2]):wait!==null&&wait>0?sem(wait)+" en esta etapa":"";
-  return{next,stage,estado,hito,target,status,delta,nOk,note,wait}
+  const pl=plan(p),next=p.r.findIndex(x=>!x);
+  let last=-1;for(let i=0;i<NH;i++)if(p.r[i])last=i;
+  const acum=last>=0&&pl[last]?diff(p.r[last],pl[last]):null;
+  const nOk=p.r.filter(Boolean).length;
+  const cx=compl(p,pl),cnote=cx.n?(cx.late?cx.late+" complementaria"+(cx.late>1?"s":"")+" atrasada"+(cx.late>1?"s":""):cx.n+" complementaria"+(cx.n>1?"s":"")+" en curso"):"";
+  const worse=(a,b)=>{const o={late:0,risk:1,ok:2,none:3,done:4};return o[a]<=o[b]?a:b};
+  const cst=cx.late?"late":cx.risk?"risk":cx.n?"ok":"done";
+  if(next===-1)return{pl,next,stage:4,estado:"Entregado",hito:"Cerrado",target:p.r[NH-1],status:worse("done",cst),delta:null,acum,nOk,note:cnote,cx};
+  const stage=H[next].s,mainObs=p.compras[0].obs,allObs=p.compras.flatMap(c=>c.obs),openObs=mainObs.filter(o=>!o.ok).length;
+  let estado=["En espera","Diseño en curso","En redacción de bases",
+    openObs?"Con observaciones":mainObs.length?"Observaciones subsanadas":"En tramitación",
+    "Publicado, en período de ofertas","Ofertas abiertas, en evaluación","Adjudicación en tramitación, OC pendiente",
+    "Antecedentes pendientes","Por entregar terreno","En obra","Por entregar"][next];
+  let note=[stage===1&&mainObs.length?mainObs.length+(mainObs.length===1?" ronda":" rondas")+" de observaciones":"",cnote].filter(Boolean).join(" · ");
+  const target=pl[next],delta=target?diff(target,TODAY):null;
+  const since=next>0?p.r[next-1]:"",wait=since?diff(TODAY,since):null;
+  let status=delta===null?"none":delta<0?"late":delta<=14?"risk":"ok";
+  if(!target&&next===0)estado="Sin programar";
+  if(stage===1&&mainObs.length>=2&&status==="ok")status="risk";
+  const mstatus=status;
+  if(status!=="none"&&cx.n)status=worse(status,cst);
+  /* Proyecto cerrado manualmente: cuenta como cerrado y sale de los indicadores activos */
+  if(p.cerrado)return{pl,next:-1,stage:4,estado:"Cerrado",hito:"Cerrado",target:p.cerradoDesde||TODAY,status:"done",mstatus:"done",delta:null,acum,nOk,
+    note:p.cerradoDesde?"cerrado el "+fmt(p.cerradoDesde):"",wait:null,cx,closed:true};
+  /* Proyecto congelado: conserva su etapa, pero sale de semáforos, conteos y cuellos */
+  if(p.pausa)return{pl,next,stage,estado:"Congelado",hito:H[next].n,target,status:"paused",mstatus:"paused",delta:null,acum,nOk,
+    note:[p.pausaMotivo,p.pausaDesde?"desde "+fmt(p.pausaDesde):""].filter(Boolean).join(" · "),wait:null,cx,paused:true};
+  return{pl,next,stage,estado,hito:H[next].n,target,status,mstatus,delta,acum,nOk,note,wait,cx}
 }
-/* Semana vigente de un hito: la real si está cumplido; si no, la meta */
-const wv=(p,k)=>p.wr[k]||p.wm[k];
-const durOf=(p,a,b,kind)=>{const x=kind==="r"?p.wr:p.wm;return x[a]&&x[b]?wIdx(x[b])-wIdx(x[a]):null};
 
-/* ---------- Gantt por semanas ---------- */
+/* ---------- Gantt ---------- */
+function domain(list){let a=null,b=null;
+  list.forEach(({p,i})=>{[...i.pl,...p.r,TODAY].forEach(d=>{if(!d)return;if(!a||d<a)a=d;if(!b||d>b)b=d})});
+  return[add(a,-10),add(b,20)]}
+function ticks(a,b,maxN){const out=[],s=pd(a);let d=new Date(s.getFullYear(),s.getMonth()+1,1,12);
+  const months=Math.max(1,Math.round(diff(b,a)/30));const step=Math.max(1,Math.ceil(months/maxN));
+  while(iso(d)<=b){out.push(iso(d));d=new Date(d.getFullYear(),d.getMonth()+step,1,12)}return out}
 function gantt(list,mode){
-  const pts=({p})=>[...p.wm,...p.wr].filter(Boolean).map(wIdx);
-  const all=list.length;list=list.filter(x=>pts(x).length);
-  if(!list.length)return`<div class="empty">${mode==="one"?"Carga la semana meta de cada hito para ver el Gantt.":all?"Ningún proyecto tiene semanas cargadas todavía.":"No hay proyectos con este filtro."}</div>`;
-  const hidden=all-list.length,ix=list.flatMap(pts);
-  const a=Math.min(CWI,...ix)-1,b=Math.max(CWI,...ix)+3,W=b-a;
-  const X=i=>((i-a)/W*100).toFixed(3)+"%",Wd=(i,j)=>(Math.max(j-i,.5)/W*100).toFixed(3)+"%";
-  const maxN=mode==="one"?8:18,step=[1,2,4,8,13,26,52].find(s=>W/s<=maxN)||52;
-  const tk=[];for(let i=a;i<=b;i++){const w=wParse(wFromIdx(i));if(!(step===1||(w.w-1)%step===0||w.w===1))continue;
-    const last=tk[tk.length-1];if(last&&i-last.i<Math.max(2,step/2)){if(w.w===1)tk.pop();else continue}tk.push({i,w})}
-  const tl=t=>t.w.w===1?String(t.w.y):"S"+t.w.w;
-  const grid=tk.map(t=>`<i class="g-grid" style="left:${X(t.i)}"></i>`).join("");
-  const today=`<i class="g-today" style="left:${X(CWI)}"></i>`;
-  const cls=(p,i,k)=>k<2?(p.wr[k+1]?"d":i.next===k+1&&!i.closed?"c "+i.status:""):(i.closed?"d":i.next===-1?"c obra":"");
-  const seg=(p,i,k)=>{const s=wv(p,k);if(!s)return"";const si=wIdx(s);
-    let ei=k<2?(wv(p,k+1)?wIdx(wv(p,k+1)):null):(p.wr[2]?Math.max(CWI,si)+1:si+1);if(ei===null)return"";
-    return`<i class="g-plan ${cls(p,i,k)}" style="left:${X(si)};width:${Wd(si,ei)}" title="${STAGES[k]}: ${wFmt(s)} → ${k<2?wFmt(wv(p,k+1)):p.wr[2]?"en curso":"—"}"></i>`};
+  const all=list.length;list=list.filter(({p,i})=>i.pl[0]||p.r.some(Boolean));
+  if(!list.length)return`<div class="empty">${mode==="one"?"Ingresa la fecha estimada de Inicio de diseño (sección 1) para generar el plan y ver el Gantt.":all?"Ningún proyecto tiene fechas todavía. Ingresa la fecha estimada de inicio de diseño de cada obra para ver el Gantt.":"No hay proyectos con este filtro."}</div>`;
+  const hidden=all-list.length;
+  const[a,b]=domain(list),W=diff(b,a);
+  const X=d=>(diff(d,a)/W*100).toFixed(3)+"%";
+  const Wd=(d1,d2)=>(Math.max(diff(d2,d1),1)/W*100).toFixed(3)+"%";
+  const tk=ticks(a,b,mode==="one"?6:14);
+  const tl=d=>{const x=pd(d);return x.getMonth()===0?x.getFullYear():x.toLocaleDateString("es-CL",{month:"short"}).replace(".","")};
+  const grid=tk.map(t=>`<i class="g-grid" style="left:${X(t)}"></i>`).join("");
+  const today=`<i class="g-today" style="left:${X(TODAY)}"></i>`;
   let rows;
-  if(mode==="one"){const{p,i}=list[0];
-    rows=STAGES.map((n,k)=>{const s=wv(p,k),e=k<2?wv(p,k+1):"";const d=s&&e?wIdx(e)-wIdx(s):null;
-      const pt=[k,k+1].filter(h=>h<NH&&(h===k||k<2)).map(h=>[p.wm[h]?`<i class="g-pt m" style="left:${X(wIdx(p.wm[h]))}" title="Meta ${H[h].n}: ${wFmt(p.wm[h])}"></i>`:"",p.wr[h]?`<i class="g-pt d" style="left:${X(wIdx(p.wr[h]))}" title="Real ${H[h].n}: ${wFmt(p.wr[h])}"></i>`:""].join("")).join("");
-      return`<div class="g-row static"><div class="g-name"><b>${n}</b><span class="num">${s?wFmt(s)+" → "+(k<2?wFmt(e):p.wr[2]?"en curso":"—"):"Sin semanas"}${d!==null?" · "+sem(d):""}</span></div>
-      <div class="g-track">${grid}${seg(p,i,k)}${pt}${today}</div></div>`}).join("");
+  const stCls=(p,i,k)=>{const e=SPAN[k][1];return p.r[e]?"d":k===i.stage?"c "+i.status:""};
+  const planSeg=(p,i,k)=>{const[s,e]=SPAN[k];if(!i.pl[s]||!i.pl[e])return"";return`<i class="g-plan ${stCls(p,i,k)}" style="left:${X(i.pl[s])};width:${Wd(i.pl[s],i.pl[e])}" title="${STAGES[k]}: ${fmt(i.pl[s])} → ${fmt(i.pl[e])}"></i>`};
+  if(mode==="one"){
+    const{p,i}=list[0];
+    rows=STAGES.map((n,k)=>{const[s,e]=SPAN[k];
+      const pts=[];for(let h=s;h<=e;h++)if(H[h].s===k&&i.pl[h])pts.push(`<i class="g-pt ${p.r[h]?"d":""}" style="left:${X(i.pl[h])}" title="${H[h].n}: ${fmt(i.pl[h])}"></i>`);
+      return`<div class="g-row static"><div class="g-name"><b>${n}</b><span class="num">${fmt(i.pl[s])} → ${fmt(i.pl[e])}</span></div>
+      <div class="g-track">${grid}${planSeg(p,i,k)}${pts.join("")}${today}</div></div>`}).join("");
   }else{
     rows=list.map(({p,i})=>`<button class="g-row${rowCls(p)}" data-id="${p.id}"><div class="g-name"><b>${nm(p)}</b><span>${esc(i.estado)}</span></div>
-      <div class="g-track">${grid}${[0,1,2].map(k=>seg(p,i,k)).join("")}${today}</div></button>`).join("");
+      <div class="g-track">${grid}${[0,1,2,3].map(k=>planSeg(p,i,k)).join("")}${today}</div></button>`).join("");
   }
   return`<div class="gwrap"><div class="gantt">
-    <div class="g-axis"><div class="eyebrow">${mode==="one"?"Etapa":"Proyecto"}</div><div class="g-ticks">${tk.map(t=>`<span style="left:${X(t.i)}${(t.i-a)/W>.93?";transform:translateX(-100%)":""}">${tl(t)}</span>`).join("")}<span class="g-today-l" style="left:${X(CWI)};bottom:auto">S${wParse(CW).w}</span></div></div>
+    <div class="g-axis"><div class="eyebrow">${mode==="one"?"Etapa":"Proyecto"}</div><div class="g-ticks">${tk.map(t=>`<span style="left:${X(t)}">${tl(t)}</span>`).join("")}<span class="g-today-l" style="left:${X(TODAY)};bottom:auto">Hoy</span></div></div>
     ${rows}</div></div>
-    <div class="legend">${hidden?`<span>${hidden} proyecto${hidden>1?"s":""} sin semanas no aparece${hidden>1?"n":""}</span>`:""}<span><i style="height:10px;background:var(--fg)"></i>Etapa cumplida</span><span><i style="height:10px;background:var(--late)"></i><i style="height:10px;background:var(--risk);margin-left:-4px"></i><i style="height:10px;background:var(--ok);margin-left:-4px"></i>Etapa en curso, según semáforo</span><span><i style="height:10px;background:var(--st2)"></i>En obra</span><span><i style="height:10px;background:var(--plan)"></i>Pendiente</span>${mode==="one"?`<span>◇ meta · ◆ real</span>`:""}</div>`;
+    <div class="legend">${hidden?`<span>${hidden} proyecto${hidden>1?"s":""} sin fechas no aparece${hidden>1?"n":""}</span>`:""}<span><i style="height:10px;background:var(--fg)"></i>Etapa cumplida</span><span><i style="height:10px;background:var(--late)"></i><i style="height:10px;background:var(--risk);margin-left:-4px"></i><i style="height:10px;background:var(--ok);margin-left:-4px"></i>Etapa en curso, según semáforo</span><span><i style="height:10px;background:var(--plan)"></i>Pendiente</span><span>Fechas estimadas</span></div>`;
 }
 
 /* ---------- Vista principal ---------- */
 function render(){
-  document.getElementById("today").textContent="Semana "+wParse(CW).w+" · "+CY;
-  document.getElementById("today").title=wRange(CW);
+  document.getElementById("today").textContent=T.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"});
   const I=data.map(p=>({p,i:info(p)}));
   const st=document.getElementById("stages");
   st.innerHTML=STAGES.map((n,k)=>{
     const g=I.filter(x=>x.i.stage===k&&!x.i.paused),l=g.filter(x=>x.i.status==="late").length,r=g.filter(x=>x.i.status==="risk").length;
-    const sub=k===2?(g.length?"se cierran con el candado":"—"):(l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados")+(r?` · ${r} en riesgo`:"");
     return`<button class="stage" data-k="${k}" aria-pressed="${F.stage===k}"><span class="k">${k+1} · ${n}</span><span class="n num">${g.length}</span>
-      <span class="s num">${sub}</span></button>`}).join("")+(()=>{
-    const g=I.filter(x=>x.i.stage===3);
-    return`<button class="stage" data-k="3" aria-pressed="${F.stage===3}"><span class="k">4 · Terminados</span><span class="n num">${g.length}</span>
-      <span class="s num">cerrados con candado</span></button>`})();
+      <span class="s num">${l?`<span class="l">${l} atrasado${l>1?"s":""}</span>`:"0 atrasados"}${r?` · ${r} en riesgo`:""}</span></button>`}).join("")+(()=>{
+    /* Terminados: obras con la entrega al usuario cumplida o cerradas con candado */
+    const g=I.filter(x=>x.i.stage===4&&!x.i.paused),c=g.filter(x=>x.i.closed).length,e=g.length-c;
+    return`<button class="stage" data-k="4" aria-pressed="${F.stage===4}"><span class="k">5 · Terminados</span><span class="n num">${g.length}</span>
+      <span class="s num">${e} entregado${e===1?"":"s"} · ${c} cerrado${c===1?"":"s"}</span></button>`})();
   st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
-  const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,obra:4,done:5,paused:6};
+  const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
   const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(!F.pri||p.prioridad)&&(!F.cl||p.cerrado)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
       &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q)))
     .sort((a,b)=>(!!b.p.prioridad-!!a.p.prioridad)||order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
@@ -578,20 +614,20 @@ function render(){
   if(F.view==="sum"){M.innerHTML=resumen(rows,I)}
   else if(F.view==="fin"){M.innerHTML=finanzas(rows)}
   else if(F.view==="gantt"){
-    const k0=x=>{const s=wv(x.p,0)||wv(x.p,1)||wv(x.p,2);return s?wIdx(s):1e9};
-    M.innerHTML=gantt([...rows].sort((a,b)=>k0(a)-k0(b)),"all");
+    const byStart=[...rows].sort((a,b)=>(a.i.pl[0]||"9")<(b.i.pl[0]||"9")?-1:1);
+    M.innerHTML=gantt(byStart,"all");
   }else if(!rows.length){M.innerHTML=`<div class="empty">No hay proyectos con este filtro.</div>`}
   else{
-    M.innerHTML=`<div class="cols"><div>Proyecto</div><div>Estado</div><div>Avance</div><div>Próximo hito</div><div class="r">Semanas</div></div>`+
+    M.innerHTML=`<div class="cols"><div>Proyecto</div><div>Estado</div><div>Avance</div><div>Próximo hito</div><div class="r">Días</div></div>`+
     rows.map(({p,i})=>{
-      const bars=H.map((h,k)=>`<i class="${p.wr[k]?"d":k===i.next?"n "+i.status:""}"></i>`).join("");
-      const dl=i.paused?"‖":i.closed?"✓":i.delta===null?"—":(i.delta<0?"+"+(-i.delta):i.delta);
-      const dlab=i.paused?"congelado":i.closed?"cerrado":i.next===-1?"en obra":i.delta===null?"sin meta":(i.delta<0?"de atraso":"restantes");
+      const bars=H.map((h,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}${k&&h.s!==H[k-1].s?" sep":""}"></i>`).join("");
+      const dl=i.paused?"‖":i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
+      const dlab=i.paused?"congelado":i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
       return`<button class="row${rowCls(p)}" data-id="${p.id}">
-        <div class="c-name"><div class="p-name">${nm(p)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}</div></div>
+        <div class="c-name"><div class="p-name">${nm(p)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
         <div class="c-estado estado"><span class="dot ${i.closed?"closed":i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
-        <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${i.closed?"Cerrado":STAGES[i.stage]}</span></div></div>
-        <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.paused?"Congelado":i.closed?"":i.next===-1?"Obra iniciada en "+wFmt(p.wr[2]):"Meta "+wFmt(i.target)}</small></div>
+        <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${STAGES[i.stage]||"Cerrado"}</span></div></div>
+        <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.paused?"Congelado":(i.closed?"Cerrado el ":i.status==="done"?"Entregado el ":"Plan ")+fmt(i.target)}</small></div>
         <div class="c-delta r delta num ${i.status==="late"?"late":""}">${dl}<small>${dlab}</small></div></button>`}).join("");
   }
   M.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>openPanel(b.dataset.id));
@@ -600,19 +636,20 @@ function render(){
 
 /* ---------- Cuellos de botella ---------- */
 function cuellos(I){
-  const act=I.filter(x=>x.i.next>=0&&!x.i.paused&&!x.i.closed);
-  const LB=["Esperando asignación","En diseño (falta la entrega)","En compra (falta el inicio de obra)"];
+  const act=I.filter(x=>x.i.next!==-1&&x.i.mstatus!=="none"&&!x.i.paused);
   const per=H.map((h,k)=>{const g=act.filter(x=>x.i.next===k);const w=g.map(x=>x.i.wait).filter(v=>v!==null);
-    return{k,n:g.length,l:g.filter(x=>x.i.status==="late").length,r:g.filter(x=>x.i.status==="risk").length,
+    return{k,h,n:g.length,l:g.filter(x=>x.i.mstatus==="late").length,r:g.filter(x=>x.i.mstatus==="risk").length,
       avg:w.length?Math.round(w.reduce((a,b)=>a+b,0)/w.length):null,names:g.map(x=>x.p.nombre)}});
   const mx=Math.max(1,...per.map(x=>x.n)),top=Math.max(...per.map(x=>x.l*100+x.n));
-  const sinf=act.filter(x=>x.i.status==="none").length;
-  return`<div class="sum-h"><h2>Cuellos de botella</h2><span>Obras detenidas antes de cada hito · rojo = atrasadas, ámbar = en riesgo</span></div>
+  const sinf=I.filter(x=>x.i.status==="none").length;
+  return`<div class="sum-h"><h2>Cuellos de botella</h2><span>Obras detenidas en cada hito · rojo = atrasadas, ámbar = en riesgo</span></div>
   <div class="bn">${per.map(x=>`<div class="bn-r ${x.n&&x.l*100+x.n===top?"max":""}" title="${esc(x.names.join(" · "))}">
-    <span class="st">${["ASG","DIS","COM"][x.k]}</span><b>${LB[x.k]}</b>
+    <span class="st">${["DIS","DIS","COM","COM","COM","COM","COM","EJE","EJE","EJE","ENT"][x.k]}</span><b>${x.h.n}</b>
     <div class="bn-bar">${x.l?`<i class="bl" style="width:${x.l/mx*100}%"></i>`:""}${x.r?`<i class="br" style="width:${x.r/mx*100}%"></i>`:""}${x.n-x.l-x.r?`<i class="bo" style="width:${(x.n-x.l-x.r)/mx*100}%"></i>`:""}</div>
-    <span class="m num">${x.n?`<b>${x.n}</b> obra${x.n>1?"s":""}${x.avg!==null?` · ${x.avg} sem. promedio`:""}`:"—"}</span></div>`).join("")}</div>
-  ${sinf?`<p class="note">${sinf} obra${sinf>1?"s":""} sin semana meta para su próximo hito: no se puede saber si está${sinf>1?"n":""} atrasada${sinf>1?"s":""}.</p>`:""}`;
+    <span class="m num">${x.n?`<b>${x.n}</b> obra${x.n>1?"s":""}${x.avg!==null?` · ${x.avg} d detenidas`:""}`:"—"}</span></div>`).join("")}</div>
+  ${(()=>{const c=I.reduce((a,x)=>({n:a.n+(x.i.cx?x.i.cx.n:0),l:a.l+(x.i.cx?x.i.cx.late:0)}),{n:0,l:0});
+    return c.n?`<p class="note"><b style="color:var(--fg)">Compras complementarias en paralelo:</b> ${c.n} pendiente${c.n>1?"s":""}${c.l?` · <span style="color:var(--late);font-weight:600">${c.l} atrasada${c.l>1?"s":""}</span>`:""}. No se cuentan en las barras, que muestran solo el camino principal de cada obra.</p>`:""})()}
+  ${sinf?`<p class="note">${sinf} obra${sinf>1?"s":""} sin fecha estimada no entra${sinf>1?"n":""} en este gráfico.</p>`:""}`;
 }
 
 /* ---------- Obras de verano: sol al lado del nombre ---------- */
@@ -638,154 +675,197 @@ function setFlag(p,f,on){p[f]=on;
 function toggleFlag(id,f){const p=data.find(x=>x.id===id);if(!p)return;setFlag(p,f,!p[f]);save();render()}
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-flag]");if(!t)return;e.stopPropagation();e.preventDefault();toggleFlag(t.dataset.pid,t.dataset.flag)},true);
 document.addEventListener("keydown",e=>{const t=e.target.closest&&e.target.closest("[data-flag]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();e.stopPropagation();toggleFlag(t.dataset.pid,t.dataset.flag)}},true);
-/* ---------- Finanzas: monto estimado y monto adjudicado (contrato) por obra ---------- */
+
+/* ---------- Finanzas ----------
+   Cada compra tiene su monto estimado (en Compra) y su monto adjudicado (en Ejecución).
+   Adjudicado = compras con monto de contrato cargado. Estimado = el resto. */
 function finanzas(rows){
-  if(!rows.length)return`<div class="empty">No hay proyectos con este filtro.</div>`;
-  const all=rows.map(({p,i})=>({p,i,m:vig(p),e:+p.mest||0,oc:p.madj!==null}));
+  const all=rows.flatMap(({p,i})=>p.compras.map((c,j)=>({p,i,c,j,m:vig(c),e:+c.monto||0,oc:madjOf(c)!==null,ocE:!!c.r[4]})));
   const sum=a=>a.reduce((s,x)=>s+x.m,0);
   const tot=sum(all),com=sum(all.filter(x=>x.oc)),pro=tot-com;
-  const sinM=all.filter(x=>!x.m).length;
-  const porCorregir=all.filter(x=>x.p.wr[2]&&!x.oc&&!x.p.pausa);
+  const sinM=rows.filter(({p})=>!montoTotal(p)).length;
+  const porCorregir=all.filter(x=>x.ocE&&!x.oc);
   const adjE=all.filter(x=>x.oc).reduce((s,x)=>s+x.e,0),varA=com-adjE;
   const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
   const bars=(groups)=>{const mx=Math.max(1,...groups.map(g=>g.t));
     return`<div class="fb">${groups.map(g=>`<div class="fb-r"><b>${g.n}</b>
       <div class="fb-bar" title="Adjudicado ${clp(g.c)} · Estimado ${clp(g.t-g.c)}"><i class="c" style="width:${g.c/mx*100}%"></i><i class="p" style="width:${(g.t-g.c)/mx*100}%"></i></div>
       <span class="m num"><b>${clpM(g.t)}</b>${g.sub?" · "+g.sub:""}</span></div>`).join("")}</div>`};
-  const grp=(n,g)=>({n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:g.length+" obra"+(g.length===1?"":"s")});
-  const byUnit=UNITS.map(u=>grp(u.n,all.filter(x=>x.p.resp===u.k))).filter(g=>g.t||g.sub!=="0 obras");
-  const byStage=["Diseño","Compra","Ejecución","Cerrado"].map((n,k)=>grp(n,all.filter(x=>x.i.stage===k))).filter(g=>g.t);
-  const tab=[...all].sort((a,b)=>b.m-a.m).map(({p,i,m,e,oc})=>`<tr class="click${rowCls(p)}" data-id="${p.id}"><td><b>${nm(p)}</b><small>${esc(uName(p.resp))}</small></td>
-      <td>${i.closed?"Cerrado":STAGES[i.stage]}</td>
-      <td class="r num">${e?clp(e):"—"}</td><td class="r num">${oc?clp(p.madj):"—"}</td><td class="r num"><strong>${clp(m)}</strong></td></tr>`).join("");
+  const byUnit=UNITS.map(u=>{const g=all.filter(x=>x.p.resp===u.k);return{n:u.n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:rows.filter(r=>r.p.resp===u.k).length+" obras"}}).filter(g=>g.t||g.sub!=="0 obras");
+  const byType=CTYPES.map(t=>{const g=all.filter(x=>(x.c.tipo||"")===t.k);return{n:t.k?t.n:"Tipo por definir",t:sum(g),c:sum(g.filter(x=>x.oc)),sub:g.length+" compra"+(g.length===1?"":"s")}}).filter(g=>g.t);
+  const byStage=["Diseño","Compra","Ejecución","Entrega","Cerrado"].map((n,k)=>{const g=all.filter(x=>x.i.stage===k);return{n,t:sum(g),c:sum(g.filter(x=>x.oc)),sub:new Set(g.map(x=>x.p.id)).size+" obras"}}).filter(g=>g.t);
+  const tab=[...rows].sort((a,b)=>montoTotal(b.p)-montoTotal(a.p)).map(({p,i})=>{
+    const c=sum(p.compras.filter(x=>madjOf(x)!==null).map(x=>({m:madjOf(x)}))),t=montoTotal(p);
+    return`<tr class="click${rowCls(p)}" data-id="${p.id}"><td><b>${nm(p)}</b><small>${esc(uName(p.resp))}</small></td>
+      <td>${p.compras.map(x=>`${x.tipo||"s/t"}${x.desc?" · "+esc(x.desc):""}`).join("<br>")}</td>
+      <td>${STAGES[i.stage]||"Cerrado"}</td>
+      <td class="r num">${t?clp(c):"—"}</td><td class="r num">${t?clp(t-c):"—"}</td><td class="r num"><b>${clp(t)}</b></td></tr>`}).join("");
+  if(!rows.length)return`<div class="empty">No hay proyectos con este filtro.</div>`;
   return`<div class="fk num">
-      <div><b>${clpM(tot)}</b><span>Costo total de la cartera</span><i>${all.filter(x=>x.m).length} obras con monto</i></div>
+      <div><b>${clpM(tot)}</b><span>Costo total de la cartera</span><i>${(n=>n+(n===1?" compra":" compras")+" con monto")(all.filter(x=>x.m).length)}</i></div>
       <div><b>${clpM(com)}</b><span>Adjudicado (contratos)</span><i>${pct(com,tot)} del total${adjE&&varA?` · ${varA>0?"+":"−"}${clpM(Math.abs(varA))} vs estimado`:""}</i></div>
       <div><b>${clpM(pro)}</b><span>Estimado (sin adjudicar)</span><i>${pct(pro,tot)} del total</i></div>
       <div><b>${sinM}</b><span>Obras sin monto cargado</span><i>de ${rows.length} en vista</i></div></div>
     <div class="legend"><span><i style="height:10px;background:var(--fg)"></i>Adjudicado (contrato)</span><span><i style="height:10px;background:var(--st1)"></i>Estimado (sin adjudicar)</span>${F.ver||F.frz||F.pri||F.cl||F.stage!==null||F.sem!=="all"||F.q?"<span>Montos según el filtro activo</span>":""}</div>
     <div class="sum-h"><h2>Por unidad</h2></div>${bars(byUnit)}
+    ${byType.length?`<div class="sum-h"><h2>Por tipo de compra</h2></div>${bars(byType)}`:""}
     ${byStage.length?`<div class="sum-h"><h2>Por etapa de la obra</h2></div>${bars(byStage)}`:""}
-    <div class="sum-h"><h2>Detalle por obra</h2><span>Ordenado por costo vigente (adjudicado si existe; si no, estimado)</span></div>
-    <div class="gwrap"><table class="ft"><thead><tr><th>Obra</th><th>Etapa</th><th class="r">Estimado</th><th class="r">Adjudicado</th><th class="r">Vigente</th></tr></thead>
-    <tbody>${tab}</tbody><tfoot><tr><td colspan="2">Total</td><td class="r num">${clp(all.reduce((s,x)=>s+x.e,0))}</td><td class="r num">${clp(com)}</td><td class="r num">${clp(tot)}</td></tr></tfoot></table></div>
-    ${porCorregir.length?`<p class="note" style="color:var(--risk)"><b>${porCorregir.length} obra${porCorregir.length>1?"s":""} con obra iniciada sin monto adjudicado:</b> ${porCorregir.map(x=>esc(x.p.nombre)).join(", ")}. Abre la obra y carga el monto del contrato.</p>`:""}
-    ${sinM?`<p class="note">${sinM} obra${sinM>1?"s":""} sin monto: ábrelas y agrega el monto estimado para que entren a estos totales.</p>`:""}`;
+    <div class="sum-h"><h2>Detalle por obra</h2><span>Ordenado por costo total</span></div>
+    <div class="gwrap"><table class="ft"><thead><tr><th>Obra</th><th>Compras</th><th>Etapa</th><th class="r">Adjudicado</th><th class="r">Estimado</th><th class="r">Total</th></tr></thead>
+    <tbody>${tab}</tbody><tfoot><tr><td colspan="3">Total</td><td class="r num">${clp(com)}</td><td class="r num">${clp(pro)}</td><td class="r num">${clp(tot)}</td></tr></tfoot></table></div>
+    ${porCorregir.length?`<p class="note" style="color:var(--risk)"><b>${porCorregir.length} compra${porCorregir.length>1?"s":""} con OC emitida sin monto adjudicado:</b> ${porCorregir.map(x=>esc(x.p.nombre)+(x.c.tipo?" ("+x.c.tipo+")":"")).join(", ")}. Abre la obra y cárgalo en la sección Ejecución.</p>`:""}
+    ${sinM?`<p class="note">${sinM} obra${sinM>1?"s":""} sin monto: ábrelas y agrega el monto en cada compra para que entren a estos totales.</p>`:""}`;
 }
 
 /* ---------- Resumen integrado ---------- */
 function resumen(rows,I){
-  const SL=["Diseño","Compra","Ejecución","Cerrado"];
+  const SL=["Diseño","Compra","Ejecución","Entrega","Cerrado"];
   const cnt=a=>({l:a.filter(x=>x.i.status==="late").length,r:a.filter(x=>x.i.status==="risk").length,n:a.filter(x=>x.i.status==="none").length});
   const tot=cnt(I);
   const ubars=UNITS.map(u=>{const g=I.filter(x=>x.p.resp===u.k);const c=cnt(g);
     const pz=g.filter(x=>x.i.paused).length;
-    const segs=[0,1,2,3].map(k=>{const n=g.filter(x=>x.i.stage===k&&!x.i.paused).length;return n?`<i class="s${k===3?4:k}" style="flex:${n}" title="${SL[k]}: ${n}">${n}</i>`:""}).join("")+(pz?`<i class="sp" style="flex:${pz}" title="Congelados: ${pz}">${pz}</i>`:"");
+    const segs=[0,1,2,3,4].map(k=>{const n=g.filter(x=>x.i.stage===k&&!x.i.paused).length;return n?`<i class="s${k}" style="flex:${n}" title="${SL[k]}: ${n}">${n}</i>`:""}).join("")+(pz?`<i class="sp" style="flex:${pz}" title="Congelados: ${pz}">${pz}</i>`:"");
     return`<div class="u-row"><b>${u.n}</b><div class="u-bar">${g.length?segs:`<i class="e">Sin proyectos asignados</i>`}</div>
-      <span class="u-n num">${g.length} obra${g.length===1?"":"s"}${g.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(g.reduce((a,x)=>a+montoTotal(x.p),0)):""}${c.l?` · <span class="l">${c.l} atrasada${c.l>1?"s":""}</span>`:""}${c.n?` · ${c.n} sin meta`:""}${pz?` · ${pz} congelada${pz>1?"s":""}`:""}</span></div>`}).join("");
-  const legend=`<div class="legend">${SL.map((n,k)=>`<span><i class="s${k===3?4:k}" style="height:12px"></i>${n}</span>`).join("")}<span><i class="sp" style="height:12px"></i>Congelado</span></div>`;
-  const head=`<div class="mx-r mx-h"><span>Obra</span>${H.map(h=>`<span class="c">${h.c}</span>`).join("")}<span>Estado</span><span>Próximo hito</span></div>`;
-  /* Celda de hito: semana real (negro) o semana meta (borde según semáforo si es el próximo hito) */
-  const cell=(p,i,k)=>{const m=p.wm[k],r=p.wr[k];
-    if(r){const d=m?wIdx(r)-wIdx(m):0;return`<span class="wk d" title="${H[k].n}: real ${wFmt(r)}${m?" · meta "+wFmt(m):""}">${wFmt(r)}${d>0?`<sup>+${d}</sup>`:""}</span>`}
-    const nx=k===i.next&&!i.paused&&!i.closed;
-    return m?`<span class="wk${nx?" n "+i.status:""}" title="${H[k].n}: meta ${wFmt(m)}">${wFmt(m)}</span>`:`<span class="wk e${nx?" n none":""}" title="${H[k].n}: sin semana meta">—</span>`};
+      <span class="u-n num">${g.length} obra${g.length===1?"":"s"}${g.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(g.reduce((a,x)=>a+montoTotal(x.p),0)):""}${c.l?` · <span class="l">${c.l} atrasada${c.l>1?"s":""}</span>`:""}${c.n?` · ${c.n} sin fechas`:""}${pz?` · ${pz} congelada${pz>1?"s":""}`:""}</span></div>`}).join("");
+  const legend=`<div class="legend">${SL.map((n,k)=>`<span><i class="s${k}" style="height:12px"></i>${n}</span>`).join("")}<span><i class="sp" style="height:12px"></i>Congelado</span></div>`;
+  const head=`<div class="mx-r mx-h"><span>Obra</span><div class="cells"><span style="grid-column:1/3">Diseño</span><span style="grid-column:4/9">Compra</span><span style="grid-column:10/13">Ejecución</span><span style="grid-column:14/15">Entrega</span></div><span>Estado</span><span>Próximo hito</span></div>`;
+  const cell=(p,i,k)=>`<i class="${p.r[k]?"d":k===i.next?"n "+i.status:""}" title="${H[k].n}${p.r[k]?": "+fmt(p.r[k]):i.pl[k]?" · plan "+fmt(i.pl[k]):""}"></i>`;
+  const cells=(p,i)=>[0,1,"g",2,3,4,5,6,"g",7,8,9,"g",10].map(k=>k==="g"?`<b class="gap"></b>`:cell(p,i,k)).join("");
   const groups=UNITS.map(u=>{const g=rows.filter(x=>x.p.resp===u.k);if(!g.length)return"";
     return`<div class="mx-u"><b>${u.n}</b><span class="num">${g.length} obra${g.length===1?"":"s"}</span></div>`+
-    g.map(({p,i})=>`<button class="mx-r${rowCls(p)}" data-id="${p.id}"><div class="mx-name"><b>${nm(p)}</b><small class="num">${montoTotal(p)?clpM(montoTotal(p)):""}</small></div>
-      ${H.map((h,k)=>cell(p,i,k)).join("")}
+    g.map(({p,i})=>`<button class="mx-r${rowCls(p)}" data-id="${p.id}"><div class="mx-name"><b>${nm(p)}</b><small class="num">${[montoTotal(p)?clpM(montoTotal(p)):"",p.compras.map(c=>c.tipo).filter(Boolean).join(" + ")].filter(Boolean).join(" · ")}</small></div>
+      <div class="cells">${cells(p,i)}</div>
       <div class="estado"><span class="dot ${i.closed?"closed":i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
-      <div class="mx-nx">${i.paused?"<b>Congelado</b>Fuera de los indicadores":i.closed?"<b>Cerrado</b>":i.next===-1?"<b>En obra</b>Cierre con candado":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin meta":i.delta<0?"+"+sem(-i.delta)+" de atraso":i.delta===0?"Vence esta semana":sem(i.delta)}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
-  return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin meta${I.filter(x=>x.i.paused).length?" · "+I.filter(x=>x.i.paused).length+" congeladas":""}</span></div>
+      <div class="mx-nx">${i.paused?"<b>Congelado</b>Fuera de los indicadores":i.closed?"<b>Cerrado</b>"+(p.cerradoDesde?fmt(p.cerradoDesde):""):i.status==="done"?"<b>Entregado</b>":`<b class="num ${i.status==="late"?"late":""}">${i.delta===null?"Sin fecha":i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"}</b>${esc(i.hito)}`}</div></button>`).join("")}).join("");
+  return`<div class="sum-h"><h2>Cartera por unidad</h2><span class="num">${I.length} obras${I.reduce((a,x)=>a+montoTotal(x.p),0)?" · "+clpM(I.reduce((a,x)=>a+montoTotal(x.p),0)):""} · ${tot.l} atrasadas · ${tot.r} en riesgo · ${tot.n} sin fechas${I.filter(x=>x.i.paused).length?" · "+I.filter(x=>x.i.paused).length+" congeladas":""}</span></div>
     <div class="units">${ubars}</div>${legend}
     ${cuellos(I)}
-    <div class="sum-h"><h2>Hitos por semana</h2><span>Negro = cumplido (semana real; +n = semanas de atraso) · borde de color = próximo hito según semáforo · hoy es S${wParse(CW).w}</span></div>
+    <div class="sum-h"><h2>Avance por hito</h2><span>■ cumplido · □ pendiente · borde de color = próximo hito según semáforo</span></div>
     <div class="gwrap"><div class="mx">${head}${groups||`<div class="empty">No hay proyectos con este filtro.</div>`}</div></div>
-    ${tot.n?`<p class="note">Las obras "sin meta" no tienen semana meta para su próximo hito. Ábrelas y cárgala para que entren al semáforo.</p>`:""}`;
+    ${tot.n?`<p class="note">Las obras sin fechas aparecen como "Sin programar". Abre cada una e ingresa la fecha estimada de inicio de diseño: el resto de las fechas se genera solo.</p>`:""}`;
 }
 
 /* ---------- Panel del proyecto ---------- */
 const panel=document.getElementById("panel"),scrim=document.getElementById("scrim");
-/* El panel no se redibuja mientras se escribe en un campo de texto o número; se redibuja al salir */
-let pending=false,ptrDown=false,editingDate=false;
+/* Fecha completa: año de 4 cifras desde 2000. Evita guardar mientras se escribe el año */
+const okDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&+v.slice(0,4)>=2000&&+v.slice(0,4)<=2100;
+/* El panel no se redibuja mientras se escribe en un campo (texto, número o fecha); se redibuja al salir */
+let delC=-1,pending=false,ptrDown=false,editingDate=false;
 function flush(){if(pending&&openId&&!ptrDown&&!editingDate){pending=false;drawPanel()}}
 const isEd=t=>t&&(t.tagName==="TEXTAREA"||["date","text","number","search"].includes(t.type));
 panel.addEventListener("focusin",e=>{if(isEd(e.target))editingDate=true});
 document.addEventListener("pointerdown",()=>{ptrDown=true},true);
 document.addEventListener("pointerup",()=>{setTimeout(()=>{ptrDown=false;flush()},0)},true);
 panel.addEventListener("focusout",e=>{if(isEd(e.target)){editingDate=false;setTimeout(flush,0)}});
-function openPanel(id){openId=id;confirmDel=false;drawPanel();panel.hidden=false;scrim.hidden=false;panel.scrollTop=0;setTimeout(()=>panel.querySelector(".x")?.focus(),0)}
+function openPanel(id){openId=id;confirmDel=false;delC=-1;drawPanel();panel.hidden=false;scrim.hidden=false;panel.scrollTop=0;setTimeout(()=>panel.querySelector(".x")?.focus(),0)}
 function closePanel(){openId=null;panel.hidden=true;scrim.hidden=true}
 scrim.onclick=closePanel;
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&openId)closePanel()});
 
-/* Selector de semana: número de semana + año */
-function wpick(kind,k,val){const p=wParse(val),y=p?p.y:CY,n=weeksIn(y);
-  const years=[...new Set([CY-2,CY-1,CY,CY+1,CY+2,CY+3,y])].sort();
-  const lab=(kind==="m"?"Semana meta ":"Semana real ")+H[k].n;
-  return`<span class="wp ${kind==="m"?"wpm":"wpr"}" title="${p?wRange(val):""}"><small class="wl">${kind==="m"?"Meta":"Real"}</small>
-    <select id="wp-${kind}-${k}-w" data-wp="${kind}:${k}" data-part="w" aria-label="${lab}"><option value="">S —</option>${Array.from({length:n},(_,i)=>`<option value="${i+1}" ${p&&p.w===i+1?"selected":""}>S${i+1}</option>`).join("")}</select>
-    <select id="wp-${kind}-${k}-y" data-wp="${kind}:${k}" data-part="y" aria-label="Año ${lab}">${years.map(v=>`<option value="${v}" ${v===y?"selected":""}>${v}</option>`).join("")}</select></span>`}
-
 function drawPanel(){
   const p=data.find(x=>x.id===openId);if(!p){closePanel();return}
-  const i=info(p),keep=panel.scrollTop,focusId=panel.contains(document.activeElement)?document.activeElement.id:"",total=montoTotal(p);
-  const lateB=d=>`<b class="${d<0?"late":""}">${d<0?"+"+sem(-d)+" de atraso":d===0?"vence esta semana":sem(d)+" restantes"}</b>`;
-  const hit=H.map((h,k)=>{const m=p.wm[k],r=p.wr[k];
-    const st=r?(m&&wIdx(r)>wIdx(m)?`<span class="dl late">cumplido con ${sem(wIdx(r)-wIdx(m))} de atraso</span>`:`<span class="dl">cumplido</span>`):k===i.next&&m&&!i.paused?lateB(wIdx(m)-CWI):"";
-    return`<div class="hrow ${r?"done":""}">
-      <input type="checkbox" id="h-${k}" data-h="${k}" ${r?"checked":""} aria-label="Cumplido: ${h.n}">
-      <label class="nm" for="h-${k}">${h.n}<small>${st}</small></label>
-      ${wpick("m",k,m)}
-      ${r?wpick("r",k,r):`<span class="wp wpr wnone">—</span>`}</div>`}).join("");
-  const durs=[["Diseño",0,1],["Compra",1,2]].map(([n,a,b])=>{const dm=durOf(p,a,b,"m"),dr=durOf(p,a,b,"r");
-    return`<div class="du"><b>${n}</b><span>${dr!==null?sem(dr):"—"}</span><span>${dm!==null?sem(dm):"sin meta"}</span>${dr!==null&&dm!==null&&dr!==dm?`<span class="${dr>dm?"late":""}">${dr>dm?"+":"−"}${sem(Math.abs(dr-dm))}</span>`:"<span></span>"}</div>`}).join("");
-  const dAdj=p.madj!==null&&p.mest?p.madj-p.mest:0;
+  const i=info(p),pl=i.pl,keep=panel.scrollTop,focusId=panel.contains(document.activeElement)?document.activeElement.id:"";
+  const fin=p.r[NH-1]||pl[NH-1],total=montoTotal(p);
+  const lateB=(d)=>`<b class="${d<0?"late":""}" style="display:inline">${d<0?"+"+(-d)+" d atraso":d+" d"}</b>`;
+  const compras=()=>{
+    const rows=p.compras.map((c,j)=>{const cp=pl.cps[j],nx=[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]);
+      const steps=[0,1,2,3,4].filter(k=>applies(c,k)).map(k=>`<div class="hrow ${c.r[k]?"done":""}">
+        <input type="checkbox" id="cc-${j}-${k}" data-cc="${j}:${k}" ${c.r[k]?"checked":""}>
+        <label class="nm" for="cc-${j}-${k}">${stepName(c,k)}</label>
+        <span class="pl"><input type="date" id="cpl-${j}-${k}" data-cpl="${j}:${k}" class="${c.ov[k]?"ov":""}" value="${cp[k]||""}" aria-label="Fecha estimada ${stepName(c,k)}">${c.ov[k]?`<button class="rs" data-crs="${j}:${k}" title="Volver a la plantilla" aria-label="Volver a la plantilla">↺</button>`:""}</span>
+        <span class="mx-nx num">${!c.r[k]&&k===nx&&cp[k]?lateB(diff(cp[k],TODAY)):""}</span></div>
+        ${k===0?`<div class="obs"><span class="lbl">Rondas de observaciones en tramitación</span>
+          ${c.obs.map((o,q)=>`<div class="obs-r"><span class="num">#${q+1}</span><input type="date" id="o-d-${j}-${q}" data-obs="${j}:${q}" data-f="d" value="${o.d}" aria-label="Fecha observación ${q+1}">
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-obsok="${j}:${q}" ${o.ok?"checked":""}>Subsanada</label>
+          ${o.ok?`<input type="date" id="o-ok-${j}-${q}" data-obs="${j}:${q}" data-f="ok" value="${o.ok}" aria-label="Fecha subsanación ${q+1}">`:"<span></span>"}
+          <button class="rs" data-obsdel="${j}:${q}" aria-label="Quitar ronda">×</button></div>`).join("")}
+          <button class="addobs" data-addobs="${j}">+ Registrar observaciones (hoy)</button></div>`:""}`).join("");
+      return`<div class="cp">
+        <div class="cp-tag"><b>${j?"Compra complementaria":"Compra principal"}</b><span>${j?"Corre en paralelo; no detiene la obra":"Define el avance del proyecto hacia Ejecución"}</span>${j?`<div class="cp-act"><button class="addobs" data-cmain="${j}">Hacer principal</button><button class="addobs del" data-cdel="${j}">${delC===j?"¿Eliminar? Confirmar":"Eliminar compra"}</button></div>`:""}</div>
+        <div class="cp-h"><span class="cp-n num">${j+1}</span>
+          <div class="f"><label for="c-tipo-${j}">Tipo</label><select id="c-tipo-${j}" data-cf="${j}:tipo">${CTYPES.map(t=>`<option value="${t.k}" ${c.tipo===t.k?"selected":""}>${t.n}</option>`).join("")}</select></div>
+          <div class="f"><label for="c-desc-${j}">Qué se compra</label><input type="text" id="c-desc-${j}" data-cf="${j}:desc" value="${esc(c.desc)}" placeholder="Ej. obra civil, mobiliario"></div>
+          <div class="f"><label for="c-monto-${j}">Monto estimado (CLP)</label><input type="text" inputmode="numeric" id="c-monto-${j}" data-cf="${j}:monto" class="num" value="${c.monto?Math.round(c.monto).toLocaleString("es-CL"):""}" placeholder="0"></div>
+          <span></span>
+        </div>
+        <div class="hrow head"><span></span><span>Hito</span><span>Fecha estimada</span><span class="ph2"></span></div>
+        ${steps}</div>`}).join("");
+    return`<div class="cp-total"><span>${p.compras.length} compra${p.compras.length>1?"s":""}</span><span>Costo total del proyecto <b class="num">${clp(total)}</b></span></div>
+      ${rows}<button class="addobs" id="addcompra" style="margin-top:10px">+ Agregar compra complementaria</button>`};
+  const contratos=()=>{const adjT=p.compras.reduce((a,c)=>a+(madjOf(c)??0),0),estT=p.compras.filter(c=>madjOf(c)!==null).reduce((a,c)=>a+(+c.monto||0),0),d=adjT-estT;
+    return`<div class="mc"><div class="mc-h"><span>Monto del contrato (adjudicado), por compra</span><span class="num">${adjT?`Total adjudicado <b>${clp(adjT)}</b>${estT&&d?` · <span class="${d>0?"late":""}">${d>0?"+":"−"}${clp(Math.abs(d))} (${d>0?"+":"−"}${Math.abs(Math.round(d/estT*100))}%) vs estimado</span>`:""}`:"Sin montos adjudicados"}</span></div>
+    ${p.compras.map((c,j)=>{const a=madjOf(c),warn=c.r[4]&&a===null;
+      return`<div class="mc-r"><label for="c-madj-${j}"><b>${j+1} · ${esc(c.tipo||"Tipo por definir")}${c.desc?" · "+esc(c.desc):""}</b><small>Estimado ${clp(+c.monto||0)}${warn?` · <span style="color:var(--risk)">OC emitida: falta el monto adjudicado</span>`:""}</small></label>
+        <input type="text" inputmode="numeric" id="c-madj-${j}" data-madj="${j}" class="num" value="${a!==null?Math.round(a).toLocaleString("es-CL"):""}" placeholder="Monto adjudicado"></div>`}).join("")}</div>`};
+  const hit=H.map((h,k)=>{
+    const sec=k===0||h.s!==H[k-1].s?`<div class="sec"><h3>${h.s+1} · ${STAGES[h.s]}<span>${pl[SPAN[h.s][0]]?fmt(pl[SPAN[h.s][0]])+" → "+fmt(pl[SPAN[h.s][1]]):"Sin fechas estimadas"}</span></h3>
+      ${h.s===2?`<div class="grid2" style="padding:4px 0 12px"><div class="f"><label for="f-plazo">Plazo contractual (ofertado), días corridos</label><input type="number" min="1" id="f-plazo" data-k="plazo" value="${p.plazo}" class="num"></div><p class="lbl" style="align-self:end;margin:0 0 6px">Fija la recepción provisoria estimada desde la entrega de terreno.</p></div>${contratos()}`:""}
+      ${h.s===1?"":`<div class="hrow head"><span></span><span>Hito</span><span>Fecha estimada</span><span class="ph2"></span></div>`}`:"";
+    const close=k===NH-1||H[k+1].s!==h.s?"</div>":"";
+    if(h.s===1)return sec+(k===2?compras():"")+close;
+    return`${sec}<div class="hrow ${p.r[k]?"done":""}">
+      <input type="checkbox" id="h-${k}" data-h="${k}" ${p.r[k]?"checked":""}>
+      <label class="nm" for="h-${k}">${h.n}</label>
+      <span class="pl"><input type="date" id="pl-${k}" data-pl="${k}" class="${p.ov[k]?"ov":""}" value="${pl[k]}" aria-label="Fecha estimada ${h.n}">${p.ov[k]?`<button class="rs" data-rs="${k}" title="Volver a la plantilla" aria-label="Volver a la plantilla">↺</button>`:""}</span>
+      <span class="mx-nx num">${p.r[k]?"":k===i.next&&i.target?lateB(i.delta):""}</span>
+    </div>${close}`}).join("");
+
   panel.innerHTML=`
   <div class="ph"><div><div class="eyebrow">${esc(uName(p.resp))}</div><h2><span class="nm">${esc(p.nombre)}</span>${flg(p,true)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
   <div class="kpis num">
     <div class="kpi"><b>${i.nOk}/${NH}</b><span>Hitos cumplidos</span></div>
-    <div class="kpi"><b class="${i.status==="late"?"late":""}">${i.wait===null?"—":sem(i.wait)}</b><span>${i.next===-1?"En obra":"En la etapa actual"}</span></div>
-    <div class="kpi"><b>${wFmt(wv(p,2))}</b><span>${p.wr[2]?"Inicio de obra (real)":"Inicio de obra (meta)"}</span></div>
-    <div class="kpi"><b>${clpM(total)}</b><span>Costo vigente</span></div>
+    <div class="kpi"><b class="${i.status==="late"?"late":""}">${i.wait===null?"—":i.wait+" d"}</b><span>Detenido en el hito actual</span></div>
+    <div class="kpi"><b>${fmt(fin)}</b><span>${p.r[NH-1]?"Entregado":"Entrega estimada"}</span></div>
+    <div class="kpi"><b>${clpM(total)}</b><span>Costo total</span></div>
   </div>
   ${gantt([{p,i}],"one")}
   <div class="sec"><h3>Datos base</h3>
   <div class="grid2">
     <div class="f full"><label for="f-nombre">Nombre</label><input type="text" id="f-nombre" data-k="nombre" value="${esc(p.nombre)}"></div>
     <div class="f"><label for="f-resp">Unidad responsable</label><select id="f-resp" data-k="resp">${UNITS.map(u=>`<option value="${u.k}" ${p.resp===u.k?"selected":""}>${u.n}</option>`).join("")}</select></div>
-    <div class="f pz-f"><label class="pz-chk"><input type="checkbox" id="f-pausa" ${p.pausa?"checked":""}><span><b>Proyecto congelado</b><small>Sale de semáforos, conteos y cuellos de botella. Sus semanas y datos se conservan.</small></span></label></div>
+    <div class="f pz-f"><label class="pz-chk"><input type="checkbox" id="f-pausa" ${p.pausa?"checked":""}><span><b>Proyecto congelado</b><small>Sale de semáforos, conteos y cuellos de botella. Sus fechas y datos se conservan.</small></span></label></div>
     ${p.pausa?`<div class="f full"><label for="f-pmot">Motivo del congelamiento</label><input type="text" id="f-pmot" data-k="pausaMotivo" value="${esc(p.pausaMotivo||"")}" placeholder="Ej. sin financiamiento, a la espera de definición del usuario"></div>`:""}
   </div></div>
-  <div class="sec"><h3>Hitos<span>Hoy es ${wFmt(CW)} · ${wRange(CW)}</span></h3>
-    <div class="hrow head"><span></span><span>Hito</span><span>Semana meta</span><span>Semana real</span></div>
-    ${hit}
-    <p class="note">Marca el hito cuando ocurra: se registra la semana actual (o la meta, si ya pasó) y puedes corregirla. La obra se cierra con el candado.</p>
-    <div class="du head"><span>Duración</span><span>Real</span><span>Meta</span><span>Diferencia</span></div>${durs}
-  </div>
-  <div class="sec"><h3>Montos<span>${p.madj!==null?"Vigente: adjudicado":"Vigente: estimado"}</span></h3>
-  <div class="grid2">
-    <div class="f"><label for="f-mest">Monto estimado (CLP)</label><input type="text" inputmode="numeric" id="f-mest" data-m="mest" class="num" value="${p.mest?Math.round(p.mest).toLocaleString("es-CL"):""}" placeholder="0"></div>
-    <div class="f"><label for="f-madj">Monto adjudicado, contrato (CLP)</label><input type="text" inputmode="numeric" id="f-madj" data-m="madj" class="num" value="${p.madj!==null?Math.round(p.madj).toLocaleString("es-CL"):""}" placeholder="Sin adjudicar"></div>
-    ${dAdj?`<p class="lbl full" style="margin:0"><span class="${dAdj>0?"late":""}" style="${dAdj>0?"color:var(--late)":""}">${dAdj>0?"+":"−"}${clp(Math.abs(dAdj))} (${dAdj>0?"+":"−"}${Math.abs(Math.round(dAdj/p.mest*100))}%) adjudicado vs estimado</span></p>`:""}
-  </div></div>
+  ${hit}
   <div class="danger">${confirmDel?`<span>¿Eliminar este proyecto?</span><button data-del="yes">Sí, eliminar</button><button data-del="no" style="color:var(--fg)">Cancelar</button>`:`<button data-del="ask">Eliminar proyecto</button>`}</div>`;
   panel.scrollTop=keep;
   if(focusId){const n=document.getElementById(focusId);if(n)n.focus({preventScroll:true})}
-  const upd=()=>{save();render()};
+  /* Al marcar, el hito se da por cumplido en su fecha estimada si ya pasó; si no, hoy */
+  const doneAt=v=>v&&v<=TODAY?v:TODAY;
+  const reDone=()=>{const np=plan(p);[0,1,7,8,9,10].forEach(j=>{if(p.r[j])p.r[j]=doneAt(np[j])});
+    p.compras.forEach((c,j)=>{c.r=c.r.map((v,k)=>v?doneAt(np.cps[j][k]):v)})};
+  const upd=()=>{sync(p);save();render()};
+  const jk=s=>s.split(":").map(Number);
   panel.querySelector(".x").onclick=closePanel;
   panel.querySelectorAll("[data-k]").forEach(el=>{
-    el.addEventListener(el.type==="text"?"input":"change",()=>{p[el.dataset.k]=el.value;upd()})});
-  panel.querySelectorAll("[data-m]").forEach(el=>el.onchange=()=>{const v=String(el.value).replace(/\D/g,"");
-    if(el.dataset.m==="mest")p.mest=+v||0;else p.madj=v===""?null:+v;upd()});
+    const text=el.type==="text";
+    el.addEventListener(text?"input":"change",()=>{
+      let v=el.value;if(el.dataset.k==="plazo")v=Math.max(1,+v||1);
+      p[el.dataset.k]=v;if(el.dataset.k==="plazo")reDone();upd();
+    })});
   panel.querySelector("#f-pausa").onchange=e=>{setFlag(p,"pausa",e.target.checked);upd()};
-  /* Al marcar: semana meta si ya pasó; si no, la semana actual */
-  panel.querySelectorAll("[data-h]").forEach(c=>c.onchange=()=>{const k=+c.dataset.h,m=p.wm[k];
-    p.wr[k]=c.checked?(m&&wIdx(m)<=CWI?m:CW):"";upd()});
-  panel.querySelectorAll("[data-wp]").forEach(s=>s.onchange=()=>{const[kind,k]=s.dataset.wp.split(":"),box=s.parentElement;
-    const w=+box.querySelector('[data-part="w"]').value,y=+box.querySelector('[data-part="y"]').value;
-    const v=w?y+"-W"+pad(Math.min(w,weeksIn(y))):"";
-    (kind==="m"?p.wm:p.wr)[+k]=v;upd()});
+  panel.querySelectorAll("[data-h]").forEach(c=>c.onchange=()=>{const k=+c.dataset.h;p.r[k]=c.checked?doneAt(plan(p)[k]):"";upd()});
+  panel.querySelectorAll("[data-pl]").forEach(c=>c.onchange=()=>{const k=+c.dataset.pl;
+    if(c.value&&!okDate(c.value))return;
+    if(k===0&&!p.ov[0]){if(c.value){p.inicio=c.value}}else p.ov[k]=c.value;reDone();upd()});
+  panel.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{p.ov[+b.dataset.rs]="";reDone();upd()});
+  /* Compras */
+  panel.querySelectorAll("[data-cf]").forEach(el=>el.onchange=()=>{const[j,f]=el.dataset.cf.split(":");const c=p.compras[+j];
+    if(f==="monto"){c.monto=+String(el.value).replace(/\D/g,"")||0}else c[f]=el.value;
+    if(f==="tipo"){c.r=c.r.map((v,k)=>applies(c,k)?v:"");c.ov=c.ov.map((v,k)=>applies(c,k)?v:"");reDone()}upd()});
+  panel.querySelectorAll("[data-madj]").forEach(el=>el.onchange=()=>{const c=p.compras[+el.dataset.madj],v=String(el.value).replace(/\D/g,"");c.madj=v===""?null:+v;upd()});
+  panel.querySelectorAll("[data-cc]").forEach(el=>el.onchange=()=>{const[j,k]=jk(el.dataset.cc);
+    p.compras[j].r[k]=el.checked?doneAt(plan(p).cps[j][k]):"";upd()});
+  panel.querySelectorAll("[data-cpl]").forEach(el=>el.onchange=()=>{const[j,k]=jk(el.dataset.cpl);
+    if(el.value&&!okDate(el.value))return;p.compras[j].ov[k]=el.value;reDone();upd()});
+  panel.querySelectorAll("[data-crs]").forEach(b=>b.onclick=()=>{const[j,k]=jk(b.dataset.crs);p.compras[j].ov[k]="";reDone();upd()});
+  panel.querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{const j=+b.dataset.cdel;if(delC!==j){delC=j;drawPanel();return}delC=-1;p.compras.splice(j,1);upd()});
+  panel.querySelectorAll("[data-cmain]").forEach(b=>b.onclick=()=>{const j=+b.dataset.cmain;const[c]=p.compras.splice(j,1);p.compras.unshift(c);reDone();upd()});
+  panel.querySelector("#addcompra").onclick=()=>{p.compras.push(blankCompra());upd()};
+  panel.querySelectorAll("[data-obs]").forEach(c=>c.onchange=()=>{const[j,q]=jk(c.dataset.obs);if(okDate(c.value)){p.compras[j].obs[q][c.dataset.f]=c.value;upd()}});
+  panel.querySelectorAll("[data-obsok]").forEach(c=>c.onchange=()=>{const[j,q]=jk(c.dataset.obsok);p.compras[j].obs[q].ok=c.checked?TODAY:"";upd()});
+  panel.querySelectorAll("[data-obsdel]").forEach(b=>b.onclick=()=>{const[j,q]=jk(b.dataset.obsdel);p.compras[j].obs.splice(q,1);upd()});
+  panel.querySelectorAll("[data-addobs]").forEach(b=>b.onclick=()=>{p.compras[+b.dataset.addobs].obs.push({d:TODAY,ok:""});upd()});
   panel.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const a=b.dataset.del;
     if(a==="ask"){confirmDel=true;drawPanel()}else if(a==="no"){confirmDel=false;drawPanel()}
     else{data=data.filter(x=>x.id!==p.id);save();closePanel();render()}});
