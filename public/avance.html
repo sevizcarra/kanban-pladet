@@ -347,6 +347,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   .pr-top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}
   .pr-top h1{font-size:20pt;margin:0;letter-spacing:-.02em;line-height:1}
   .pr-top .ey{font-size:7.5pt;letter-spacing:.12em;text-transform:uppercase;color:#EA7600;font-weight:700}
+  .pr-top .fl{font-size:9pt;margin-top:4px;font-weight:600}
   .pr-top .dt{text-align:right;font-size:8.5pt}
   .pr-k{display:flex;gap:22px;margin:0 0 10px;font-size:8.5pt}.pr-k b{font-size:12pt;display:block}
   .pr-t{width:100%;border-collapse:collapse}
@@ -648,6 +649,11 @@ function gantt(list,mode){
 }
 
 /* ---------- Vista principal ---------- */
+/* Filtro activo: el mismo predicado para la pantalla y para la impresión */
+function fOk({p,i}){const q=F.q.toLowerCase();return(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(!F.pri||p.prioridad)&&(!F.cl||p.cerrado)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
+  &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q))}
+function fLabel(){return[F.ver&&"Obras de verano",F.pri&&"Prioritarias",F.frz&&"Congeladas",F.cl&&"Cerradas",
+  F.stage!==null&&(F.stage===4?"Terminados":STAGES[F.stage]),{late:"Atrasadas",risk:"En riesgo",ok:"En plazo"}[F.sem],F.q&&`“${F.q}”`].filter(Boolean).join(" | ")}
 function render(){
   document.getElementById("today").textContent=T.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"});
   const I=data.map(p=>({p,i:info(p)}));
@@ -662,8 +668,7 @@ function render(){
       <span class="s num">${e} entregado${e===1?"":"s"} · ${c} cerrado${c===1?"":"s"}</span></button>`})();
   st.querySelectorAll(".stage").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;F.stage=F.stage===k?null:k;render()});
   const q=F.q.toLowerCase(),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
-  const rows=I.filter(({p,i})=>(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(!F.pri||p.prioridad)&&(!F.cl||p.cerrado)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
-      &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q)))
+  const rows=I.filter(fOk)
     .sort((a,b)=>(!!b.p.prioridad-!!a.p.prioridad)||order[a.i.status]-order[b.i.status]||(a.i.delta??999)-(b.i.delta??999));
   const M=document.getElementById("main");
   if(F.view==="sum"){M.innerHTML=resumen(rows,I)}
@@ -950,7 +955,7 @@ document.getElementById("impGo").onclick=()=>{const m=document.getElementById("i
 
 
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
-const APP_VER="2026-10-27a";let stale=false,lastVer=0;
+const APP_VER="2026-10-27b";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const m=/APP_VER="([^"]+)"/.exec(await r.text());
@@ -967,7 +972,7 @@ window.restoreData=arr=>{data=arr.filter(p=>p&&p.id).map((p,k)=>norm(Object.assi
 
 /* ---------- Imprimir la cartera completa ---------- */
 function buildPrint(){
-  const I=data.map(p=>({p,i:info(p)})),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
+  const I=data.map(p=>({p,i:info(p)})).filter(fOk),fl=fLabel(),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
   const col={late:"#e2231a",risk:"#d98a00",ok:"#1f8a4c",none:"#a8a8a3",done:"#111",paused:"#3b82c4"};
   const etapa=i=>i.closed?"Cerrado":i.paused?"Congelado":STAGES[i.stage]||"Entregado";
   const marcas=p=>[p.prioridad&&"Prioridad",p.verano&&"Verano",p.pausa&&"Congelado",p.cerrado&&"Cerrado"].filter(Boolean).join(" · ");
@@ -982,11 +987,11 @@ function buildPrint(){
         <td><span class="dot" style="background:${col[i.closed?"done":i.status]||"#999"}"></span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</td>
         <td>${i.closed||i.status==="done"?"—":esc(i.hito)}</td><td>${i.paused?"—":fmt(i.target)}</td><td class="r">${dias(i)}</td><td class="r">${montoTotal(p)?clp(montoTotal(p)):"—"}</td></tr>`).join("")}).join("");
   document.getElementById("printView").innerHTML=`
-    <div class="pr-top"><div><img class="brand" src="${logo}" alt=""><div class="ey">PLADET · Control de cartera</div><h1>Cartera de proyectos</h1></div>
+    <div class="pr-top"><div><img class="brand" src="${logo}" alt=""><div class="ey">PLADET · Control de cartera</div><h1>Cartera de proyectos</h1>${fl?`<div class="fl">Filtro: ${esc(fl)}</div>`:""}</div>
       <div class="dt">${T.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"})}<br>${I.length} obras · ${clp(tot)}</div></div>
     <div class="pr-k"><span><b>${cnt(0)}</b>Diseño</span><span><b>${cnt(1)}</b>Compra</span><span><b>${cnt(2)}</b>Ejecución</span><span><b>${cnt(3)}</b>Entrega</span><span><b>${cnt(4)}</b>Terminados</span>
       <span><b>${act.filter(x=>x.i.status==="late").length}</b>Atrasadas</span><span><b>${act.filter(x=>x.i.status==="risk").length}</b>En riesgo</span><span><b>${I.filter(x=>x.i.paused).length}</b>Congeladas</span></div>
-    <table class="pr-t"><thead><tr><th>Obra</th><th>Etapa</th><th>Estado</th><th>Próximo hito</th><th>Fecha plan</th><th class="r">Días</th><th class="r">Monto vigente</th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="pr-t"><thead><tr><th>Obra</th><th>Etapa</th><th>Estado</th><th>Próximo hito</th><th>Fecha plan</th><th class="r">Días</th><th class="r">Monto vigente</th></tr></thead><tbody>${rows||`<tr><td colspan="7">No hay proyectos con este filtro.</td></tr>`}</tbody></table>
     <div class="pr-f"><span>Días: positivos = días restantes al próximo hito; "+n atraso" = días vencidos. Monto vigente = adjudicado si existe; si no, estimado.</span><span>kanban-pladet.vercel.app</span></div>`;
   document.body.classList.add("printing")}
 window.addEventListener("beforeprint",buildPrint);
