@@ -328,6 +328,38 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   .obs-r{grid-template-columns:auto 1fr;}
 }
 @media (prefers-reduced-motion:no-preference){.row,.stage,.g-row{transition:background .12s}}
+/* Aviso de versión vieja */
+.banner.stale{background:var(--fg);color:var(--bg)}
+.banner.stale button{margin-left:10px;background:var(--acc);color:#fff;border:0;padding:3px 10px;font-weight:600}
+.btn2{background:none;color:var(--fg);border:1px solid var(--fg);padding:7px 14px;font-weight:600;font-size:13px}
+.btn2:hover{border-color:var(--acc);color:var(--acc)}
+.bk-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.bk-r small{display:block;color:var(--muted);font-size:12px}
+/* Impresión de la cartera completa */
+#printView{display:none}
+@media print{
+  @page{size:A4 landscape;margin:11mm 10mm}
+  html,body{background:#fff!important;color:#000!important;border:0!important}
+  body.printing>*:not(#printView){display:none!important}
+  body.printing #printView{display:block}
+  #printView{font-family:var(--sans);font-size:8.6pt;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printView .brand{height:26px;filter:none!important;margin:0 0 6px}
+  .pr-top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}
+  .pr-top h1{font-size:20pt;margin:0;letter-spacing:-.02em;line-height:1}
+  .pr-top .ey{font-size:7.5pt;letter-spacing:.12em;text-transform:uppercase;color:#EA7600;font-weight:700}
+  .pr-top .dt{text-align:right;font-size:8.5pt}
+  .pr-k{display:flex;gap:22px;margin:0 0 10px;font-size:8.5pt}.pr-k b{font-size:12pt;display:block}
+  .pr-t{width:100%;border-collapse:collapse}
+  .pr-t th{text-align:left;font-size:7pt;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid #000;padding:3px 5px 3px 0;color:#444}
+  .pr-t td{padding:3.5px 5px 3.5px 0;border-bottom:.5px solid #ccc;vertical-align:top}
+  .pr-t td small{display:block;color:#555;font-size:7.3pt}
+  .pr-t tr{break-inside:avoid}
+  .pr-t .r{text-align:right}
+  .pr-t tr.u td{padding-top:9px;border-bottom:1.2px solid #000;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:8pt}
+  .pr-t .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .pr-t .late{color:#c41a12;font-weight:700}
+  .pr-f{margin-top:8px;font-size:7.3pt;color:#555;display:flex;justify-content:space-between}
+}
 </style>
 </head>
 <body>
@@ -346,6 +378,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   </form>
 </div>
 <div class="banner" id="banner" hidden></div>
+<div class="banner stale" id="stale" hidden>Se publicó una versión nueva de la app. Para no pisar datos de otras personas, esta pestaña dejó de guardar cambios.<button id="reloadBtn">Recargar ahora</button></div>
 <div class="wrap" id="app" hidden>
   <header>
     <div>
@@ -372,6 +405,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="ok">En plazo</button>
     </div>
     <input class="search" id="q" type="search" placeholder="Buscar proyecto, código o unidad">
+    <button class="btn2" id="printBtn" title="Imprime o guarda en PDF la cartera completa">Imprimir cartera</button>
     <button class="btn" id="add">+ Proyecto</button>
     <div class="fbar"><span class="lbl">Filtrar por marca</span><div class="seg" id="flagF" role="group" aria-label="Filtrar por marca"></div><span class="lbl fhint">Para marcar un proyecto, pasa el mouse sobre su nombre y haz clic en el ícono.</span></div>
   </div>
@@ -392,6 +426,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 <div class="scrim" id="scrim" hidden></div>
 <aside class="panel" id="panel" hidden aria-label="Proyecto"></aside>
 <aside class="panel" id="upanel" hidden aria-label="Usuarios"></aside>
+<div id="printView" aria-hidden="true"></div>
 
 <script>
 const STAGES=["Diseño","Compra","Ejecución","Entrega"];
@@ -517,10 +552,10 @@ function norm(p){
   p.compras.forEach(c=>{if(c.adj&&c.madj===undefined)c.madj=+c.monto||0;delete c.adj;if(c.madj===undefined)c.madj=null;c.r=c.r.map(v=>ok(v)?v:"");c.ov=c.ov.map(v=>ok(v)?v:"");c.obs=(c.obs||[]).filter(o=>ok(o.d))});
   backMontos(p);if(p.v===2)p.v=1;
   sync(p);return p}
-function save(){clearTimeout(saveT);saveT=setTimeout(flushSave,300)}
+function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{await checkVer(20000);flushSave()},300)}
 /* JSON con claves ordenadas: Firestore devuelve los campos en otro orden y eso no debe contar como cambio */
 const sj=v=>JSON.stringify(v,(k,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,q)=>(o[q]=x[q],o),{}):x);
-function flushSave(){if(!window.FB||!ready)return;const ids=new Set();
+function flushSave(){if(!window.FB||!ready||stale)return;const ids=new Set();
   data.forEach((p,k)=>{ids.add(p.id);const j=sj(p);if(lastSaved[p.id]!==j){lastSaved[p.id]=j;FB.put(p.id,JSON.parse(j))}});
   Object.keys(lastSaved).forEach(id=>{if(!ids.has(id)){delete lastSaved[id];FB.del(id)}})}
 /* Cambios que llegan desde Firestore (de esta u otra persona) */
@@ -913,11 +948,55 @@ document.getElementById("impGo").onclick=()=>{const m=document.getElementById("i
     if(i>=0){p.orden=data[i].orden;data[i]=p}else{p.orden=data.length+k;data.push(p)}n++});
   save();render();m.textContent=n+" proyectos importados.";document.getElementById("impTxt").value=""};
 
+
+/* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
+const APP_VER="2026-10-27a";let stale=false,lastVer=0;
+async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
+  try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
+    const m=/APP_VER="([^"]+)"/.exec(await r.text());
+    if(m&&m[1]!==APP_VER){stale=true;clearTimeout(saveT);document.getElementById("stale").hidden=false}}catch(_){}}
+setInterval(()=>checkVer(),60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVer()});
+window.addEventListener("focus",()=>checkVer(10000));
+document.getElementById("reloadBtn").onclick=()=>location.reload();
+/* Acceso para respaldos (módulo de Firebase) */
+window.getData=()=>JSON.parse(JSON.stringify(data));
+window.appReady=()=>ready;window.appStale=()=>stale;window.APP_VER=APP_VER;
+window.restoreData=arr=>{data=arr.filter(p=>p&&p.id).map((p,k)=>norm(Object.assign(p,{orden:p.orden??k})));
+  data.sort((x,y)=>(x.orden??0)-(y.orden??0));if(openId&&!data.find(p=>p.id===openId))closePanel();save();render()};
+
+/* ---------- Imprimir la cartera completa ---------- */
+function buildPrint(){
+  const I=data.map(p=>({p,i:info(p)})),order={late:0,risk:1,ok:2,none:3,done:4,paused:5};
+  const col={late:"#e2231a",risk:"#d98a00",ok:"#1f8a4c",none:"#a8a8a3",done:"#111",paused:"#3b82c4"};
+  const etapa=i=>i.closed?"Cerrado":i.paused?"Congelado":STAGES[i.stage]||"Entregado";
+  const marcas=p=>[p.prioridad&&"Prioridad",p.verano&&"Verano",p.pausa&&"Congelado",p.cerrado&&"Cerrado"].filter(Boolean).join(" · ");
+  const dias=i=>i.paused||i.delta===null?"—":i.delta<0?`<span class="late">+${-i.delta} atraso</span>`:i.delta;
+  const tot=I.reduce((a,x)=>a+montoTotal(x.p),0),act=I.filter(x=>!x.i.paused&&!x.i.closed&&x.i.stage<4);
+  const cnt=k=>I.filter(x=>x.i.stage===k&&!x.i.paused).length;
+  const logo=document.querySelector("header .brand")?.src||"";
+  const rows=UNITS.map(u=>{const g=I.filter(x=>x.p.resp===u.k).sort((a,b)=>(!!b.p.prioridad-!!a.p.prioridad)||a.i.stage-b.i.stage||order[a.i.status]-order[b.i.status]||a.p.nombre.localeCompare(b.p.nombre,"es"));
+    if(!g.length)return"";const m=g.reduce((a,x)=>a+montoTotal(x.p),0);
+    return`<tr class="u"><td colspan="5">${esc(u.n)} · ${g.length} obra${g.length>1?"s":""}</td><td class="r" colspan="2">${m?clp(m):""}</td></tr>`+
+      g.map(({p,i})=>`<tr><td><b>${esc(p.nombre)}</b>${marcas(p)?`<small>${marcas(p)}</small>`:""}</td><td>${etapa(i)}</td>
+        <td><span class="dot" style="background:${col[i.closed?"done":i.status]||"#999"}"></span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</td>
+        <td>${i.closed||i.status==="done"?"—":esc(i.hito)}</td><td>${i.paused?"—":fmt(i.target)}</td><td class="r">${dias(i)}</td><td class="r">${montoTotal(p)?clp(montoTotal(p)):"—"}</td></tr>`).join("")}).join("");
+  document.getElementById("printView").innerHTML=`
+    <div class="pr-top"><div><img class="brand" src="${logo}" alt=""><div class="ey">PLADET · Control de cartera</div><h1>Cartera de proyectos</h1></div>
+      <div class="dt">${T.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"})}<br>${I.length} obras · ${clp(tot)}</div></div>
+    <div class="pr-k"><span><b>${cnt(0)}</b>Diseño</span><span><b>${cnt(1)}</b>Compra</span><span><b>${cnt(2)}</b>Ejecución</span><span><b>${cnt(3)}</b>Entrega</span><span><b>${cnt(4)}</b>Terminados</span>
+      <span><b>${act.filter(x=>x.i.status==="late").length}</b>Atrasadas</span><span><b>${act.filter(x=>x.i.status==="risk").length}</b>En riesgo</span><span><b>${I.filter(x=>x.i.paused).length}</b>Congeladas</span></div>
+    <table class="pr-t"><thead><tr><th>Obra</th><th>Etapa</th><th>Estado</th><th>Próximo hito</th><th>Fecha plan</th><th class="r">Días</th><th class="r">Monto vigente</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="pr-f"><span>Días: positivos = días restantes al próximo hito; "+n atraso" = días vencidos. Monto vigente = adjudicado si existe; si no, estimado.</span><span>kanban-pladet.vercel.app</span></div>`;
+  document.body.classList.add("printing")}
+window.addEventListener("beforeprint",buildPrint);
+window.addEventListener("afterprint",()=>document.body.classList.remove("printing"));
+document.getElementById("printBtn").onclick=()=>{buildPrint();window.print()};
 </script>
 <script type="module">
 import {initializeApp,deleteApp} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,createUserWithEmailAndPassword,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import {getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc,getDoc,getDocs} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import {getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc,getDoc,getDocs,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 const CFG={apiKey:"AIzaSyChraly0ienzU2hGw0AlD9k1JAEq73yS-o",authDomain:"kanban-pladet.firebaseapp.com",projectId:"kanban-pladet",
   storageBucket:"kanban-pladet.firebasestorage.app",messagingSenderId:"420984183452",appId:"1:420984183452:web:849f277db1b255895a2b59"};
 const app=initializeApp(CFG);
@@ -942,7 +1021,17 @@ onAuthStateChanged(auth,async u=>{
     await signOut(auth);$("lg-err").textContent=msg;return}
   ME={uid:u.uid,...prof};isAdm=prof.role==="admin"||u.email===ADMIN;
   $("login").hidden=true;$("app").hidden=false;$("who").textContent=u.email;$("admLnk").hidden=!isAdm;
-  unsub=onSnapshot(collection(db,COL),s=>window.onRemote(s.docs.map(d=>d.data())),e=>{fail(e)});});
+  unsub=onSnapshot(collection(db,COL),s=>window.onRemote(s.docs.map(d=>d.data())),e=>{fail(e)});
+  setTimeout(maybeBackup,20000);});
+
+/* ---------- Respaldo automático: una copia completa de la cartera por hora con alguien conectado ---------- */
+const BCOL="respaldos";
+const slot=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"_"+p(d.getHours())+"h"};
+async function writeBackup(id){const d=window.getData();if(!d.length)return false;
+  await setDoc(doc(db,BCOL,id),{fecha:new Date().toISOString(),por:ME?ME.email:"",n:d.length,ver:window.APP_VER,datos:JSON.stringify(d)});return true}
+async function maybeBackup(){try{if(!ME||!window.appReady()||window.appStale())return;const id=slot();
+  if((await getDoc(doc(db,BCOL,id))).exists())return;await writeBackup(id)}catch(e){console.warn("Respaldo automático:",e&&e.code||e)}}
+setInterval(maybeBackup,5*60000);
 
 /* ---------- Panel de usuarios (solo administradores) ---------- */
 const up=$("upanel"),scrimEl=$("scrim");
@@ -981,7 +1070,9 @@ function drawUsers(){
     <p id="u-msg" class="u-msg${uMsg.err?" err":""}" role="status">${escH(uMsg.t)}</p></div>
   <div class="sec"><h3>Con acceso<span>${on.length} usuario${on.length===1?"":"s"}</span></h3>${on.map(row).join("")||'<p class="note">Sin usuarios.</p>'}</div>
   ${off.length?`<div class="sec"><h3>Sin acceso<span>${off.length}</span></h3>${off.map(row).join("")}</div>`:""}
-  <p class="note" style="margin-top:16px">Administrador: puede gestionar usuarios. Colaborador: carga y edita proyectos.</p>`;
+  <div class="sec"><h3>Respaldos de la cartera<span>Automáticos, uno por hora</span></h3><div id="bk-box"><button class="addobs" id="bk-load">Ver respaldos</button></div></div>
+  <p class="note" style="margin-top:16px">Administrador: puede gestionar usuarios y restaurar respaldos. Colaborador: carga y edita proyectos.</p>`;
+  up.querySelector("#bk-load").onclick=loadBackups;
   up.querySelector("#u-x").onclick=closeUsers;
   up.querySelector("#u-form").onsubmit=createUser;
   up.querySelectorAll("[data-urole]").forEach(s=>s.onchange=async()=>{
@@ -1015,6 +1106,21 @@ async function createUser(e){e.preventDefault();
     const g=$("u-go");if(g)g.disabled=false}
   finally{deleteApp(sec).catch(()=>{})}}
 $("usersBtn").onclick=openUsers;
+/* Lista de respaldos: descargar o restaurar (solo administradores) */
+let BK=[],bkConfirm=null;
+async function loadBackups(){const box=up.querySelector("#bk-box");if(!box)return;box.innerHTML='<p class="note">Cargando…</p>';
+  try{const s=await getDocs(query(collection(db,BCOL),orderBy("fecha","desc"),limit(48)));BK=s.docs.map(d=>({id:d.id,...d.data()}));drawBackups()}
+  catch(e){box.innerHTML='<p class="note">No se pudieron leer los respaldos ('+escH(e.code||e.message)+').</p>'}}
+function drawBackups(msg){const box=up.querySelector("#bk-box");if(!box)return;
+  const f=t=>new Date(t).toLocaleString("es-CL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  box.innerHTML=(msg?'<p class="u-msg">'+escH(msg)+'</p>':'')+(BK.length?BK.map(b=>`<div class="bk-r"><div><b>${f(b.fecha)}</b><small>${b.n} obras · ${escH(b.por||"")}</small></div>
+    <div class="u-act"><button class="addobs" data-bkdl="${b.id}">Descargar</button><button class="addobs del" data-bkrs="${b.id}">${bkConfirm===b.id?"¿Reemplazar la cartera actual? Confirmar":"Restaurar"}</button></div></div>`).join(""):'<p class="note">Aún no hay respaldos.</p>');
+  box.querySelectorAll("[data-bkdl]").forEach(x=>x.onclick=()=>{const b=BK.find(y=>y.id===x.dataset.bkdl);
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([b.datos],{type:"application/json"}));a.download="cartera-pladet-"+b.id+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)});
+  box.querySelectorAll("[data-bkrs]").forEach(x=>x.onclick=async()=>{const id=x.dataset.bkrs;if(bkConfirm!==id){bkConfirm=id;drawBackups();return}bkConfirm=null;
+    const b=BK.find(y=>y.id===id);
+    try{await writeBackup("antes-de-restaurar_"+Date.now());window.restoreData(JSON.parse(b.datos));drawBackups("Cartera restaurada al respaldo del "+f(b.fecha)+". Se guardó una copia del estado anterior.")}
+    catch(e){drawBackups("No se pudo restaurar ("+(e.code||e.message)+").")}});}
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("lg-err").textContent="";$("lg-btn").disabled=true;
   try{await signInWithEmailAndPassword(auth,$("lg-email").value.trim(),$("lg-pass").value)}
   catch(err){$("lg-err").textContent=/invalid-credential|wrong-password|user-not-found/.test(err.code)?"Correo o contraseña incorrectos.":"No se pudo iniciar sesión ("+err.code+")."}
