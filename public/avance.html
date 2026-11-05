@@ -646,6 +646,8 @@ function info(p){
   let status=waitOnly?"ok":delta===null?"none":delta<0?"late":delta<=14?"risk":"ok";
   if(waitOnly&&wait!==null)note=[wait+" d en este paso",note].filter(Boolean).join(" · ");
   if(!target&&next===0)estado="Sin programar";
+  /* OC emitida pero aún no enviada a Inspección Técnica */
+  if(next===7&&!p.ito)estado="OC por enviar a ITO";
   if(stage===1&&mainObs.length>=2&&status==="ok")status="risk";
   const mstatus=status;
   if(status!=="none"&&cx.n)status=worse(status,cst);
@@ -909,13 +911,21 @@ function drawPanel(){
     ${p.compras.map((c,j)=>{const a=madjOf(c),warn=c.r[4]&&a===null;
       return`<div class="mc-r"><label for="c-madj-${j}"><b>${j+1} · ${esc(c.tipo||"Tipo por definir")}${c.desc?" · "+esc(c.desc):""}</b><small>Estimado ${clp(+c.monto||0)}${warn?` · <span style="color:var(--risk)">OC emitida: falta el monto adjudicado</span>`:""}</small></label>
         <input type="text" inputmode="numeric" id="c-madj-${j}" data-madj="${j}" class="num" value="${a!==null?Math.round(a).toLocaleString("es-CL"):""}" placeholder="Monto adjudicado"></div>`}).join("")}</div>`};
+  /* Envío de la OC tramitada a Inspección Técnica: registro con fecha real (no es hito de plantilla) */
+  const itoRow=()=>{const oc=p.r[6];
+    const dias=p.ito?(oc?`<b style="display:inline">${diff(p.ito,oc)} d</b> desde la OC`:""):oc&&i.next===7?`<b style="display:inline">${diff(TODAY,oc)} d</b> en espera`:"";
+    return`<div class="hrow ${p.ito?"done":""}">
+      <input type="checkbox" id="h-ito" ${p.ito?"checked":""}>
+      <label class="nm" for="h-ito">OC tramitada enviada a Inspección Técnica</label>
+      <span class="pl">${p.ito?`<input type="date" id="ito-d" class="ov" value="${p.ito}" aria-label="Fecha de envío a Inspección Técnica" title="Fecha real">`:""}</span>
+      <span class="mx-nx num">${dias}</span></div>`};
   const hit=H.map((h,k)=>{
     const sec=k===0||h.s!==H[k-1].s?`<div class="sec"><h3>${h.s+1} · ${STAGES[h.s]}<span>${pl[SPAN[h.s][0]]?fmt(pl[SPAN[h.s][0]])+" → "+fmt(pl[SPAN[h.s][1]]):"Sin fechas estimadas"}</span></h3>
       ${h.s===2?`<div class="grid2" style="padding:4px 0 12px"><div class="f"><label for="f-plazo">Plazo contractual (ofertado), días corridos</label><input type="number" min="1" id="f-plazo" data-k="plazo" value="${p.plazo}" class="num"></div><p class="lbl" style="align-self:end;margin:0 0 6px">Fija la recepción provisoria estimada desde la entrega de terreno.</p></div>${contratos()}`:""}
       ${h.s===1?"":`<div class="hrow head"><span></span><span>Hito</span><span>Fecha estimada</span><span class="ph2"></span></div>`}`:"";
     const close=k===NH-1||H[k+1].s!==h.s?"</div>":"";
     if(h.s===1)return sec+(k===2?compras():"")+close;
-    return`${sec}<div class="hrow ${p.r[k]?"done":""}">
+    return`${sec}${k===7?itoRow():""}<div class="hrow ${p.r[k]?"done":""}">
       <input type="checkbox" id="h-${k}" data-h="${k}" ${p.r[k]?"checked":""}>
       <label class="nm" for="h-${k}">${h.n}</label>
       <span class="pl"><input type="date" id="pl-${k}" data-pl="${k}" class="${p.ov[k]?"ov":""}" value="${pl[k]}" aria-label="Fecha estimada ${h.n}">${p.ov[k]?`<button class="rs" data-rs="${k}" title="Volver a la plantilla" aria-label="Volver a la plantilla">↺</button>`:""}</span>
@@ -956,6 +966,8 @@ function drawPanel(){
       p[el.dataset.k]=v;if(el.dataset.k==="plazo")reDone();upd();
     })});
   panel.querySelector("#f-pausa").onchange=e=>{setFlag(p,"pausa",e.target.checked);upd()};
+  panel.querySelector("#h-ito").onchange=e=>{p.ito=e.target.checked?TODAY:"";upd();if(e.target.checked)setTimeout(()=>document.getElementById("ito-d")?.focus(),0)};
+  panel.querySelector("#ito-d")?.addEventListener("change",e=>{if(okDate(e.target.value)){p.ito=e.target.value;upd()}});
   panel.querySelectorAll("[data-h]").forEach(c=>c.onchange=()=>{const k=+c.dataset.h;p.r[k]=c.checked?doneAt(plan(p)[k]):"";upd()});
   panel.querySelectorAll("[data-pl]").forEach(c=>c.onchange=()=>{const k=+c.dataset.pl;
     if(c.value&&!okDate(c.value))return;
@@ -1010,7 +1022,7 @@ document.getElementById("impGo").onclick=()=>{const m=document.getElementById("i
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-03a",APP_COMPAT="merge1";let stale=false,lastVer=0;
+const APP_VER="2026-11-05a",APP_COMPAT="merge1";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
