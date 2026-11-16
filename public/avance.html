@@ -415,6 +415,15 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 @media (max-width:720px){.dt-h{display:none}.dt-r{grid-template-columns:1fr 1fr}}
 .cp.des{opacity:.6}.cp.des:hover{opacity:1}.cp.des .cp-tag b{color:var(--late)}
 .cp-des{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:6px 0 10px}.cp-des input[type=date]{width:auto}.cp-des input[type=text]{flex:1;min-width:200px}
+/* Leyenda del calendario: muestras del mismo tamaño, alineadas con su texto */
+.vbtns{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.vleg{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;font-size:12px;color:var(--muted)}
+.vleg>span{display:inline-flex;align-items:center;gap:8px;line-height:1}
+.vk{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;box-sizing:border-box;font-style:normal;font-weight:600;font-size:11px;flex:none}
+.vk.v{background:var(--fg);color:var(--bg)}.vk.a{background:var(--acc);color:#fff}.vk.r{border:1px dashed var(--fg);color:var(--fg)}
+.vk.x{outline:2px solid var(--late);outline-offset:-2px;border:2px solid var(--bg)}
+.vk.rc{border:1px solid var(--line);background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--line) 3px 5px)}
+.vk.fe{border:1px solid var(--line)}.vk.fe b{width:5px;height:5px;border-radius:50%;background:var(--acc)}
 </style>
 </head>
 <body>
@@ -1208,8 +1217,8 @@ function vacView(){
           const tip=o.a.map(a=>`${VT[a.t]}${a.t==="r"?"":" "+f1(a.dias)+" d"} · ${fmt(a.d1)}${a.d2&&a.d2!==a.d1?" → "+fmt(a.d2):""}${a.nota?" · "+a.nota:""}`).join("\n")+(x?"\nChoca con su backup":"");
           return`<td class="wk ${c}"><span class="vc ${t}${x}" title="${esc(tip)}">${t==="r"&&!o.days.size?"M":f1(o.n)}</span></td>`}).join("")}</tr>`}).join("")}).join("");
   const tool=`<div class="vtool"><div class="vyear"><button data-vyr="-1" aria-label="Año anterior">‹</button><span class="num">${y}</span><button data-vyr="1" aria-label="Año siguiente">›</button></div>
-    <div class="legend" style="padding:0"><span><span class="vc v" style="display:inline-block;width:18px">5</span>Vacaciones (días)</span><span><span class="vc a" style="display:inline-block;width:18px">1</span>Administrativo</span><span><span class="vc r" style="display:inline-block;width:18px">M</span>Semana móvil</span><span><span class="vc v x" style="display:inline-block;width:18px"> </span>Choca con su backup</span><span><i class="rec-k"></i>Receso</span></div>
-    ${ed?`<span style="flex:1"></span><button class="btn2" id="vRecB">${vRec?"Ocultar recesos":"Recesos"}</button><button class="btn2" id="vImp">Importar planilla</button><input type="file" id="vFile" accept=".json,application/json" hidden><button class="btn" id="vAdd">+ Persona</button>`:""}</div>
+    <div class="vleg"><span><i class="vk v">5</i>Vacaciones (días)</span><span><i class="vk a">1</i>Administrativo</span><span><i class="vk r">M</i>Semana móvil</span><span><i class="vk v x"></i>Choca con su backup</span><span><i class="vk rc"></i>Receso</span><span><i class="vk fe"><b></b></i>Feriado</span></div>
+    ${ed?`<span class="vbtns"><button class="btn2" id="vRecB">${vRec?"Ocultar recesos":"Recesos"}</button><button class="btn2" id="vImp">Importar planilla</button><input type="file" id="vFile" accept=".json,application/json" hidden><button class="btn" id="vAdd">+ Persona</button></span>`:""}</div>
     ${vMsg?`<p class="note">${esc(vMsg)}</p>`:""}${recBox}`;
   if(!D.ppl.length)return tool+`<div class="empty">Todavía no hay personas cargadas.${ed?" Usa “Importar planilla” para cargar la planilla de vacaciones, o “+ Persona”.":""}</div>`;
   return tool+cards+`<p class="note" style="margin:0 0 8px"><b>Para asignar un backup o registrar vacaciones, haz clic en el nombre de la persona.</b></p>
@@ -1362,7 +1371,7 @@ function perSel(){const s=document.getElementById("perF");if(!s)return;const v=F
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-16e",APP_COMPAT="merge2";let stale=false,lastVer=0;
+const APP_VER="2026-11-16f",APP_COMPAT="merge2";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
