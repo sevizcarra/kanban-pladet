@@ -391,6 +391,24 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .va-r input,.va-r select{min-width:0;width:100%}
 @media (max-width:720px){.va-r{grid-template-columns:1fr 1fr}.va-r.head{display:none}.vgrid .nm{min-width:140px;max-width:140px}.vgrid .sd{left:140px}}
 @media print{body.printing #vpanel{display:none}}
+.dt-h,.dt-r{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:center}
+.dt-h{padding:10px 0 8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--fg)}
+.dt-u{display:flex;justify-content:space-between;padding:18px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
+.dt-r{width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0;text-align:left;font-size:13px}.dt-r:hover{background:var(--soft)}
+.dt-r b{display:block;font-weight:600}.dt-r small{color:var(--muted);font-size:12px}
+.dt-p{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.2fr) 110px;gap:12px;align-items:center;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 0;text-align:left;font-size:13px}.dt-p:hover{background:var(--soft)}
+.dt-p b{display:block;font-weight:600}.dt-p small{color:var(--muted);font-size:12px}.dt-p .late{color:var(--late);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);padding:3px 4px 3px 8px;font-size:12px}.chip button{background:none;border:0;padding:0 4px;color:var(--muted)}
+.eq-al{border-left:3px solid var(--late);padding:4px 0 4px 10px;margin:0 0 10px;font-size:13px}.eq-al p{margin:2px 0}
+.vrec{border:1px solid var(--line);padding:12px;margin:0 0 16px}.vrec h4{margin:0 0 8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.vrec-r{display:grid;grid-template-columns:minmax(0,1fr) 130px 130px auto 24px;gap:8px;align-items:center;margin-bottom:6px}
+.vgrid .rec{background-image:repeating-linear-gradient(135deg,transparent 0 4px,var(--soft) 4px 8px)}.vgrid th.rec{color:var(--fg)}
+.rec-k{display:inline-block;width:18px;height:12px;vertical-align:middle;margin-right:6px;border:1px solid var(--line);background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--line) 3px 5px)}
+.vgrid .fer{display:block;width:4px;height:4px;border-radius:50%;background:var(--acc);margin:1px auto 0}
+.per{border:0;border-bottom:1px solid var(--line);background:none;padding:6px 0;max-width:200px}
+.vcard .lnk{background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font:inherit;color:inherit}
+@media (max-width:720px){.dt-h{display:none}.dt-r{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -429,6 +447,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="gantt">Gantt</button>
       <button data-v="fin">Finanzas</button>
       <button data-v="vac">Vacaciones</button>
+      <button data-v="dot">Dotación</button>
     </div>
     <div class="seg" id="semaf" role="group" aria-label="Filtrar por estado">
       <button data-v="all" aria-pressed="true">Todos</button>
@@ -437,6 +456,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
       <button data-v="ok">En plazo</button>
     </div>
     <input class="search" id="q" type="search" placeholder="Buscar proyecto, código o unidad">
+    <select id="perF" class="per" aria-label="Proyectos de una persona" hidden></select>
     <button class="btn2" id="printBtn" title="Imprime o guarda en PDF la cartera completa">Imprimir cartera</button>
     <button class="btn" id="add">+ Proyecto</button>
     <div class="fbar"><span class="lbl">Filtrar por marca</span><div class="seg" id="flagF" role="group" aria-label="Filtrar por marca"></div><span class="lbl fhint">Para marcar un proyecto, pasa el mouse sobre su nombre y haz clic en el ícono.</span></div>
@@ -636,7 +656,7 @@ window.onSaveFail=(id,j)=>{if(sent[id]===j)delete sent[id];clearTimeout(window._
 /* Cambios que llegan desde Firestore (de esta u otra persona) */
 window.onRemote=docs=>{
   /* Los documentos de vacaciones viven en la misma colección: se separan aquí */
-  const vd=docs.filter(d=>d&&d._t==="vac");docs=docs.filter(d=>d&&!d._t);window.onVac(vd);
+  const vd=docs.filter(d=>d&&(d._t==="vac"||d._t==="vaccfg"));docs=docs.filter(d=>d&&!d._t);window.onVac(vd);
   /* Nunca se siembran datos de ejemplo: una lectura vacía (p. ej. sin conexión) no debe escribir nada en la base */
   if(!ready&&!docs.length){ready=true;render();return}
   const byId=new Map(data.map(p=>[p.id,p]));const seen=new Set();let mig=false,changed=!ready;
@@ -733,15 +753,16 @@ function gantt(list,mode){
 /* ---------- Vista principal ---------- */
 /* Filtro activo: el mismo predicado para la pantalla y para la impresión */
 function fOk({p,i}){const q=F.q.toLowerCase();return(!F.ver||p.verano)&&(!F.frz||p.pausa)&&(!F.pri||p.prioridad)&&(!F.cl||p.cerrado)&&(F.stage===null||i.stage===F.stage)&&(F.sem==="all"||i.status===F.sem)
-  &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q))}
+  &&(!q||(p.nombre+" "+uName(p.resp)).toLowerCase().includes(q))&&(!F.per||rolesIn(p,F.per).length>0)}
 function fLabel(){return[F.ver&&"Obras de verano",F.pri&&"Prioritarias",F.frz&&"Congeladas",F.cl&&"Cerradas",
-  F.stage!==null&&(F.stage===4?"Terminados":STAGES[F.stage]),{late:"Atrasadas",risk:"En riesgo",ok:"En plazo"}[F.sem],F.q&&`“${F.q}”`].filter(Boolean).join(" | ")}
+  F.stage!==null&&(F.stage===4?"Terminados":STAGES[F.stage]),{late:"Atrasadas",risk:"En riesgo",ok:"En plazo"}[F.sem],F.q&&`“${F.q}”`,F.per&&pById(F.per)&&"Proyectos de "+pById(F.per).nombre].filter(Boolean).join(" | ")}
 function render(){
   document.getElementById("today").textContent=T.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"});
   /* Pestaña Vacaciones: usa su propia barra; se ocultan los controles de la cartera */
-  const isV=F.view==="vac";["stages","semaf","printBtn","add"].forEach(id=>document.getElementById(id).hidden=isV);
+  const isV=F.view==="vac"||F.view==="dot";["stages","semaf","printBtn","add"].forEach(id=>document.getElementById(id).hidden=isV);
+  perSel();if(isV)document.getElementById("perF").hidden=true;
   document.querySelector(".fbar").hidden=isV;document.querySelector(".foot").hidden=isV;document.getElementById("q").placeholder=isV?"Buscar persona o unidad":"Buscar proyecto, código o unidad";
-  if(isV){const M=document.getElementById("main");M.innerHTML=vacView();bindVac(M);return}
+  if(isV){const M=document.getElementById("main");M.innerHTML=F.view==="dot"?dotView():vacView();bindVac(M);if(openId){if(editingDate||ptrDown)pending=true;else drawPanel()}return}
   const I=data.map(p=>({p,i:info(p)}));
   const st=document.getElementById("stages");
   st.innerHTML=STAGES.map((n,k)=>{
@@ -770,7 +791,7 @@ function render(){
       const dl=i.paused?"‖":i.waitOnly?(i.wait??"—"):i.delta===null?(i.status==="done"?"✓":"—"):(i.delta<0?"+"+(-i.delta):i.delta);
       const dlab=i.paused?"congelado":i.waitOnly?"días en espera":i.delta===null?(i.status==="done"?"cerrado":"sin fecha"):(i.delta<0?"de atraso":"restantes");
       return`<button class="row${rowCls(p)}" data-id="${p.id}">
-        <div class="c-name"><div class="p-name">${nm(p)}</div><div class="p-resp">${esc(uName(p.resp))}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}</div></div>
+        <div class="c-name"><div class="p-name">${nm(p)}</div><div class="p-resp">${esc(uName(p.resp))}${pById(eqOf(p).jefe)?" · JP "+esc(pById(eqOf(p).jefe).nombre):""}${montoTotal(p)?" · "+clpM(montoTotal(p)):""}${p.compras.length>1?" · "+p.compras.length+" compras":""}${vacAlert(p)?` · <span class="bad" title="${esc(vacAlert(p).map(a=>a.txt).join("\n"))}">jefe/ITO fuera</span>`:""}</div></div>
         <div class="c-estado estado"><span class="dot ${i.closed?"closed":i.status}"></span><span>${esc(i.estado)}${i.note?`<small>${esc(i.note)}</small>`:""}</span></div>
         <div class="c-prog"><div class="prog">${bars}</div><div class="prog-l num"><span>${i.nOk}/${NH} hitos</span><span>${STAGES[i.stage]||"Cerrado"}</span></div></div>
         <div class="c-hito hito">${esc(i.hito)}<small class="num">${i.paused?"Congelado":i.waitOnly?(i.since?"Desde "+fmt(i.since):"Sin fecha"):(i.closed?"Cerrado el ":i.status==="done"?"Entregado el ":"Plan ")+fmt(i.target)}</small></div>
@@ -985,6 +1006,7 @@ function drawPanel(){
     <div class="f pz-f"><label class="pz-chk"><input type="checkbox" id="f-pausa" ${p.pausa?"checked":""}><span><b>Proyecto congelado</b><small>Sale de semáforos, conteos y cuellos de botella. Sus fechas y datos se conservan.</small></span></label></div>
     ${p.pausa?`<div class="f full"><label for="f-pmot">Motivo del congelamiento</label><input type="text" id="f-pmot" data-k="pausaMotivo" value="${esc(p.pausaMotivo||"")}" placeholder="Ej. sin financiamiento, a la espera de definición del usuario"></div>`:""}
   </div></div>
+  ${eqSection(p)}
   ${hit}
   <div class="danger">${confirmDel?`<span>¿Eliminar este proyecto?</span><button data-del="yes">Sí, eliminar</button><button data-del="no" style="color:var(--fg)">Cancelar</button>`:`<button data-del="ask">Eliminar proyecto</button>`}</div>`;
   panel.scrollTop=keep;
@@ -996,6 +1018,7 @@ function drawPanel(){
   const upd=()=>{sync(p);save();render()};
   const jk=s=>s.split(":").map(Number);
   panel.querySelector(".x").onclick=closePanel;
+  bindEq(p,upd);
   panel.querySelectorAll("[data-k]").forEach(el=>{
     const text=el.type==="text";
     el.addEventListener(text?"input":"change",()=>{
@@ -1038,6 +1061,7 @@ function seg(id,key){document.getElementById(id).querySelectorAll("button").forE
   F[key]=b.dataset.v;document.querySelectorAll(`#${id} button`).forEach(x=>x.setAttribute("aria-pressed",x===b));render()})}
 seg("view","view");seg("semaf","sem");
 document.getElementById("q").oninput=e=>{F.q=e.target.value;render()};
+document.getElementById("perF").onchange=e=>{F.per=e.target.value;render()};
 /* Filtros por marca (se pueden combinar) */
 (()=>{const box=document.getElementById("flagF"),FF=[["ver","ver","Verano","obras de verano"],["pri","pri","Prioridad","proyectos prioritarios"],["frz","frz","Congelados","proyectos congelados"],["cl","cl","Cerrados","proyectos cerrados"]];
   box.innerHTML=FF.map(([k,c,l,t])=>`<button class="vb ${c}" data-ff="${k}" aria-pressed="false" title="Mostrar solo ${t}">${ICO[c]}<span>${l}</span></button>`).join("");
@@ -1056,28 +1080,37 @@ document.getElementById("impGo").onclick=()=>{const m=document.getElementById("i
   save();render();m.textContent=n+" proyectos importados.";document.getElementById("impTxt").value=""};
 
 
-/* ---------- Vacaciones: calendario del equipo, backups y saldos ----------
-   Cada persona es un documento en la misma colección (id "vac_…", _t:"vac"), con su propio guardado por fusión */
-let VAC=[],vLast={},vSent={},vReady=false,vT=null,VY=new Date().getFullYear(),vOpen=null,vDelP=false,vEditing=false,vPending=false,vScroll={},vMsg="";
+/* ---------- Dotación y vacaciones: personas, backups, saldos, recesos y equipos de proyecto ----------
+   Cada persona es un documento en la colección de la cartera (id "vac_…", _t:"vac"); los recesos van en "vac__cfg" (_t:"vaccfg").
+   Se guardan con la misma fusión campo a campo que los proyectos */
+let VAC=[],vLast={},vSent={},vReady=false,vT=null,VY=new Date().getFullYear(),vOpen=null,vDelP=false,vEditing=false,vPending=false,vScroll={},vMsg="",vRec=false;
 const PERM={canVac:false,vacOnly:false};
+const PP=()=>VAC.filter(p=>p._t==="vac");
+const CFG=()=>VAC.find(p=>p._t==="vaccfg");
+const pById=id=>VAC.find(p=>p._t==="vac"&&p.id===id);
 /* Feriados nacionales (Chile) que no cuentan como día hábil. Revisar cada año */
 const FERIADOS=new Set(["2026-01-01","2026-04-03","2026-04-04","2026-05-01","2026-05-21","2026-06-21","2026-06-29","2026-07-16","2026-08-15","2026-09-18","2026-09-19","2026-10-12","2026-10-31","2026-11-01","2026-12-08","2026-12-25",
   "2027-01-01","2027-03-26","2027-03-27","2027-05-01","2027-05-21","2027-06-21","2027-06-28","2027-07-16","2027-08-15","2027-09-17","2027-09-18","2027-09-19","2027-10-11","2027-10-31","2027-11-01","2027-12-08","2027-12-25"]);
-const isBiz=s=>{const d=pd(s).getDay();return d>0&&d<6&&!FERIADOS.has(s)};
+const recesos=()=>((CFG()||{}).recesos||[]).filter(r=>r.d1&&r.d2);
+/* Un receso marcado "no descuenta" deja esos días fuera del conteo de vacaciones */
+const libre=s=>recesos().some(r=>r.libre&&s>=r.d1&&s<=r.d2);
+const isBiz=s=>{const d=pd(s).getDay();return d>0&&d<6&&!FERIADOS.has(s)&&!libre(s)};
 function bizDays(a,b){if(!a||!b||b<a)return 0;let n=0;for(let s=a;s<=b;s=add(s,1))if(isBiz(s))n++;return n}
 const mondayOf=s=>add(s,-((pd(s).getDay()+6)%7));
 const VT={v:"Vacaciones",a:"Día administrativo",r:"Semana móvil"};
 const UORD=["Dirección","Unidad de Planificación Territorial","Unidad de Obras Menores","Unidad de Obras Mayores"];
+const ROL={jefe:"Jefe de proyecto",insp:"ITO",team:"Equipo"};
 const nd=v=>v===undefined||v===null||v==="";
 const vY=(p,y)=>(p.y&&p.y[y])||{};
 const vUsed=(p,y,t)=>(p.aus||[]).filter(a=>a.t===t&&String(a.d1||"").slice(0,4)===String(y)).reduce((s,a)=>s+(+a.dias||0),0);
-/* Saldo del año: pendientes del año anterior + días del año − días usados. Si no se ingresan los pendientes, se arrastra el saldo del año anterior */
+/* Saldo del año: pendientes del año anterior + días del año − días usados. Sin pendientes ingresados, se arrastra el saldo del año anterior */
 function vSaldo(p,y,deep=0){const c=vY(p,y),pc=vY(p,y-1);
   const prev=!nd(c.prev)?+c.prev:(deep<3&&p.y&&p.y[y-1]?vSaldo(p,y-1,deep+1).saldo:0);
   const der=!nd(c.der)?+c.der:(!nd(pc.der)?+pc.der:25),used=vUsed(p,y,"v");
   const admDer=!nd(c.admDer)?+c.admDer:6,admUsed=(+c.admPrev||0)+vUsed(p,y,"a");
   return{prev,der,used,saldo:prev+der-used,admDer,admUsed,adm:admDer-admUsed}}
 const f1=n=>{n=Math.round((+n||0)*10)/10;return String(n).replace(".",",")};
+const fD=s=>pd(s).toLocaleDateString("es-CL",{day:"numeric",month:"short"}).replace(".","");
 /* Ausencias por semana: lunes -> {n días, tipos, fechas} */
 function vOcc(p){const m=new Map();
   (p.aus||[]).forEach(a=>{if(!a.d1)return;const d2=a.d2&&a.d2>=a.d1?a.d2:a.d1;
@@ -1086,90 +1119,150 @@ function vOcc(p){const m=new Map();
     for(let s=a.d1;s<=d2;s=add(s,1)){if(!isBiz(s)&&!(a.d1===d2))continue;const w=mondayOf(s),o=m.get(w)||{n:0,t:new Set(),days:new Set(),a:[]};
       o.days.add(s);o.t.add(a.t);if(!o.a.includes(a)){o.a.push(a);if(one)o.n+=+a.dias||0}if(!one)o.n+=1;m.set(w,o)}});
   return m}
+/* ¿Está fuera (vacaciones o administrativo) en algún día entre a y b? Devuelve la ausencia */
+const ausIn=(p,a,b)=>p?(p.aus||[]).find(x=>x.t!=="r"&&x.d1&&x.d1<=b&&(x.d2||x.d1)>=a):null;
 function vacData(){
-  const byId=new Map(VAC.map(p=>[p.id,p])),occ=new Map(VAC.map(p=>[p.id,vOcc(p)]));
+  const ppl=PP(),byId=new Map(ppl.map(p=>[p.id,p])),occ=new Map(ppl.map(p=>[p.id,vOcc(p)]));
   const off=(id,w)=>{const o=occ.get(id)&&occ.get(id).get(w);return o&&o.days.size?o:null};
   const clash=(p,w)=>{const b=byId.get(p.backup);if(!b)return false;const A=off(p.id,w),B=off(b.id,w);if(!A||!B)return false;for(const d of A.days)if(B.days.has(d))return true;return false};
-  return{byId,occ,off,clash}}
+  return{ppl,byId,occ,off,clash}}
+const unitsOf=ppl=>[...new Set(ppl.map(p=>p.unidad||"Sin unidad"))].sort((a,b)=>((UORD.indexOf(a)+1)||99)-((UORD.indexOf(b)+1)||99)||a.localeCompare(b,"es"));
+/* ---- Cruce con la cartera ---- */
+const eqOf=p=>p.eq||{};
+const rolesIn=(p,id)=>{const e=eqOf(p),r=[];if(e.jefe===id)r.push("jefe");if(e.insp===id)r.push("insp");if((e.team||[]).includes(id))r.push("team");return r};
+const activo=p=>!p.cerrado&&!p.pausa&&p.r[NH-1]==="";
+/* Proyectos de una persona, con su rol */
+const projsOf=id=>data.map(p=>({p,r:rolesIn(p,id)})).filter(x=>x.r.length);
+/* Alerta: jefe de proyecto o ITO fuera en las próximas 3 semanas, o el día del próximo hito */
+function vacAlert(p){if(!activo(p))return null;const e=eqOf(p),i=info(p),hasta=add(TODAY,21),out=[];
+  [["jefe",e.jefe],["insp",e.insp]].forEach(([k,id])=>{const pr=pById(id);if(!pr)return;
+    const lim=i.target&&i.target>hasta?i.target:hasta,a=ausIn(pr,TODAY,lim);if(!a)return;
+    const enHito=i.target&&a.d1<=i.target&&(a.d2||a.d1)>=i.target,b=pById(pr.backup);
+    out.push({k,pr,a,enHito,b,txt:`${ROL[k]} ${pr.nombre} fuera ${fD(a.d1)}${a.d2&&a.d2!==a.d1?"–"+fD(a.d2):""}${enHito?" (coincide con el hito)":""} · ${b?"cubre "+b.nombre:"sin backup"}`})});
+  return out.length?out:null}
+window.vacAlert=vacAlert;
+/* ---- Vista Vacaciones ---- */
 function vacView(){
   const y=VY,D=vacData(),ed=PERM.canVac,q=F.q.toLowerCase();
   const wk=[];for(let m=mondayOf(y+"-01-01");m<=y+"-12-31";m=add(m,7))wk.push(m);
   const thisW=mondayOf(TODAY),next=[0,1,2,3,4,5,6,7].map(k=>add(thisW,7*k));
   const nmOf=id=>{const b=D.byId.get(id);return b?esc(b.nombre):""};
-  const fW=w=>pd(w).toLocaleDateString("es-CL",{day:"numeric",month:"short"}).replace(".","");
+  const recW=w=>recesos().find(r=>r.d1<=add(w,4)&&r.d2>=w);
   /* Alertas */
-  const fuera=VAC.filter(p=>D.off(p.id,thisW)).map(p=>{const o=D.off(p.id,thisW),b=D.byId.get(p.backup);
+  const fuera=D.ppl.filter(p=>D.off(p.id,thisW)).map(p=>{const o=D.off(p.id,thisW),b=D.byId.get(p.backup);
     const bs=!b?`<span class="warn">sin backup</span>`:D.clash(p,thisW)?`<span class="bad">${esc(b.nombre)} también fuera</span>`:`backup ${esc(b.nombre)}`;
     return`<li><b>${esc(p.nombre)}</b> · ${f1(o.n)} d · ${bs}</li>`});
-  const choques=[];next.forEach(w=>{const seen=new Set();VAC.forEach(p=>{if(!D.clash(p,w))return;const k=[p.id,p.backup].sort().join("|");if(seen.has(k))return;seen.add(k);
-    choques.push(`<li><span class="num">${fW(w)}</span> · <b>${esc(p.nombre)}</b> y su backup <b>${nmOf(p.backup)}</b></li>`)})});
-  const units=[...new Set(VAC.map(p=>p.unidad||"Sin unidad"))].sort((a,b)=>((UORD.indexOf(a)+1)||99)-((UORD.indexOf(b)+1)||99)||a.localeCompare(b,"es"));
-  const cob=[];next.forEach(w=>units.forEach(u=>{const g=VAC.filter(p=>(p.unidad||"Sin unidad")===u);if(g.length<2)return;const n=g.filter(p=>D.off(p.id,w)).length;
-    if(n/g.length>=.5)cob.push(`<li><span class="num">${fW(w)}</span> · ${esc(u)}: <b>${n} de ${g.length}</b> fuera</li>`)}));
-  const sinB=VAC.filter(p=>!p.backup||!D.byId.get(p.backup));
+  const choques=[];next.forEach(w=>{const seen=new Set();D.ppl.forEach(p=>{if(!D.clash(p,w))return;const k=[p.id,p.backup].sort().join("|");if(seen.has(k))return;seen.add(k);
+    choques.push(`<li><span class="num">${fD(w)}</span> · <b>${esc(p.nombre)}</b> y su backup <b>${nmOf(p.backup)}</b></li>`)})});
+  const units=unitsOf(D.ppl);
+  const cob=[];next.forEach(w=>units.forEach(u=>{const g=D.ppl.filter(p=>(p.unidad||"Sin unidad")===u);if(g.length<2)return;const n=g.filter(p=>D.off(p.id,w)).length;
+    if(n/g.length>=.5)cob.push(`<li><span class="num">${fD(w)}</span> · ${esc(u)}: <b>${n} de ${g.length}</b> fuera</li>`)}));
+  const pa=data.map(p=>({p,al:vacAlert(p)})).filter(x=>x.al);
+  const sinB=D.ppl.filter(p=>!p.backup||!D.byId.get(p.backup));
   const cards=`<div class="valert">
-    <div class="vcard"><h4>Fuera esta semana · ${fW(thisW)}</h4><ul>${fuera.join("")||"<li class=\"lbl\">Nadie</li>"}</ul></div>
-    <div class="vcard"><h4>Choques de backup · próximas 8 semanas</h4><ul>${choques.join("")||"<li class=\"lbl\">Sin choques</li>"}</ul></div>
+    <div class="vcard"><h4>Fuera esta semana · ${fD(thisW)}</h4><ul>${fuera.join("")||"<li class=\"lbl\">Nadie</li>"}</ul></div>
+    <div class="vcard"><h4>Proyectos con jefe o ITO fuera · 3 semanas</h4><ul>${pa.map(x=>`<li><button class="lnk" data-pj="${x.p.id}"><b>${esc(x.p.nombre)}</b></button> · ${x.al.map(a=>`<span class="${a.enHito||!a.b?"bad":""}">${esc(a.txt)}</span>`).join("; ")}</li>`).join("")||"<li class=\"lbl\">Sin alertas</li>"}</ul></div>
+    <div class="vcard"><h4>Choques de backup · 8 semanas</h4><ul>${choques.join("")||"<li class=\"lbl\">Sin choques</li>"}</ul></div>
     <div class="vcard"><h4>Cobertura · 50% o más de la unidad fuera</h4><ul>${cob.join("")||"<li class=\"lbl\">Cobertura suficiente</li>"}</ul></div>
-    <div class="vcard"><h4>Sin backup asignado · ${sinB.length}</h4><ul>${sinB.length?`<li>${sinB.map(p=>esc(p.nombre)).join(", ")}</li>`:"<li class=\"lbl\">Todos tienen backup</li>"}</ul></div></div>`;
+    <div class="vcard"><h4>Sin backup asignado · ${sinB.length}</h4><ul>${sinB.length?`<li>${sinB.map(p=>`<button class="lnk" data-vp="${p.id}">${esc(p.nombre)}</button>`).join(", ")}</li>`:"<li class=\"lbl\">Todos tienen backup</li>"}</ul></div></div>`;
+  /* Recesos (solo quienes editan) */
+  const recBox=ed&&vRec?`<div class="vrec"><h4>Recesos universitarios</h4>
+    ${((CFG()||{}).recesos||[]).map(r=>`<div class="vrec-r"><input type="text" data-rc="${r.id}" data-f="nombre" value="${esc(r.nombre||"")}" placeholder="Nombre (ej. Receso de verano)" aria-label="Nombre del receso">
+      <input type="date" data-rc="${r.id}" data-f="d1" value="${r.d1||""}" aria-label="Desde"><input type="date" data-rc="${r.id}" data-f="d2" value="${r.d2||""}" aria-label="Hasta">
+      <label class="lbl" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-rc="${r.id}" data-f="libre" ${r.libre?"checked":""}>No descuenta vacaciones</label><button class="rs" data-rcdel="${r.id}" aria-label="Quitar receso">×</button></div>`).join("")||`<p class="lbl">Sin recesos registrados.</p>`}
+    <button class="addobs" id="rcAdd">+ Receso</button><p class="lbl">Marca "No descuenta" si esos días los da la universidad: no se cuentan al registrar vacaciones nuevas (las ya cargadas no cambian).</p></div>`:"";
   /* Calendario */
   const mos=[];wk.forEach(w=>{const m=pd(add(w,3)).getMonth(),l=mos[mos.length-1];if(l&&l.m===m)l.n++;else mos.push({m,n:1})});
   const MN=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const wcls=w=>[w===thisW?"now":"",recW(w)?"rec":""].filter(Boolean).join(" ");
   const head=`<thead><tr class="mo"><th class="nm"></th>${ed?`<th class="sd"></th>`:""}${mos.map(o=>`<th colspan="${o.n}">${MN[o.m]}</th>`).join("")}</tr>
-    <tr><th class="nm" style="text-align:left">Persona · backup</th>${ed?`<th class="sd" title="Saldo de vacaciones ${y}">Saldo</th>`:""}${wk.map(w=>`<th class="${w===thisW?"now":""}" title="Semana del ${fW(w)}">${pd(w).getDate()}</th>`).join("")}</tr></thead>`;
-  const ppl=VAC.filter(p=>!q||(p.nombre+" "+(p.unidad||"")).toLowerCase().includes(q));
+    <tr><th class="nm" style="text-align:left">Persona · backup</th>${ed?`<th class="sd" title="Saldo de vacaciones ${y}">Saldo</th>`:""}${wk.map(w=>{const r=recW(w),fer=[0,1,2,3,4].map(k=>add(w,k)).filter(s=>FERIADOS.has(s));
+      return`<th class="${wcls(w)}" title="Semana del ${fD(w)}${r?" · "+esc(r.nombre||"Receso"):""}${fer.length?" · feriado "+fer.map(fD).join(", "):""}">${pd(w).getDate()}${fer.length?"<i class=\"fer\"></i>":""}</th>`}).join("")}</tr></thead>`;
+  const ppl=D.ppl.filter(p=>!q||(p.nombre+" "+(p.unidad||"")+" "+(p.cargo||"")).toLowerCase().includes(q));
   const body=units.map(u=>{const g=ppl.filter(p=>(p.unidad||"Sin unidad")===u).sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));if(!g.length)return"";
     return`<tr class="un"><td class="nm">${esc(u)}</td>${ed?`<td class="sd"></td>`:""}<td colspan="${wk.length}"></td></tr>`+g.map(p=>{const s=vSaldo(p,y);
       return`<tr class="vrow" data-vp="${p.id}"><td class="nm"><b>${esc(p.nombre)}</b> <small>${p.backup&&D.byId.get(p.backup)?"· "+nmOf(p.backup):"· <span class=\"warn\">sin backup</span>"}</small></td>
         ${ed?`<td class="sd num${s.saldo<0?" late":""}" title="Pendientes ${f1(s.prev)} + ${y} ${f1(s.der)} − usados ${f1(s.used)}">${f1(s.saldo)}</td>`:""}
-        ${wk.map(w=>{const o=D.occ.get(p.id).get(w),now=w===thisW?" now":"";if(!o)return`<td class="wk${now}"></td>`;
+        ${wk.map(w=>{const o=D.occ.get(p.id).get(w),c=wcls(w);if(!o)return`<td class="wk ${c}"></td>`;
           const t=o.t.has("v")?"v":o.t.has("a")?"a":"r",x=D.clash(p,w)?" x":"";
           const tip=o.a.map(a=>`${VT[a.t]}${a.t==="r"?"":" "+f1(a.dias)+" d"} · ${fmt(a.d1)}${a.d2&&a.d2!==a.d1?" → "+fmt(a.d2):""}${a.nota?" · "+a.nota:""}`).join("\n")+(x?"\nChoca con su backup":"");
-          return`<td class="wk${now}"><span class="vc ${t}${x}" title="${esc(tip)}">${t==="r"&&!o.days.size?"M":f1(o.n)}</span></td>`}).join("")}</tr>`}).join("")}).join("");
+          return`<td class="wk ${c}"><span class="vc ${t}${x}" title="${esc(tip)}">${t==="r"&&!o.days.size?"M":f1(o.n)}</span></td>`}).join("")}</tr>`}).join("")}).join("");
   const tool=`<div class="vtool"><div class="vyear"><button data-vyr="-1" aria-label="Año anterior">‹</button><span class="num">${y}</span><button data-vyr="1" aria-label="Año siguiente">›</button></div>
-    <div class="legend" style="padding:0"><span><span class="vc v" style="display:inline-block;width:18px">5</span>Vacaciones (días)</span><span><span class="vc a" style="display:inline-block;width:18px">1</span>Administrativo</span><span><span class="vc r" style="display:inline-block;width:18px">M</span>Semana móvil</span><span><span class="vc v x" style="display:inline-block;width:18px"> </span>Choca con su backup</span></div>
-    ${ed?`<span style="flex:1"></span><button class="btn2" id="vImp">Importar planilla</button><input type="file" id="vFile" accept=".json,application/json" hidden><button class="btn" id="vAdd">+ Persona</button>`:""}</div>
-    ${vMsg?`<p class="note">${esc(vMsg)}</p>`:""}`;
-  if(!VAC.length)return tool+`<div class="empty">Todavía no hay personas cargadas.${ed?" Usa “Importar planilla” para cargar el archivo de la planilla de vacaciones, o “+ Persona”.":""}</div>`;
-  return tool+cards+`<div class="gwrap" id="vwrap"><table class="vgrid">${head}<tbody>${body}</tbody></table></div>
-    <p class="note">Haz clic en una persona para ver ${ed?"y editar ":""}sus ausencias${ed?", su backup y sus saldos":" y su backup"}. Los días se cuentan en días hábiles (sin fines de semana ni feriados).</p>`}
+    <div class="legend" style="padding:0"><span><span class="vc v" style="display:inline-block;width:18px">5</span>Vacaciones (días)</span><span><span class="vc a" style="display:inline-block;width:18px">1</span>Administrativo</span><span><span class="vc r" style="display:inline-block;width:18px">M</span>Semana móvil</span><span><span class="vc v x" style="display:inline-block;width:18px"> </span>Choca con su backup</span><span><i class="rec-k"></i>Receso</span></div>
+    ${ed?`<span style="flex:1"></span><button class="btn2" id="vRecB">${vRec?"Ocultar recesos":"Recesos"}</button><button class="btn2" id="vImp">Importar planilla</button><input type="file" id="vFile" accept=".json,application/json" hidden><button class="btn" id="vAdd">+ Persona</button>`:""}</div>
+    ${vMsg?`<p class="note">${esc(vMsg)}</p>`:""}${recBox}`;
+  if(!D.ppl.length)return tool+`<div class="empty">Todavía no hay personas cargadas.${ed?" Usa “Importar planilla” para cargar la planilla de vacaciones, o “+ Persona”.":""}</div>`;
+  return tool+cards+`<p class="note" style="margin:0 0 8px"><b>Para asignar un backup o registrar vacaciones, haz clic en el nombre de la persona.</b></p>
+    <div class="gwrap" id="vwrap"><table class="vgrid">${head}<tbody>${body}</tbody></table></div>
+    <p class="note">Los días se cuentan en días hábiles: sin fines de semana, feriados (marcados con un punto) ni recesos que no descuentan.</p>`}
+/* ---- Vista Dotación ---- */
+function dotView(){
+  const D=vacData(),ed=PERM.canVac,q=F.q.toLowerCase(),units=unitsOf(D.ppl),wkEnd=add(TODAY,6);
+  const ppl=D.ppl.filter(p=>!q||[p.nombre,p.unidad,p.cargo,p.esp,p.correo].join(" ").toLowerCase().includes(q));
+  const rows=units.map(u=>{const g=ppl.filter(p=>(p.unidad||"Sin unidad")===u).sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));if(!g.length)return"";
+    return`<div class="dt-u">${esc(u)}<span>${g.length}</span></div>`+g.map(p=>{const pj=projsOf(p.id).filter(x=>activo(x.p)),b=D.byId.get(p.backup),a=ausIn(p,TODAY,wkEnd);
+      const n=k=>pj.filter(x=>x.r.includes(k)).length,late=pj.filter(x=>info(x.p).status==="late").length;
+      return`<button class="dt-r" data-vp="${p.id}"><span><b>${esc(p.nombre)}</b><small>${esc([p.cargo,p.esp].filter(Boolean).join(" · ")||"Sin cargo")}</small></span>
+        <span>${b?esc(b.nombre):`<span class="warn">sin backup</span>`}</span>
+        <span class="num">${pj.length?`${n("jefe")?n("jefe")+" jefe · ":""}${n("insp")?n("insp")+" ITO · ":""}${n("team")?n("team")+" equipo":""}`.replace(/ · $/,""):"—"}${late?` <span class="bad">· ${late} atrasado${late>1?"s":""}</span>`:""}</span>
+        <span>${a?`<span class="warn">Fuera ${fD(a.d1)}${a.d2&&a.d2!==a.d1?"–"+fD(a.d2):""}</span>`:"Disponible"}</span></button>`}).join("")}).join("");
+  return`<div class="vtool"><span class="lbl">${D.ppl.length} personas en la dotación</span><span style="flex:1"></span>${ed?`<button class="btn" id="vAdd">+ Persona</button>`:""}</div>
+    ${D.ppl.length?`<div class="dt-h"><span>Persona</span><span>Backup</span><span>Proyectos activos</span><span>Esta semana</span></div>${rows}
+    <p class="note">Haz clic en una persona para ${ed?"editar sus datos, su backup y sus vacaciones, o quitarla de la dotación":"ver sus proyectos y su backup"}. En cada proyecto se asigna el jefe de proyecto, el ITO y el equipo (sección "Equipo" del proyecto).</p>`
+    :`<div class="empty">Sin personas. ${ed?"Agrega la primera con “+ Persona” o importa la planilla de vacaciones en la pestaña Vacaciones.":""}</div>`}`}
 function bindVac(M){
   M.querySelectorAll("[data-vyr]").forEach(b=>b.onclick=()=>{VY+=+b.dataset.vyr;render()});
   M.querySelectorAll("[data-vp]").forEach(r=>r.onclick=()=>openV(r.dataset.vp));
-  const add_=M.querySelector("#vAdd");if(add_)add_.onclick=()=>{const p={id:"vac_"+Date.now().toString(36),_t:"vac",nombre:"Nueva persona",unidad:"",backup:"",y:{},aus:[]};VAC.push(p);vSave();render();openV(p.id)};
+  M.querySelectorAll("[data-pj]").forEach(b=>b.onclick=()=>openPanel(b.dataset.pj));
+  const add_=M.querySelector("#vAdd");if(add_)add_.onclick=()=>{const p={id:"vac_"+Date.now().toString(36),_t:"vac",nombre:"Nueva persona",unidad:"",cargo:"",esp:"",correo:"",backup:"",y:{},aus:[]};VAC.push(p);vSave();render();openV(p.id);setTimeout(()=>{const n=document.getElementById("vf-nombre");if(n){n.focus();n.select()}},0)};
+  const rb=M.querySelector("#vRecB");if(rb)rb.onclick=()=>{vRec=!vRec;render()};
+  const cfg=()=>{let c=CFG();if(!c){c={id:"vac__cfg",_t:"vaccfg",recesos:[]};VAC.push(c)}c.recesos=c.recesos||[];return c};
+  const ra=M.querySelector("#rcAdd");if(ra)ra.onclick=()=>{cfg().recesos.push({id:"r"+Date.now().toString(36),nombre:"",d1:"",d2:"",libre:false});vSave();render()};
+  M.querySelectorAll("[data-rc]").forEach(el=>el.addEventListener(el.type==="text"?"input":"change",()=>{const r=cfg().recesos.find(x=>x.id===el.dataset.rc);if(!r)return;const f=el.dataset.f;
+    if(f==="libre")r.libre=el.checked;else if(f==="nombre")r.nombre=el.value;else{if(el.value&&!okDate(el.value))return;r[f]=el.value;if(r.d1&&r.d2&&r.d2<r.d1)r.d2=r.d1}
+    vSave();if(f!=="nombre")render()}));
+  M.querySelectorAll("[data-rcdel]").forEach(b=>b.onclick=()=>{const c=cfg();c.recesos=c.recesos.filter(x=>x.id!==b.dataset.rcdel);vSave();render()});
   const imp=M.querySelector("#vImp"),fi=M.querySelector("#vFile");
   if(imp){imp.onclick=()=>fi.click();fi.onchange=async()=>{const f=fi.files[0];if(!f)return;let arr;
     try{arr=JSON.parse(await f.text());if(!Array.isArray(arr))throw 0}catch(_){vMsg="El archivo no es una planilla de vacaciones válida (se espera el .json preparado).";render();return}
-    let n=0;arr.forEach(x=>{if(!x||!x.id||x._t!=="vac"||!x.nombre)return;const cur=VAC.find(p=>p.id===x.id);
-      if(cur){const keepB=cur.backup;swap(cur,JSON.parse(JSON.stringify(x)));if(!cur.backup&&keepB)cur.backup=keepB}else VAC.push(JSON.parse(JSON.stringify(x)));n++});
+    let n=0;arr.forEach(x=>{if(!x||!x.id||x._t!=="vac"||!x.nombre)return;const cur=pById(x.id);
+      if(cur){const keep={backup:cur.backup,cargo:cur.cargo,esp:cur.esp,correo:cur.correo};swap(cur,JSON.parse(JSON.stringify(x)));Object.keys(keep).forEach(k=>{if(!cur[k]&&keep[k])cur[k]=keep[k]})}
+      else VAC.push(JSON.parse(JSON.stringify(x)));n++});
     vMsg=n+" personas importadas.";fi.value="";vSave();render()}}
   const w=M.querySelector("#vwrap");if(w){const k=VY;if(vScroll[k]===undefined){const c=w.querySelector("th.now");vScroll[k]=c?Math.max(0,c.offsetLeft-w.querySelector("th.nm").offsetWidth-24*2):0}
     w.scrollLeft=vScroll[k];w.onscroll=()=>{vScroll[k]=w.scrollLeft}}}
-/* Panel de una persona */
+/* ---- Ficha de una persona ---- */
 const vp=document.getElementById("vpanel");
-function openV(id){vOpen=id;vDelP=false;drawV();vp.hidden=false;scrim.hidden=false;vp.scrollTop=0}
+function openV(id){if(openId)closePanel();vOpen=id;vDelP=false;drawV();vp.hidden=false;scrim.hidden=false;vp.scrollTop=0}
 function closeV(){vOpen=null;vp.hidden=true;if(panel.hidden)scrim.hidden=true}
 scrim.addEventListener("click",()=>{if(vOpen)closeV()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&vOpen)closeV()});
 vp.addEventListener("focusin",e=>{if(isEd(e.target))vEditing=true});
 vp.addEventListener("focusout",e=>{if(isEd(e.target)){vEditing=false;setTimeout(()=>{if(vPending&&vOpen&&!vEditing){vPending=false;drawV()}},0)}});
-function drawV(){const p=VAC.find(x=>x.id===vOpen);if(!p){closeV();return}
+function drawV(){const p=pById(vOpen);if(!p){closeV();return}
   const y=VY,s=vSaldo(p,y),ed=PERM.canVac,c=vY(p,y),keep=vp.scrollTop,fid=vp.contains(document.activeElement)?document.activeElement.id:"";
-  const others=VAC.filter(x=>x.id!==p.id).sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")),resp=VAC.filter(x=>x.backup===p.id);
-  const b=VAC.find(x=>x.id===p.backup),aus=(p.aus||[]).filter(a=>String(a.d1||"").slice(0,4)===String(y)||String(a.d2||"").slice(0,4)===String(y)).sort((a,b)=>String(a.d1).localeCompare(String(b.d1)));
-  const units=[...new Set([...UORD,...VAC.map(x=>x.unidad).filter(Boolean)])];
+  const others=PP().filter(x=>x.id!==p.id).sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")),resp=PP().filter(x=>x.backup===p.id);
+  const b=pById(p.backup),aus=(p.aus||[]).filter(a=>String(a.d1||"").slice(0,4)===String(y)||String(a.d2||"").slice(0,4)===String(y)).sort((a,b)=>String(a.d1).localeCompare(String(b.d1)));
+  const units=[...new Set([...UORD,...PP().map(x=>x.unidad).filter(Boolean)])];
+  const pj=projsOf(p.id).sort((a,b)=>activo(b.p)-activo(a.p)||a.p.nombre.localeCompare(b.p.nombre,"es"));
   const num=(k,lab,ph)=>`<div class="f"><label for="vy-${k}">${lab}</label><input type="number" step="0.5" id="vy-${k}" data-vy="${k}" class="num" value="${nd(c[k])?"":c[k]}" placeholder="${ph}"></div>`;
-  vp.innerHTML=`<div class="ph"><div><div class="eyebrow">${esc(p.unidad||"Sin unidad")} · Vacaciones ${y}</div><h2>${esc(p.nombre)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
+  const txt=(k,lab,ph="",full)=>`<div class="f${full?" full":""}"><label for="vf-${k}">${lab}</label><input type="text" id="vf-${k}" data-vf="${k}" value="${esc(p[k]||"")}" placeholder="${ph}"></div>`;
+  vp.innerHTML=`<div class="ph"><div><div class="eyebrow">${esc(p.unidad||"Sin unidad")}${p.cargo?" · "+esc(p.cargo):""}</div><h2>${esc(p.nombre)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
   ${ed?`<div class="kpis num"><div class="kpi"><b class="${s.saldo<0?"late":""}">${f1(s.saldo)}</b><span>Saldo vacaciones ${y}</span></div><div class="kpi"><b>${f1(s.used)}</b><span>Usados ${y}</span></div>
-    <div class="kpi"><b>${f1(s.prev)}</b><span>Pendientes ${y-1}</span></div><div class="kpi"><b class="${s.adm<0?"late":""}">${f1(s.adm)}</b><span>Días administrativos disponibles</span></div></div>`:""}
-  <div class="sec"><h3>Datos y backup</h3>${ed?`<div class="grid2">
-    <div class="f full"><label for="vf-nombre">Nombre</label><input type="text" id="vf-nombre" data-vf="nombre" value="${esc(p.nombre)}"></div>
-    <div class="f"><label for="vf-unidad">Unidad</label><input type="text" id="vf-unidad" data-vf="unidad" list="vunits" value="${esc(p.unidad||"")}"><datalist id="vunits">${units.map(u=>`<option value="${esc(u)}">`).join("")}</datalist></div>
-    <div class="f"><label for="vf-backup">Backup (quién lo reemplaza)</label><select id="vf-backup" data-vf="backup"><option value="">Sin backup</option>${others.map(o=>`<option value="${o.id}" ${o.id===p.backup?"selected":""}>${esc(o.nombre)}</option>`).join("")}</select></div>
-    ${num("der",`Días de vacaciones ${y}`,f1(s.der))}${num("prev",`Pendientes de ${y-1}`,f1(s.prev))}
-    ${num("admDer",`Días administrativos ${y}`,"6")}${num("admPrev","Administrativos ya usados sin fecha (de la planilla)","0")}</div>`
+    <div class="kpi"><b>${pj.filter(x=>activo(x.p)).length}</b><span>Proyectos activos</span></div><div class="kpi"><b class="${s.adm<0?"late":""}">${f1(s.adm)}</b><span>Días administrativos disponibles</span></div></div>`:""}
+  <div class="sec"><h3>Backup</h3>${ed?`<div class="f"><label for="vf-backup">Quién lo reemplaza cuando no está</label><select id="vf-backup" data-vf="backup"><option value="">Sin backup</option>${others.map(o=>`<option value="${o.id}" ${o.id===p.backup?"selected":""}>${esc(o.nombre)}</option>`).join("")}</select></div>`
     :`<p>Backup: <b>${b?esc(b.nombre):"sin backup"}</b></p>`}
     ${resp.length?`<p class="lbl">Es backup de: ${resp.map(x=>esc(x.nombre)).join(", ")}</p>`:""}</div>
+  <div class="sec"><h3>Proyectos<span>${pj.filter(x=>activo(x.p)).length} activos</span></h3>
+    ${pj.length?pj.map(({p:q,r})=>{const i=info(q);return`<button class="dt-p" data-pj="${q.id}"><span><b>${esc(q.nombre)}</b><small>${r.map(k=>ROL[k]).join(" · ")}</small></span>
+      <span class="estado"><span class="dot ${i.closed?"closed":i.status}"></span>${esc(i.estado)}</span><span class="num ${i.status==="late"?"late":""}">${i.paused||i.closed||i.status==="done"?"":i.delta!==null?(i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"):i.waitOnly&&i.wait!==null?i.wait+" d en espera":""}</span></button>`}).join("")
+      :`<p class="lbl">No está asignado a proyectos. Se asigna desde cada proyecto, en la sección "Equipo".</p>`}</div>
+  <div class="sec"><h3>Datos</h3>${ed?`<div class="grid2">${txt("nombre","Nombre","",true)}
+    <div class="f"><label for="vf-unidad">Unidad</label><input type="text" id="vf-unidad" data-vf="unidad" list="vunits" value="${esc(p.unidad||"")}"><datalist id="vunits">${units.map(u=>`<option value="${esc(u)}">`).join("")}</datalist></div>
+    ${txt("cargo","Cargo","Ej. Arquitecta, Inspector técnico")}${txt("esp","Especialidad","Ej. eléctrico, clima, cálculo")}${txt("correo","Correo","nombre@usach.cl")}
+    ${num("der",`Días de vacaciones ${y}`,f1(s.der))}${num("prev",`Pendientes de ${y-1}`,f1(s.prev))}
+    ${num("admDer",`Días administrativos ${y}`,"6")}${num("admPrev","Administrativos usados sin fecha","0")}</div>`
+    :`<p class="lbl">${esc([p.cargo,p.esp,p.correo].filter(Boolean).join(" · ")||"Sin datos")}</p>`}</div>
   <div class="sec"><h3>Ausencias ${y}<span>${aus.length}</span></h3>
     ${aus.length?`<div class="va-r head"><span>Tipo</span><span>Desde</span><span>Hasta</span><span>Días</span><span>Nota</span><span></span></div>`:""}
     ${aus.map(a=>ed?`<div class="va-r"><select data-va="${a.id}" data-f="t" aria-label="Tipo">${Object.keys(VT).map(k=>`<option value="${k}" ${a.t===k?"selected":""}>${VT[k]}</option>`).join("")}</select>
@@ -1179,9 +1272,11 @@ function drawV(){const p=VAC.find(x=>x.id===vOpen);if(!p){closeV();return}
       :`<div class="va-r ro"><span>${VT[a.t]}</span><span>${fmt(a.d1)}</span><span>${fmt(a.d2)}</span><span class="num">${a.t==="r"?"—":f1(a.dias)}</span><span>${esc(a.nota||"")}</span><span></span></div>`).join("")||`<p class="lbl">Sin ausencias registradas en ${y}.</p>`}
     ${ed?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="addobs" data-vadd="v">+ Vacaciones</button><button class="addobs" data-vadd="a">+ Día administrativo</button><button class="addobs" data-vadd="r">+ Semana móvil</button></div>
       <p class="lbl">Los días se calculan solos en días hábiles al cambiar las fechas; puedes corregirlos (por ejemplo, medio día = 0,5).</p>`:""}</div>
-  ${ed?`<div class="danger">${vDelP?`<span>¿Quitar a esta persona del calendario?</span><button data-vpd="yes">Sí, quitar</button><button data-vpd="no" style="color:var(--fg)">Cancelar</button>`:`<button data-vpd="ask">Quitar persona</button>`}</div>`:""}`;
+  ${ed?`<div class="danger">${vDelP?`<span>¿Quitar a ${esc(p.nombre)} de la dotación? Se borran sus vacaciones y se le quita de los proyectos y backups.</span><button data-vpd="yes">Sí, quitar</button><button data-vpd="no" style="color:var(--fg)">Cancelar</button>`:`<button data-vpd="ask">Quitar de la dotación</button>`}</div>`:""}`;
   vp.scrollTop=keep;if(fid){const n=document.getElementById(fid);if(n)n.focus({preventScroll:true})}
-  vp.querySelector(".x").onclick=closeV;if(!ed)return;
+  vp.querySelector(".x").onclick=closeV;
+  vp.querySelectorAll("[data-pj]").forEach(bt=>bt.onclick=()=>{closeV();openPanel(bt.dataset.pj)});
+  if(!ed)return;
   const up_=()=>{vSave();render();if(!vEditing)drawV();else vPending=true};
   vp.querySelectorAll("[data-vf]").forEach(el=>el.addEventListener(el.type==="text"?"input":"change",()=>{p[el.dataset.vf]=el.value;vSave();render();if(el.tagName==="SELECT")drawV()}));
   vp.querySelectorAll("[data-vy]").forEach(el=>el.addEventListener("change",()=>{p.y=p.y||{};p.y[y]=p.y[y]||{};const k=el.dataset.vy;if(el.value==="")delete p.y[y][k];else p.y[y][k]=+el.value;up_()}));
@@ -1194,8 +1289,25 @@ function drawV(){const p=VAC.find(x=>x.id===vOpen);if(!p){closeV();return}
   vp.querySelectorAll("[data-vadd]").forEach(bt=>bt.onclick=()=>{const t=bt.dataset.vadd,d1=y===+TODAY.slice(0,4)?TODAY:y+"-01-05",d2=t==="r"?add(mondayOf(d1),4):d1;
     p.aus=p.aus||[];p.aus.push({id:"a"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),t,d1,d2,dias:t==="r"?0:bizDays(d1,d2),nota:""});vSave();render();drawV()});
   vp.querySelectorAll("[data-vpd]").forEach(bt=>bt.onclick=()=>{const a=bt.dataset.vpd;if(a==="ask"){vDelP=true;drawV()}else if(a==="no"){vDelP=false;drawV()}
-    else{VAC=VAC.filter(x=>x.id!==p.id);VAC.forEach(x=>{if(x.backup===p.id)x.backup=""});vSave();closeV();render()}})}
-/* Guardado (fusión campo a campo, igual que los proyectos) */
+    else{const id=p.id;VAC=VAC.filter(x=>x.id!==id);PP().forEach(x=>{if(x.backup===id)x.backup=""});
+      /* También sale de los equipos de proyecto */
+      let pc=false;data.forEach(q=>{const e=q.eq;if(!e)return;if(e.jefe===id){e.jefe="";pc=true}if(e.insp===id){e.insp="";pc=true}if((e.team||[]).includes(id)){e.team=e.team.filter(x=>x!==id);pc=true}});
+      if(pc)save();vSave();closeV();render()}})}
+/* ---- Equipo dentro del panel de un proyecto ---- */
+function eqSection(p){const ppl=PP().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")),e=eqOf(p),al=vacAlert(p)||[];
+  if(!ppl.length)return`<div class="sec"><h3>Equipo</h3><p class="lbl">Primero carga la dotación en la pestaña Dotación o Vacaciones.</p></div>`;
+  const opt=sel=>`<option value="">Sin asignar</option>`+ppl.map(x=>`<option value="${x.id}" ${x.id===sel?"selected":""}>${esc(x.nombre)}${x.cargo?" · "+esc(x.cargo):""}</option>`).join("");
+  const fuera=id=>{const pr=pById(id),a=ausIn(pr,TODAY,add(TODAY,21));return a?` <span class="warn">fuera ${fD(a.d1)}${a.d2&&a.d2!==a.d1?"–"+fD(a.d2):""}</span>`:""};
+  return`<div class="sec"><h3>Equipo</h3>${al.length?`<div class="eq-al">${al.map(a=>`<p class="${a.enHito||!a.b?"bad":"warn"}">${esc(a.txt)}</p>`).join("")}</div>`:""}
+    <div class="grid2"><div class="f"><label for="eq-jefe">Jefe de proyecto${e.jefe?fuera(e.jefe):""}</label><select id="eq-jefe" data-eq="jefe">${opt(e.jefe)}</select></div>
+    <div class="f"><label for="eq-insp">ITO (inspección técnica)${e.insp?fuera(e.insp):""}</label><select id="eq-insp" data-eq="insp">${opt(e.insp)}</select></div>
+    <div class="f full"><label for="eq-add">Equipo (especialistas)</label><div class="chips">${(e.team||[]).map(id=>{const x=pById(id);return x?`<span class="chip">${esc(x.nombre)}${x.esp?" · "+esc(x.esp):""}${fuera(id)}<button data-eqdel="${id}" aria-label="Quitar">×</button></span>`:""}).join("")}
+      <select id="eq-add" aria-label="Agregar al equipo"><option value="">+ Agregar persona…</option>${ppl.filter(x=>!(e.team||[]).includes(x.id)).map(x=>`<option value="${x.id}">${esc(x.nombre)}${x.esp?" · "+esc(x.esp):""}</option>`).join("")}</select></div></div></div></div>`}
+function bindEq(p,upd){const E=()=>{p.eq=p.eq||{jefe:"",insp:"",team:[]};p.eq.team=p.eq.team||[];return p.eq};
+  panel.querySelectorAll("[data-eq]").forEach(s=>s.onchange=()=>{E()[s.dataset.eq]=s.value;upd()});
+  const a=panel.querySelector("#eq-add");if(a)a.onchange=()=>{if(a.value){E().team.push(a.value);upd()}};
+  panel.querySelectorAll("[data-eqdel]").forEach(b=>b.onclick=()=>{E().team=E().team.filter(x=>x!==b.dataset.eqdel);upd()})}
+/* ---- Guardado (fusión campo a campo, igual que los proyectos) ---- */
 function vSave(){clearTimeout(vT);vT=setTimeout(vFlush,300)}
 function vFlush(){if(!window.FB||!vReady||stale)return;const ids=new Set();
   VAC.forEach(p=>{ids.add(p.id);const j=sj(p);if(vLast[p.id]!==j&&vSent[p.id]!==j){vSent[p.id]=j;FB.put(p.id,vLast[p.id]===undefined?null:JSON.parse(vLast[p.id]),JSON.parse(j),j,"v")}});
@@ -1203,7 +1315,7 @@ function vFlush(){if(!window.FB||!vReady||stale)return;const ids=new Set();
 window.onSavedV=(id,out,j)=>{if(vSent[id]===j)delete vSent[id];const nj=sj(out);vLast[id]=nj;const cur=VAC.find(p=>p.id===id);if(!cur)return;const cj=sj(cur);
   const m=cj===j?JSON.parse(nj):merge3(JSON.parse(j),JSON.parse(cj),JSON.parse(nj));if(sj(m)!==cj){swap(cur,m);vRefresh()}if(sj(cur)!==nj)vSave()};
 window.onSaveFailV=(id,j)=>{if(vSent[id]===j)delete vSent[id];clearTimeout(window.__vretry);window.__vretry=setTimeout(vSave,15000)};
-function vRefresh(){if(F.view==="vac"){if(ptrDown)needRender=true;else render()}if(vOpen){if(vEditing||ptrDown)vPending=true;else drawV()}}
+function vRefresh(){if(ptrDown)needRender=true;else render();if(vOpen){if(vEditing||ptrDown)vPending=true;else drawV()}}
 window.onVac=docs=>{let ch=!vReady;const seen=new Set();
   docs.forEach(d=>{seen.add(d.id);const nj=sj(d),base=vLast[d.id];vLast[d.id]=nj;const cur=VAC.find(p=>p.id===d.id);
     if(cur){const cj=sj(cur),dirty=base!==undefined&&cj!==base,m=dirty?merge3(JSON.parse(base),JSON.parse(cj),JSON.parse(nj)):JSON.parse(nj);
@@ -1211,17 +1323,21 @@ window.onVac=docs=>{let ch=!vReady;const seen=new Set();
     else{VAC.push(JSON.parse(nj));ch=true}});
   const n=VAC.length;VAC=VAC.filter(p=>seen.has(p.id)||!(p.id in vLast));if(VAC.length!==n)ch=true;
   Object.keys(vLast).forEach(id=>{if(!seen.has(id))delete vLast[id]});
-  vReady=true;if(vOpen&&!VAC.find(p=>p.id===vOpen))closeV();if(ch)vRefresh()};
+  vReady=true;if(vOpen&&!pById(vOpen))closeV();if(ch)vRefresh()};
 window.getVac=()=>JSON.parse(JSON.stringify(VAC));
-/* Permisos: quién edita vacaciones y quién solo ve esta pestaña */
-function applyPerm(){const only=PERM.vacOnly;document.querySelectorAll('#view button:not([data-v="vac"])').forEach(b=>b.hidden=only);
-  if(only&&F.view!=="vac"){F.view="vac";document.querySelectorAll("#view button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v==="vac"))}}
+/* Permisos: quién edita la dotación y vacaciones, y quién solo ve esas pestañas */
+function applyPerm(){const only=PERM.vacOnly;document.querySelectorAll('#view button').forEach(b=>b.hidden=only&&!["vac","dot"].includes(b.dataset.v));
+  if(only&&!["vac","dot"].includes(F.view)){F.view="vac";document.querySelectorAll("#view button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v==="vac"))}}
 window.setPerm=p=>{Object.assign(PERM,p);applyPerm();render()};
+/* Selector "Proyectos de…" en la cartera */
+function perSel(){const s=document.getElementById("perF");if(!s)return;const v=F.per||"";
+  const html=`<option value="">Todas las personas</option>`+PP().sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")).map(x=>`<option value="${x.id}" ${x.id===v?"selected":""}>${esc(x.nombre)}</option>`).join("");
+  if(s.dataset.h!==html){s.innerHTML=html;s.dataset.h=html}s.hidden=!PP().length}
 
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-16a",APP_COMPAT="merge2";let stale=false,lastVer=0;
+const APP_VER="2026-11-16b",APP_COMPAT="merge2";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
