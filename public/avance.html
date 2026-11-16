@@ -243,7 +243,11 @@ button.mx-r:hover{background:var(--soft)}
 
 /* Panel */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:10}
-.panel{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--bg);border-left:2px solid var(--fg);z-index:11;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 28px calc(40px + env(safe-area-inset-bottom,0px))}
+/* Fichas (proyecto, persona, usuarios): ventana central amplia; el encabezado con el botón cerrar queda fijo al desplazarse */
+.panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(1040px,calc(100% - 48px));max-height:calc(100vh - 48px);background:var(--bg);border:2px solid var(--fg);box-shadow:0 24px 64px rgba(0,0,0,.25);z-index:11;overflow-y:auto;overscroll-behavior:contain;padding:0 36px 40px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.panel::-webkit-scrollbar{width:8px}.panel::-webkit-scrollbar-thumb{background:var(--line)}.panel::-webkit-scrollbar-track{background:transparent}
+.panel>.ph{position:sticky;top:0;z-index:5;background:var(--bg);padding:24px 0 14px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+body:has(.panel:not([hidden])){overflow:hidden}
 .ph{display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:16px}
 .ph h2{margin:4px 0 0;font-size:24px;letter-spacing:-.02em;line-height:1.05}
 .x{background:none;border:1px solid var(--fg);width:32px;height:32px;font-size:18px;line-height:1;flex:none}
@@ -318,7 +322,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
   .row>.c-name,.row>.c-prog,.row>.c-estado{grid-column:1/-1}
   .row>.c-hito{grid-column:1}
   .row>.c-delta{grid-column:2;grid-row:4}
-  .panel{padding-left:16px;padding-right:16px}
+  .panel{padding-left:16px;padding-right:16px;width:100%;max-height:100%;height:100%;border:0}
   .grid2{grid-template-columns:1fr}
   .cp-h{grid-template-columns:22px 1fr 20px}.cp-h .f{grid-column:2}
   .kpis{grid-template-columns:repeat(2,1fr)}
@@ -1358,7 +1362,7 @@ function perSel(){const s=document.getElementById("perF");if(!s)return;const v=F
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-16d",APP_COMPAT="merge2";let stale=false,lastVer=0;
+const APP_VER="2026-11-16e",APP_COMPAT="merge2";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
