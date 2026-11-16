@@ -1083,7 +1083,7 @@ document.getElementById("impGo").onclick=()=>{const m=document.getElementById("i
 /* ---------- Dotación y vacaciones: personas, backups, saldos, recesos y equipos de proyecto ----------
    Cada persona es un documento en la colección de la cartera (id "vac_…", _t:"vac"); los recesos van en "vac__cfg" (_t:"vaccfg").
    Se guardan con la misma fusión campo a campo que los proyectos */
-let VAC=[],vLast={},vSent={},vReady=false,vT=null,VY=new Date().getFullYear(),vOpen=null,vDelP=false,vEditing=false,vPending=false,vScroll={},vMsg="",vRec=false;
+let vNewU=false,VAC=[],vLast={},vSent={},vReady=false,vT=null,VY=new Date().getFullYear(),vOpen=null,vDelP=false,vEditing=false,vPending=false,vScroll={},vMsg="",vRec=false;
 const PERM={canVac:false,vacOnly:false};
 const PP=()=>VAC.filter(p=>p._t==="vac");
 const CFG=()=>VAC.find(p=>p._t==="vaccfg");
@@ -1233,7 +1233,7 @@ function bindVac(M){
     w.scrollLeft=vScroll[k];w.onscroll=()=>{vScroll[k]=w.scrollLeft}}}
 /* ---- Ficha de una persona ---- */
 const vp=document.getElementById("vpanel");
-function openV(id){if(openId)closePanel();vOpen=id;vDelP=false;drawV();vp.hidden=false;scrim.hidden=false;vp.scrollTop=0}
+function openV(id){if(openId)closePanel();vOpen=id;vDelP=false;vNewU=false;drawV();vp.hidden=false;scrim.hidden=false;vp.scrollTop=0}
 function closeV(){vOpen=null;vp.hidden=true;if(panel.hidden)scrim.hidden=true}
 scrim.addEventListener("click",()=>{if(vOpen)closeV()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&vOpen)closeV()});
@@ -1258,7 +1258,8 @@ function drawV(){const p=pById(vOpen);if(!p){closeV();return}
       <span class="estado"><span class="dot ${i.closed?"closed":i.status}"></span>${esc(i.estado)}</span><span class="num ${i.status==="late"?"late":""}">${i.paused||i.closed||i.status==="done"?"":i.delta!==null?(i.delta<0?"+"+(-i.delta)+" d atraso":i.delta+" d"):i.waitOnly&&i.wait!==null?i.wait+" d en espera":""}</span></button>`}).join("")
       :`<p class="lbl">No está asignado a proyectos. Se asigna desde cada proyecto, en la sección "Equipo".</p>`}</div>
   <div class="sec"><h3>Datos</h3>${ed?`<div class="grid2">${txt("nombre","Nombre","",true)}
-    <div class="f"><label for="vf-unidad">Unidad</label><input type="text" id="vf-unidad" data-vf="unidad" list="vunits" value="${esc(p.unidad||"")}"><datalist id="vunits">${units.map(u=>`<option value="${esc(u)}">`).join("")}</datalist></div>
+    <div class="f"><label for="vf-unidad">Unidad</label>${vNewU?`<input type="text" id="vf-unidadN" placeholder="Nombre de la nueva unidad" value="">`
+      :`<select id="vf-unidad"><option value="" ${!p.unidad?"selected":""}>Sin unidad</option>${units.map(u=>`<option value="${esc(u)}" ${u===p.unidad?"selected":""}>${esc(u)}</option>`).join("")}<option value="__new">+ Otra unidad…</option></select>`}</div>
     ${txt("cargo","Cargo","Ej. Arquitecta, Inspector técnico")}${txt("esp","Especialidad","Ej. eléctrico, clima, cálculo")}${txt("correo","Correo","nombre@usach.cl")}
     ${num("der",`Días de vacaciones ${y}`,f1(s.der))}${num("prev",`Pendientes de ${y-1}`,f1(s.prev))}
     ${num("admDer",`Días administrativos ${y}`,"6")}${num("admPrev","Administrativos usados sin fecha","0")}</div>`
@@ -1279,6 +1280,10 @@ function drawV(){const p=pById(vOpen);if(!p){closeV();return}
   if(!ed)return;
   const up_=()=>{vSave();render();if(!vEditing)drawV();else vPending=true};
   vp.querySelectorAll("[data-vf]").forEach(el=>el.addEventListener(el.type==="text"?"input":"change",()=>{p[el.dataset.vf]=el.value;vSave();render();if(el.tagName==="SELECT")drawV()}));
+  /* Unidad: lista con todas las unidades; "Otra unidad…" permite crear una nueva */
+  const us=vp.querySelector("#vf-unidad");if(us)us.onchange=()=>{if(us.value==="__new"){vNewU=true;drawV();setTimeout(()=>document.getElementById("vf-unidadN")?.focus(),0);return}p.unidad=us.value;vSave();render();drawV()};
+  const un=vp.querySelector("#vf-unidadN");if(un){let done=false;const ok=()=>{if(done)return;done=true;const v=un.value.trim();vNewU=false;if(v){p.unidad=v;vSave();render()}drawV()};
+    un.onkeydown=e=>{if(e.key==="Enter")ok();if(e.key==="Escape"){e.stopPropagation();vNewU=false;drawV()}};un.onblur=ok}
   vp.querySelectorAll("[data-vy]").forEach(el=>el.addEventListener("change",()=>{p.y=p.y||{};p.y[y]=p.y[y]||{};const k=el.dataset.vy;if(el.value==="")delete p.y[y][k];else p.y[y][k]=+el.value;up_()}));
   vp.querySelectorAll("[data-va]").forEach(el=>el.addEventListener(el.type==="text"?"input":"change",()=>{const a=p.aus.find(x=>x.id===el.dataset.va);if(!a)return;const f=el.dataset.f;
     if(f==="nota"){a.nota=el.value;vSave();return}
@@ -1337,7 +1342,7 @@ function perSel(){const s=document.getElementById("perF");if(!s)return;const v=F
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-16b",APP_COMPAT="merge2";let stale=false,lastVer=0;
+const APP_VER="2026-11-16c",APP_COMPAT="merge2";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
