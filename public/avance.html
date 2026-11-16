@@ -409,6 +409,8 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .per{border:0;border-bottom:1px solid var(--line);background:none;padding:6px 0;max-width:200px}
 .vcard .lnk{background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font:inherit;color:inherit}
 @media (max-width:720px){.dt-h{display:none}.dt-r{grid-template-columns:1fr 1fr}}
+.cp.des{opacity:.6}.cp.des:hover{opacity:1}.cp.des .cp-tag b{color:var(--late)}
+.cp-des{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:6px 0 10px}.cp-des input[type=date]{width:auto}.cp-des input[type=text]{flex:1;min-width:200px}
 </style>
 </head>
 <body>
@@ -531,7 +533,8 @@ const maxD=a=>a.filter(Boolean).sort().pop()||"";
 /* Montos: c.monto = estimado; c.madj = adjudicado (monto del contrato), se carga en Ejecución.
    El costo vigente usa el adjudicado si existe; si no, el estimado. */
 const madjOf=c=>c.madj===null||c.madj===undefined||c.madj===""?null:+c.madj;
-const vig=c=>{const a=madjOf(c);return a!==null?a:(+c.monto||0)};
+/* Una compra declarada desierta queda como registro, pero no suma al costo */
+const vig=c=>{if(c.desierta)return 0;const a=madjOf(c);return a!==null?a:(+c.monto||0)};
 const montoTotal=p=>(p.compras||[]).reduce((a,c)=>a+vig(c),0);
 const clp=n=>n?"$ "+Math.round(n).toLocaleString("es-CL"):"—";
 const clpM=n=>n?"$ "+(n/1e6).toLocaleString("es-CL",{maximumFractionDigits:n<1e8?1:0})+" M":"—";
@@ -558,7 +561,7 @@ function sync(p){if(!p.compras||!p.compras.length)p.compras=[blankCompra()];
   for(let k=0;k<5;k++)p.r[2+k]=applies(c,k)?e[k]:(p.r[1+k]||"")}
 /* Estado de las compras complementarias pendientes */
 function compl(p,pl){const out={n:0,late:0,risk:0,worst:null};
-  p.compras.slice(1).forEach((c,j)=>{if(c.r[4])return;out.n++;const cp=pl.cps[j+1],nx=[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]);
+  p.compras.slice(1).forEach((c,j)=>{if(c.r[4]||c.desierta)return;out.n++;const cp=pl.cps[j+1],nx=[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]);
     const t=cp[nx];if(!t)return;const d=diff(t,TODAY);if(d<0)out.late++;else if(d<=14)out.risk++;
     if(out.worst===null||d<out.worst)out.worst=d});return out}
 
@@ -701,6 +704,8 @@ function info(p){
   if(!target&&next===0)estado="Sin programar";
   /* OC emitida pero aún no enviada a Inspección Técnica */
   if(next===7&&!p.ito)estado="OC por enviar a ITO";
+  /* Compra principal declarada desierta y aún sin relicitar */
+  const c0=p.compras[0];if(stage===1&&c0.desierta){estado="Compra desierta, por relicitar";note=["desierta el "+fmt(c0.desierta),note].filter(Boolean).join(" · ");if(status==="ok")status="risk"}
   if(stage===1&&mainObs.length>=2&&status==="ok")status="risk";
   const mstatus=status;
   if(status!=="none"&&cx.n)status=worse(status,cst);
@@ -936,7 +941,7 @@ function drawPanel(){
   const fin=p.r[NH-1]||pl[NH-1],total=montoTotal(p);
   const lateB=(d)=>`<b class="${d<0?"late":""}" style="display:inline">${d<0?"+"+(-d)+" d atraso":d+" d"}</b>`;
   const compras=()=>{
-    const rows=p.compras.map((c,j)=>{const cp=pl.cps[j],nx=[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]&&![0,1,2,3,4].some(q=>q>k&&applies(c,q)&&c.r[q]));
+    const rows=p.compras.map((c,j)=>{const cp=pl.cps[j],nx=c.desierta?-1:[0,1,2,3,4].find(k=>applies(c,k)&&!c.r[k]&&![0,1,2,3,4].some(q=>q>k&&applies(c,q)&&c.r[q]));
       /* Marcado: la fecha es la real (editable) y se muestran los días desde el paso anterior.
          Sin marcar: fecha estimada opcional, a mano; el paso en curso muestra los días en espera */
       const steps=[0,1,2,3,4].filter(k=>applies(c,k)).map(k=>{const pv=prevDone(p,c,k),skip=!c.r[k]&&[0,1,2,3,4].some(q=>q>k&&applies(c,q)&&c.r[q]);
@@ -952,14 +957,18 @@ function drawPanel(){
           ${o.ok?`<input type="date" id="o-ok-${j}-${q}" data-obs="${j}:${q}" data-f="ok" value="${o.ok}" aria-label="Fecha subsanación ${q+1}">`:"<span></span>"}
           <button class="rs" data-obsdel="${j}:${q}" aria-label="Quitar ronda">×</button></div>`).join("")}
           <button class="addobs" data-addobs="${j}">+ Registrar observaciones (hoy)</button></div>`:""}`}).join("");
-      return`<div class="cp">
-        <div class="cp-tag"><b>${j?"Compra complementaria":"Compra principal"}</b><span>${j?"Corre en paralelo; no detiene la obra":"Define el avance del proyecto hacia Ejecución"}</span>${j?`<div class="cp-act"><button class="addobs" data-cmain="${j}">Hacer principal</button><button class="addobs del" data-cdel="${j}">${delC===j?"¿Eliminar? Confirmar":"Eliminar compra"}</button></div>`:""}</div>
+      const orig=c.reemplaza?p.compras.findIndex(x=>x.id===c.reemplaza):-1,repl=p.compras.find(x=>x.reemplaza===c.id);
+      return`<div class="cp${c.desierta?" des":""}">
+        <div class="cp-tag"><b>${c.desierta?"Compra desierta":j?"Compra complementaria":"Compra principal"}</b><span>${c.desierta?`Declarada desierta el ${fmt(c.desierta)}${c.dMotivo?" · "+esc(c.dMotivo):""}${repl?` · se relicitó en la compra ${p.compras.indexOf(repl)+1}`:""}`:j?"Corre en paralelo; no detiene la obra":"Define el avance del proyecto hacia Ejecución"}${orig>=0?` · relicitación de la compra ${orig+1}`:""}</span>${j?`<div class="cp-act">${c.desierta?"":`<button class="addobs" data-cmain="${j}">Hacer principal</button>`}<button class="addobs del" data-cdel="${j}">${delC===j?"¿Eliminar? Confirmar":"Eliminar compra"}</button></div>`:""}</div>
         <div class="cp-h"><span class="cp-n num">${j+1}</span>
           <div class="f"><label for="c-tipo-${j}">Tipo</label><select id="c-tipo-${j}" data-cf="${j}:tipo">${CTYPES.map(t=>`<option value="${t.k}" ${c.tipo===t.k?"selected":""}>${t.n}</option>`).join("")}</select></div>
           <div class="f"><label for="c-desc-${j}">Qué se compra</label><input type="text" id="c-desc-${j}" data-cf="${j}:desc" value="${esc(c.desc)}" placeholder="Ej. obra civil, mobiliario"></div>
           <div class="f"><label for="c-monto-${j}">Monto estimado (CLP)</label><input type="text" inputmode="numeric" id="c-monto-${j}" data-cf="${j}:monto" class="num" value="${c.monto?Math.round(c.monto).toLocaleString("es-CL"):""}" placeholder="0"></div>
           <span></span>
         </div>
+        ${c.r[4]?"":`<div class="cp-des"><label class="lbl" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-cdes="${j}" ${c.desierta?"checked":""}>Declarada desierta</label>
+          ${c.desierta?`<input type="date" id="cdes-d-${j}" data-cdesd="${j}" value="${c.desierta}" aria-label="Fecha de la declaratoria desierta"><input type="text" id="cdes-m-${j}" data-cdesm="${j}" value="${esc(c.dMotivo||"")}" placeholder="Motivo (ej. sin oferentes, ofertas sobre presupuesto)" aria-label="Motivo">
+            ${repl?"":`<button class="btn" data-crel="${j}">Abrir nueva compra (relicitar)</button>`}`:""}</div>`}
         <div class="hrow head"><span></span><span>Paso</span><span>Fecha real · estimada</span><span class="ph2">Días</span></div>
         ${steps}</div>`}).join("");
     return`<div class="cp-total"><span>${p.compras.length} compra${p.compras.length>1?"s":""}</span><span>Costo total del proyecto <b class="num">${clp(total)}</b></span></div>
@@ -1046,6 +1055,13 @@ function drawPanel(){
   panel.querySelectorAll("[data-cpl]").forEach(el=>el.onchange=()=>{const[j,k]=jk(el.dataset.cpl);
     if(el.value&&!okDate(el.value))return;p.compras[j].ov[k]=el.value;upd()});
   panel.querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{const j=+b.dataset.cdel;if(delC!==j){delC=j;drawPanel();return}delC=-1;p.compras.splice(j,1);upd()});
+  /* Declaratoria desierta: queda el registro y se puede abrir una nueva compra que la reemplaza */
+  panel.querySelectorAll("[data-cdes]").forEach(el=>el.onchange=()=>{const c=p.compras[+el.dataset.cdes];if(el.checked){c.desierta=TODAY}else{delete c.desierta;delete c.dMotivo}upd()});
+  panel.querySelectorAll("[data-cdesd]").forEach(el=>el.onchange=()=>{if(okDate(el.value)){p.compras[+el.dataset.cdesd].desierta=el.value;upd()}});
+  panel.querySelectorAll("[data-cdesm]").forEach(el=>el.oninput=()=>{p.compras[+el.dataset.cdesm].dMotivo=el.value;save()});
+  panel.querySelectorAll("[data-crel]").forEach(b=>b.onclick=()=>{const j=+b.dataset.crel,c=p.compras[j],n=Object.assign(blankCompra(),{tipo:c.tipo,desc:c.desc,monto:c.monto,reemplaza:c.id});
+    /* Si la desierta era la principal, la nueva pasa a ser la principal */
+    if(j===0)p.compras.unshift(n);else p.compras.splice(j+1,0,n);upd()});
   panel.querySelectorAll("[data-cmain]").forEach(b=>b.onclick=()=>{const j=+b.dataset.cmain;const[c]=p.compras.splice(j,1);p.compras.unshift(c);reDone();upd()});
   panel.querySelector("#addcompra").onclick=()=>{p.compras.push(blankCompra());upd()};
   panel.querySelectorAll("[data-obs]").forEach(c=>c.onchange=()=>{const[j,q]=jk(c.dataset.obs);if(okDate(c.value)){p.compras[j].obs[q][c.dataset.f]=c.value;upd()}});
@@ -1342,7 +1358,7 @@ function perSel(){const s=document.getElementById("perF");if(!s)return;const v=F
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-16c",APP_COMPAT="merge2";let stale=false,lastVer=0;
+const APP_VER="2026-11-16d",APP_COMPAT="merge2";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
