@@ -378,7 +378,9 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .vgrid th,.vgrid td{padding:0;height:26px;min-width:26px;text-align:center;border-bottom:1px solid var(--line)}
 .vgrid .nm{position:sticky;left:0;background:var(--bg);z-index:2;text-align:left;min-width:220px;max-width:220px;padding:0 8px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
 .vgrid .nm b{font-weight:600}.vgrid .nm small{color:var(--muted);font-size:11px}
-.vgrid .sd{position:sticky;left:220px;background:var(--bg);z-index:2;min-width:48px;font-weight:600;font-size:12px;border-right:1px solid var(--fg)}
+.vgrid .sd{position:sticky;background:var(--bg);z-index:2;min-width:42px;max-width:42px;white-space:nowrap;font-weight:600;font-size:12px}
+.vgrid .vs1{left:220px;font-weight:500}.vgrid .vs2{left:262px;font-weight:500}.vgrid .vs3{left:304px;border-right:1px solid var(--fg)}
+.vgrid td.pend{color:var(--acc)}
 .vgrid .sd.late{color:var(--late)}
 .vgrid thead th{font-weight:500;color:var(--muted);border-bottom:1px solid var(--fg);font-size:10px}
 .vgrid .mo th{text-align:left;text-transform:uppercase;letter-spacing:.06em;border-bottom:0;padding-left:3px;border-left:1px solid var(--line)}
@@ -393,7 +395,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .va-r{display:grid;grid-template-columns:132px 118px 118px 50px minmax(0,1fr) 24px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
 .va-r.head{font-size:11px;color:var(--muted);border-bottom:1px solid var(--fg)}
 .va-r input,.va-r select{min-width:0;width:100%}
-@media (max-width:720px){.va-r{grid-template-columns:1fr 1fr}.va-r.head{display:none}.vgrid .nm{min-width:140px;max-width:140px}.vgrid .sd{left:140px}}
+@media (max-width:720px){.va-r{grid-template-columns:1fr 1fr}.va-r.head{display:none}.vgrid .nm{min-width:140px;max-width:140px}.vgrid .vs1{left:140px}.vgrid .vs2{left:182px}.vgrid .vs3{left:224px}}
 @media print{body.printing #vpanel{display:none}}
 .dt-h,.dt-r{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:center}
 .dt-h{padding:10px 0 8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--fg)}
@@ -424,6 +426,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .vk.x{outline:2px solid var(--late);outline-offset:-2px;border:2px solid var(--bg)}
 .vk.rc{border:1px solid var(--line);background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--line) 3px 5px)}
 .vk.fe{border:1px solid var(--line)}.vk.fe b{width:5px;height:5px;border-radius:50%;background:var(--acc)}
+.kpi b.acc{color:var(--acc)}
 </style>
 </head>
 <body>
@@ -1137,7 +1140,9 @@ function vSaldo(p,y,deep=0){const c=vY(p,y),pc=vY(p,y-1);
   const prev=!nd(c.prev)?+c.prev:(deep<3&&p.y&&p.y[y-1]?vSaldo(p,y-1,deep+1).saldo:0);
   const der=!nd(c.der)?+c.der:(!nd(pc.der)?+pc.der:25),used=vUsed(p,y,"v");
   const admDer=!nd(c.admDer)?+c.admDer:6,admUsed=(+c.admPrev||0)+vUsed(p,y,"a");
-  return{prev,der,used,saldo:prev+der-used,admDer,admUsed,adm:admDer-admUsed}}
+  /* Los días usados descuentan primero los pendientes del año anterior y luego los del año */
+  const quedaPrev=Math.max(0,prev-used),quedaAnio=der-Math.max(0,used-Math.max(0,prev));
+  return{prev,der,used,saldo:prev+der-used,quedaPrev,quedaAnio,admDer,admUsed,adm:admDer-admUsed}}
 const f1=n=>{n=Math.round((+n||0)*10)/10;return String(n).replace(".",",")};
 const fD=s=>pd(s).toLocaleDateString("es-CL",{day:"numeric",month:"short"}).replace(".","");
 /* Ausencias por semana: lunes -> {n días, tipos, fechas} */
@@ -1204,14 +1209,14 @@ function vacView(){
   const mos=[];wk.forEach(w=>{const m=pd(add(w,3)).getMonth(),l=mos[mos.length-1];if(l&&l.m===m)l.n++;else mos.push({m,n:1})});
   const MN=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const wcls=w=>[w===thisW?"now":"",recW(w)?"rec":""].filter(Boolean).join(" ");
-  const head=`<thead><tr class="mo"><th class="nm"></th>${ed?`<th class="sd"></th>`:""}${mos.map(o=>`<th colspan="${o.n}">${MN[o.m]}</th>`).join("")}</tr>
-    <tr><th class="nm" style="text-align:left">Persona · backup</th>${ed?`<th class="sd" title="Saldo de vacaciones ${y}">Saldo</th>`:""}${wk.map(w=>{const r=recW(w),fer=[0,1,2,3,4].map(k=>add(w,k)).filter(s=>FERIADOS.has(s));
+  const head=`<thead><tr class="mo"><th class="nm"></th>${ed?`<th class="sd vs1"></th><th class="sd vs2"></th><th class="sd vs3"></th>`:""}${mos.map(o=>`<th colspan="${o.n}">${MN[o.m]}</th>`).join("")}</tr>
+    <tr><th class="nm" style="text-align:left">Persona · backup</th>${ed?`<th class="sd vs1" title="Días pendientes de ${y-1} que quedan">Saldo ${y-1}</th><th class="sd vs2" title="Días de ${y} que quedan">${y}</th><th class="sd vs3" title="Saldo total de vacaciones">Total</th>`:""}${wk.map(w=>{const r=recW(w),fer=[0,1,2,3,4].map(k=>add(w,k)).filter(s=>FERIADOS.has(s));
       return`<th class="${wcls(w)}" title="Semana del ${fD(w)}${r?" · "+esc(r.nombre||"Receso"):""}${fer.length?" · feriado "+fer.map(fD).join(", "):""}">${pd(w).getDate()}${fer.length?"<i class=\"fer\"></i>":""}</th>`}).join("")}</tr></thead>`;
   const ppl=D.ppl.filter(p=>!q||(p.nombre+" "+(p.unidad||"")+" "+(p.cargo||"")).toLowerCase().includes(q));
   const body=units.map(u=>{const g=ppl.filter(p=>(p.unidad||"Sin unidad")===u).sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));if(!g.length)return"";
-    return`<tr class="un"><td class="nm">${esc(u)}</td>${ed?`<td class="sd"></td>`:""}<td colspan="${wk.length}"></td></tr>`+g.map(p=>{const s=vSaldo(p,y);
+    return`<tr class="un"><td class="nm">${esc(u)}</td>${ed?`<td class="sd vs1"></td><td class="sd vs2"></td><td class="sd vs3"></td>`:""}<td colspan="${wk.length}"></td></tr>`+g.map(p=>{const s=vSaldo(p,y);
       return`<tr class="vrow" data-vp="${p.id}"><td class="nm"><b>${esc(p.nombre)}</b> <small>${p.backup&&D.byId.get(p.backup)?"· "+nmOf(p.backup):"· <span class=\"warn\">sin backup</span>"}</small></td>
-        ${ed?`<td class="sd num${s.saldo<0?" late":""}" title="Pendientes ${f1(s.prev)} + ${y} ${f1(s.der)} − usados ${f1(s.used)}">${f1(s.saldo)}</td>`:""}
+        ${ed?`<td class="sd vs1 num${s.quedaPrev>0?" pend":""}" title="De ${f1(s.prev)} días pendientes de ${y-1}, quedan ${f1(s.quedaPrev)}">${f1(s.quedaPrev)}</td><td class="sd vs2 num${s.quedaAnio<0?" late":""}" title="De ${f1(s.der)} días de ${y}, quedan ${f1(s.quedaAnio)}">${f1(s.quedaAnio)}</td><td class="sd vs3 num${s.saldo<0?" late":""}" title="Pendientes ${f1(s.prev)} + ${y} ${f1(s.der)} − usados ${f1(s.used)}">${f1(s.saldo)}</td>`:""}
         ${wk.map(w=>{const o=D.occ.get(p.id).get(w),c=wcls(w);if(!o)return`<td class="wk ${c}"></td>`;
           const t=o.t.has("v")?"v":o.t.has("a")?"a":"r",x=D.clash(p,w)?" x":"";
           const tip=o.a.map(a=>`${VT[a.t]}${a.t==="r"?"":" "+f1(a.dias)+" d"} · ${fmt(a.d1)}${a.d2&&a.d2!==a.d1?" → "+fmt(a.d2):""}${a.nota?" · "+a.nota:""}`).join("\n")+(x?"\nChoca con su backup":"");
@@ -1277,8 +1282,8 @@ function drawV(){const p=pById(vOpen);if(!p){closeV();return}
   const num=(k,lab,ph)=>`<div class="f"><label for="vy-${k}">${lab}</label><input type="number" step="0.5" id="vy-${k}" data-vy="${k}" class="num" value="${nd(c[k])?"":c[k]}" placeholder="${ph}"></div>`;
   const txt=(k,lab,ph="",full)=>`<div class="f${full?" full":""}"><label for="vf-${k}">${lab}</label><input type="text" id="vf-${k}" data-vf="${k}" value="${esc(p[k]||"")}" placeholder="${ph}"></div>`;
   vp.innerHTML=`<div class="ph"><div><div class="eyebrow">${esc(p.unidad||"Sin unidad")}${p.cargo?" · "+esc(p.cargo):""}</div><h2>${esc(p.nombre)}</h2></div><button class="x" aria-label="Cerrar">×</button></div>
-  ${ed?`<div class="kpis num"><div class="kpi"><b class="${s.saldo<0?"late":""}">${f1(s.saldo)}</b><span>Saldo vacaciones ${y}</span></div><div class="kpi"><b>${f1(s.used)}</b><span>Usados ${y}</span></div>
-    <div class="kpi"><b>${pj.filter(x=>activo(x.p)).length}</b><span>Proyectos activos</span></div><div class="kpi"><b class="${s.adm<0?"late":""}">${f1(s.adm)}</b><span>Días administrativos disponibles</span></div></div>`:""}
+  ${ed?`<div class="kpis num"><div class="kpi"><b class="${s.saldo<0?"late":""}">${f1(s.saldo)}</b><span>Saldo vacaciones ${y}</span></div><div class="kpi"><b class="${s.quedaPrev>0?"acc":""}">${f1(s.quedaPrev)}</b><span>Quedan de ${y-1} (de ${f1(s.prev)})</span></div>
+    <div class="kpi"><b class="${s.quedaAnio<0?"late":""}">${f1(s.quedaAnio)}</b><span>Quedan de ${y} (de ${f1(s.der)}) · usados ${f1(s.used)}</span></div><div class="kpi"><b class="${s.adm<0?"late":""}">${f1(s.adm)}</b><span>Días administrativos disponibles</span></div></div>`:""}
   <div class="sec"><h3>Backup</h3>${ed?`<div class="f"><label for="vf-backup">Quién lo reemplaza cuando no está</label><select id="vf-backup" data-vf="backup"><option value="">Sin backup</option>${others.map(o=>`<option value="${o.id}" ${o.id===p.backup?"selected":""}>${esc(o.nombre)}</option>`).join("")}</select></div>`
     :`<p>Backup: <b>${b?esc(b.nombre):"sin backup"}</b></p>`}
     ${resp.length?`<p class="lbl">Es backup de: ${resp.map(x=>esc(x.nombre)).join(", ")}</p>`:""}</div>
@@ -1371,7 +1376,7 @@ function perSel(){const s=document.getElementById("perF");if(!s)return;const v=F
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-16f",APP_COMPAT="merge2";let stale=false,lastVer=0;
+const APP_VER="2026-11-16g",APP_COMPAT="merge2";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
