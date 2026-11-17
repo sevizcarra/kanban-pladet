@@ -378,7 +378,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .vgrid th,.vgrid td{padding:0;height:26px;min-width:26px;text-align:center;border-bottom:1px solid var(--line)}
 .vgrid .nm{position:sticky;left:0;background:var(--bg);z-index:2;text-align:left;min-width:220px;max-width:220px;padding:0 8px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
 .vgrid .nm b{font-weight:600}.vgrid .nm small{color:var(--muted);font-size:11px}
-.vgrid .sd{position:sticky;background:var(--bg);z-index:2;min-width:42px;max-width:42px;white-space:nowrap;font-weight:600;font-size:12px}
+.vgrid .sd{position:sticky;background:var(--bg);z-index:2;min-width:42px;max-width:42px;white-space:nowrap;overflow:hidden;text-align:center;font-weight:600;font-size:12px}
 .vgrid .vs1{left:220px;font-weight:500}.vgrid .vs2{left:262px;font-weight:500}.vgrid .vs3{left:304px;border-right:1px solid var(--fg)}
 .vgrid td.pend{color:var(--acc)}
 .vgrid .sd.late{color:var(--late)}
@@ -427,6 +427,7 @@ input[type=date]{font-family:var(--mono);font-size:12px}
 .vk.rc{border:1px solid var(--line);background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--line) 3px 5px)}
 .vk.fe{border:1px solid var(--line)}.vk.fe b{width:5px;height:5px;border-radius:50%;background:var(--acc)}
 .kpi b.acc{color:var(--acc)}
+.vgrid .mo th.sdh{text-align:center;padding-left:0;overflow:visible;letter-spacing:.08em}
 </style>
 </head>
 <body>
@@ -1209,8 +1210,8 @@ function vacView(){
   const mos=[];wk.forEach(w=>{const m=pd(add(w,3)).getMonth(),l=mos[mos.length-1];if(l&&l.m===m)l.n++;else mos.push({m,n:1})});
   const MN=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const wcls=w=>[w===thisW?"now":"",recW(w)?"rec":""].filter(Boolean).join(" ");
-  const head=`<thead><tr class="mo"><th class="nm"></th>${ed?`<th class="sd vs1"></th><th class="sd vs2"></th><th class="sd vs3"></th>`:""}${mos.map(o=>`<th colspan="${o.n}">${MN[o.m]}</th>`).join("")}</tr>
-    <tr><th class="nm" style="text-align:left">Persona · backup</th>${ed?`<th class="sd vs1" title="Días pendientes de ${y-1} que quedan">Saldo ${y-1}</th><th class="sd vs2" title="Días de ${y} que quedan">${y}</th><th class="sd vs3" title="Saldo total de vacaciones">Total</th>`:""}${wk.map(w=>{const r=recW(w),fer=[0,1,2,3,4].map(k=>add(w,k)).filter(s=>FERIADOS.has(s));
+  const head=`<thead><tr class="mo"><th class="nm"></th>${ed?`<th class="sd vs1"></th><th class="sd vs2 sdh">Saldo</th><th class="sd vs3"></th>`:""}${mos.map(o=>`<th colspan="${o.n}">${MN[o.m]}</th>`).join("")}</tr>
+    <tr><th class="nm" style="text-align:left">Persona · backup</th>${ed?`<th class="sd vs1" title="Días pendientes de ${y-1} que quedan">${y-1}</th><th class="sd vs2" title="Días de ${y} que quedan">${y}</th><th class="sd vs3" title="Saldo total de vacaciones">Total</th>`:""}${wk.map(w=>{const r=recW(w),fer=[0,1,2,3,4].map(k=>add(w,k)).filter(s=>FERIADOS.has(s));
       return`<th class="${wcls(w)}" title="Semana del ${fD(w)}${r?" · "+esc(r.nombre||"Receso"):""}${fer.length?" · feriado "+fer.map(fD).join(", "):""}">${pd(w).getDate()}${fer.length?"<i class=\"fer\"></i>":""}</th>`}).join("")}</tr></thead>`;
   const ppl=D.ppl.filter(p=>!q||(p.nombre+" "+(p.unidad||"")+" "+(p.cargo||"")).toLowerCase().includes(q));
   const body=units.map(u=>{const g=ppl.filter(p=>(p.unidad||"Sin unidad")===u).sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));if(!g.length)return"";
@@ -1376,7 +1377,7 @@ function perSel(){const s=document.getElementById("perF");if(!s)return;const v=F
 /* ---------- Control de versión: una pestaña con una versión vieja deja de guardar ---------- */
 /* APP_VER cambia en cada publicación (aviso suave: recargar). APP_COMPAT solo cambia si la forma de guardar deja de ser compatible:
    ahí la pestaña vieja deja de guardar. Las versiones anteriores a la fusión no traen APP_COMPAT y quedan bloqueadas */
-const APP_VER="2026-11-16g",APP_COMPAT="merge2";let stale=false,lastVer=0;
+const APP_VER="2026-11-16h",APP_COMPAT="merge2";let stale=false,lastVer=0;
 async function checkVer(maxAge){if(stale)return;if(maxAge&&Date.now()-lastVer<maxAge)return;lastVer=Date.now();
   try{const r=await fetch("/avance.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return;
     const t=await r.text(),m=/APP_VER="([^"]+)"/.exec(t),c=/APP_COMPAT="([^"]+)"/.exec(t);if(!m)return;
